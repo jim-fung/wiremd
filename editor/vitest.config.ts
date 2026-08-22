@@ -17,6 +17,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Order matters: the subpath entry must win before the bare-package
+      // alias, or `wiremd/embed` resolves to `src/index.ts/embed`.
+      'wiremd/embed': resolve(__dirname, '../src/embed/index.ts'),
       wiremd: resolve(__dirname, '../src/index.ts'),
     },
   },

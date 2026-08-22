@@ -8,6 +8,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         parser: resolve(__dirname, 'src/parser/index.ts'),
+        'parser/includes': resolve(__dirname, 'src/parser/includes.ts'),
         renderer: resolve(__dirname, 'src/renderer/index.ts'),
         embed: resolve(__dirname, 'src/embed/index.ts'),
         'cli/index': resolve(__dirname, 'src/cli/index.ts'),
