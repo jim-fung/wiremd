@@ -112,6 +112,12 @@ export function createPreview(elements: {
         if (state.activeTab === 'html') {
           editor.layout();
         }
+      }).catch((err: unknown) => {
+        // Lazy chunk load can fail (offline, flaky deploy); surface it instead
+        // of leaving a silent blank HTML tab plus an unhandled rejection.
+        elements.errorMessage.textContent =
+          `Could not load the HTML editor: ${err instanceof Error ? err.message : String(err)}`;
+        elements.errorBar.classList.add('ed-error--visible');
       });
     }
   }

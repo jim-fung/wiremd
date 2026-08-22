@@ -46,13 +46,25 @@ export function renderMarkup(markdown: string, style: StyleName): RenderMarkupRe
       classPrefix: 'wmd-',
     });
 
+    // Surface every diagnostic the embed boundary emits — not just dropped
+    // constructs. Error-severity notes accompany partial renders (document is
+    // non-null but some nodes were invalid); includes-disabled explains
+    // ![[...]] tokens degrading to literal text.
     const warnings = compiled.diagnostics
-      .filter((d) => d.code === 'wmd-unsupported-node')
-      .map((d) =>
-        d.start
-          ? `Omitted unsupported construct (line ${d.start.line}): ${d.message}`
-          : `Omitted unsupported construct: ${d.message}`
-      );
+      .map((d) => {
+        const where = d.start ? ` (line ${d.start.line})` : '';
+        if (d.severity === 'error') {
+          return `Error${where}: ${d.message}`;
+        }
+        if (d.code === 'wmd-includes-disabled') {
+          return `Includes disabled${where}: ${d.message}`;
+        }
+        if (d.code === 'wmd-unsupported-node') {
+          return `Omitted unsupported construct${where}: ${d.message}`;
+        }
+        return null;
+      })
+      .filter((w): w is string => w !== null);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
