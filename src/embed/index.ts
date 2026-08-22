@@ -174,7 +174,8 @@ export function compileWiremd(
   }
 
   if (options.validate !== false && document) {
-    const validationErrors = validate(document);
+    // attachNodes lets each diagnostic carry its node's source span.
+    const validationErrors = validate(document, { attachNodes: true });
     for (const validationError of validationErrors) {
       emit(validationErrorToDiagnostic(validationError));
     }
