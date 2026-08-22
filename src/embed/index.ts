@@ -74,6 +74,13 @@ export interface CompileWiremdResult {
   document: DocumentNode | null;
   diagnostics: WiremdDiagnostic[];
   syntaxVersion: string;
+  /**
+   * The validated visual style from options, carried so downstream preview
+   * rendering can honor the compile call's choice without re-passing it.
+   * Undefined when no style was requested (or the runtime value was not a
+   * known style, which also emits a `wmd-invalid-style` error diagnostic).
+   */
+  style?: WiremdStyle;
 }
 
 export interface PreviewRenderOptions {
@@ -104,7 +111,13 @@ export function compileWiremd(
   options: CompileWiremdOptions = {}
 ): CompileWiremdResult {
   const diagnostics: WiremdDiagnostic[] = [];
-  const emit = options.onDiagnostic ?? ((d: WiremdDiagnostic) => diagnostics.push(d));
+  // Every diagnostic lands in the result list; a caller-supplied sink is a
+  // SECOND delivery channel (for incremental UIs), never a replacement —
+  // otherwise `result.diagnostics` would silently under-report.
+  const emit = (diagnostic: WiremdDiagnostic) => {
+    diagnostics.push(diagnostic);
+    options.onDiagnostic?.(diagnostic);
+  };
 
   if (typeof source !== 'string') {
     emit({
@@ -114,6 +127,20 @@ export function compileWiremd(
       source: 'parser',
     });
     return { document: null, diagnostics, syntaxVersion: SYNTAX_VERSION };
+  }
+
+  let style: WiremdStyle | undefined;
+  if (options.style !== undefined) {
+    if ((WIREMD_STYLES as readonly string[]).includes(options.style)) {
+      style = options.style;
+    } else {
+      emit({
+        severity: 'error',
+        code: 'wmd-invalid-style',
+        message: `Unknown wiremd style ${JSON.stringify(options.style)}. Valid styles: ${WIREMD_STYLES.join(', ')}.`,
+        source: 'parser',
+      });
+    }
   }
 
   if (
@@ -143,7 +170,7 @@ export function compileWiremd(
       message: `Unexpected parser failure: ${error instanceof Error ? error.message : String(error)}`,
       source: 'parser',
     });
-    return { document: null, diagnostics, syntaxVersion: SYNTAX_VERSION };
+    return { document: null, diagnostics, syntaxVersion: SYNTAX_VERSION, style };
   }
 
   if (options.validate !== false && document) {
@@ -153,7 +180,7 @@ export function compileWiremd(
     }
   }
 
-  return { document, diagnostics, syntaxVersion: SYNTAX_VERSION };
+  return { document, diagnostics, syntaxVersion: SYNTAX_VERSION, style };
 }
 
 /**
@@ -169,7 +196,9 @@ export function renderToPreview(
 }
 
 const INCLUDE_TOKEN_PATTERN = /!\[\[\s*([^\]]+?)\s*\]\]/g;
-const CODE_SPAN_SPLIT = /(```[\s\S]*?```|`[^`\n]+`)/g;
+// Both CommonMark fence flavors count as code; a fence opened with the
+// other flavor must not leak its body into the scanned text.
+const CODE_SPAN_SPLIT = /(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g;
 
 /**
  * v1 include policy: includes are DISABLED inside embed compiles, loudly.
@@ -184,28 +213,30 @@ function reportDisabledIncludes(
 ): void {
   const parts = source.split(CODE_SPAN_SPLIT);
   const hasToken = /!\[\[\s*[^\]]+?\s*\]\]/;
+  // Running source offset: split parts reassemble to exactly `source`, so
+  // accumulating lengths recovers each part's absolute start. indexOf would
+  // pin every REPEATED segment (identical text between two code spans) to
+  // the first occurrence's location.
+  let partOffset = 0;
   for (let i = 0; i < parts.length; i += 1) {
-    if (i % 2 === 1) continue; // fenced block or inline code span
     const part = parts[i];
-    if (!hasToken.test(part)) continue;
-
-    // Offsets within `part` shift by the length of everything split off
-    // before it; walk the source once to recover absolute offsets.
-    const partOffset = source.indexOf(part);
-    INCLUDE_TOKEN_PATTERN.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = INCLUDE_TOKEN_PATTERN.exec(part)) !== null) {
-      const startOffset = (partOffset >= 0 ? partOffset : 0) + match.index;
-      const endOffset = startOffset + match[0].length;
-      emit({
-        severity: 'warning',
-        code: 'wmd-includes-disabled',
-        message: `Include "![[${match[1]}]]" is disabled in embedded previews and renders as text.`,
-        source: 'include',
-        start: offsetToSpan(source, startOffset),
-        end: offsetToSpan(source, endOffset),
-      });
+    if (i % 2 === 0 && hasToken.test(part)) {
+      INCLUDE_TOKEN_PATTERN.lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = INCLUDE_TOKEN_PATTERN.exec(part)) !== null) {
+        const startOffset = partOffset + match.index;
+        const endOffset = startOffset + match[0].length;
+        emit({
+          severity: 'warning',
+          code: 'wmd-includes-disabled',
+          message: `Include "![[${match[1]}]]" is disabled in embedded previews and renders as text.`,
+          source: 'include',
+          start: offsetToSpan(source, startOffset),
+          end: offsetToSpan(source, endOffset),
+        });
+      }
     }
+    partOffset += part.length;
   }
 }
 

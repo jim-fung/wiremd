@@ -158,6 +158,60 @@ describe('unsupported-node visibility (drop diagnostics)', () => {
   });
 });
 
+describe('post-review hardening (diagnostic delivery, option honesty, spans)', () => {
+  test('onDiagnostic callers still get the complete list in result.diagnostics', () => {
+    const collected: import('../src/diagnostics.js').WiremdDiagnostic[] = [];
+    const result = compileWiremd('<div>x</div>\n![[a.md]]', {
+      onDiagnostic: (d) => collected.push(d),
+    });
+    expect(collected.length).toBeGreaterThan(0);
+    expect(result.diagnostics).toEqual(collected);
+  });
+
+  test('validated style persists on the compile result; invalid runtime values are rejected loudly', () => {
+    expect(compileWiremd(VALID_SOURCE, { style: 'clean' }).style).toBe('clean');
+    expect(compileWiremd(VALID_SOURCE).style).toBeUndefined();
+    const invalid = compileWiremd(VALID_SOURCE, {
+      style: 'not-a-style' as never,
+    });
+    expect(invalid.style).toBeUndefined();
+    expect(
+      invalid.diagnostics.some(
+        (d) => d.severity === 'error' && d.code === 'wmd-invalid-style'
+      )
+    ).toBe(true);
+  });
+
+  test('repeated identical segments get spans at their OWN occurrences, not the first', () => {
+    // Both fenced blocks are byte-identical, so both non-code split parts are
+    // byte-identical too — source.indexOf(part) resolves BOTH to the first.
+    const source =
+      '```\ncode\n```\n![[t.md]]\n```\ncode\n```\n![[t.md]]\n';
+    const collected: import('../src/diagnostics.js').WiremdDiagnostic[] = [];
+    compileWiremd(source, { onDiagnostic: (d) => collected.push(d) });
+    const includeWarnings = collected.filter(
+      (d) => d.code === 'wmd-includes-disabled'
+    );
+    expect(includeWarnings.length).toBe(2);
+    const firstAt = source.indexOf('![[t.md]]');
+    const secondAt = source.lastIndexOf('![[t.md]]');
+    expect(firstAt).not.toBe(secondAt);
+    expect(includeWarnings[0].start?.offset).toBe(firstAt);
+    expect(includeWarnings[1].start?.offset).toBe(secondAt);
+    expect(includeWarnings[0].start?.line).toBe(4);
+    expect(includeWarnings[1].start?.line).toBe(8);
+  });
+
+  test('tilde-fenced code suppresses includes-disabled warnings like backtick fences', () => {
+    const source = 'intro\n\n~~~\n![[fenced.md]]\n~~~\n\noutro';
+    const collected: import('../src/diagnostics.js').WiremdDiagnostic[] = [];
+    compileWiremd(source, { onDiagnostic: (d) => collected.push(d) });
+    expect(
+      collected.filter((d) => d.code === 'wmd-includes-disabled')
+    ).toEqual([]);
+  });
+});
+
 describe('positions (ParseOptions.position becomes live)', () => {
   test('D2: default parse stays position-blind (renderToJSON unchanged)', () => {
     const ast = parse(`# Title\n[Button]*`);
