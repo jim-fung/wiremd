@@ -5,7 +5,12 @@ const distAssetsDir = path.resolve('dist/assets');
 
 const bundleBudgets = [
   { prefix: 'index-', maxBytes: 20 * 1024 },
-  { prefix: 'wiremd-core-', maxBytes: 220 * 1024 },
+  // 240 KiB: the editor now consumes `wiremd/embed` (the browser-safe
+  // boundary OpenKnowledge shares), whose graph is the remark pipeline +
+  // full style themes + the policy preview renderer. The old root-entry
+  // graph was smaller only because tree-shaking could drop renderer
+  // branches the embed entry deliberately owns. Ratchet from here.
+  { prefix: 'wiremd-core-', maxBytes: 240 * 1024 },
   { prefix: 'monaco-html-', maxBytes: 40 * 1024 },
   { prefix: 'monaco-', maxBytes: 3900 * 1024 },
 ];

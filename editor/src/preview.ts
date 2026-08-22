@@ -37,6 +37,12 @@ export function createPreview(elements: {
       updateIframe(html);
       htmlEditor?.setValue(html);
       elements.errorBar.classList.remove('ed-error--visible');
+      // Unsupported constructs degrade the preview but must stay visible:
+      // surface them as non-fatal notes in the same bar errors use.
+      if (result.warnings.length > 0) {
+        elements.errorMessage.textContent = result.warnings.join(' ');
+        elements.errorBar.classList.add('ed-error--visible');
+      }
       return;
     }
 

@@ -58,6 +58,7 @@ describe('editor preview', () => {
     previewMocks.renderMarkup.mockReturnValue({
       html: '<!DOCTYPE html><body>ok</body>',
       error: null,
+      warnings: [],
     });
 
     const elements = createElements();
@@ -76,10 +77,12 @@ describe('editor preview', () => {
       .mockReturnValueOnce({
         html: '<!DOCTYPE html><body>ok</body>',
         error: null,
+        warnings: [],
       })
       .mockReturnValueOnce({
         html: '',
         error: 'Parse failed',
+        warnings: [],
       });
 
     const elements = createElements();
@@ -100,6 +103,7 @@ describe('editor preview', () => {
     previewMocks.renderMarkup.mockReturnValue({
       html: '<!DOCTYPE html><body>lazy</body>',
       error: null,
+      warnings: [],
     });
 
     const elements = createElements();
@@ -131,6 +135,7 @@ describe('editor preview', () => {
     previewMocks.renderMarkup.mockReturnValue({
       html: '<!DOCTYPE html><body>ok</body>',
       error: null,
+      warnings: [],
     });
 
     const elements = createElements();
