@@ -11,7 +11,7 @@ import {
 } from './splitter.js';
 import { initToolbar, showToast } from './toolbar.js';
 import { examples } from './examples.js';
-import { decodeShareHash, encodeShareHash } from './url-share.js';
+import { decodeShareState, encodeShareHash } from './url-share.js';
 
 // --- DOM Elements ---
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -71,7 +71,7 @@ async function copyText(text: string): Promise<boolean> {
 let isInitializing = true;
 
 function syncUrlToBuffer(value: string) {
-  const hash = encodeShareHash(value);
+  const hash = encodeShareHash(value, preview.state.style);
   const url = window.location.pathname + window.location.search + hash;
   window.history.replaceState(null, '', url);
 }
@@ -108,6 +108,10 @@ initToolbar({
   onStyleChange: (style) => {
     preview.setStyle(style as StyleName);
     renderMarkdown(editor.getValue());
+    // Keep the share URL in sync so copying the link preserves the style.
+    if (!isInitializing) {
+      syncUrlToBuffer(editor.getValue());
+    }
   },
   onTabChange: (tab) => {
     preview.setTab(tab);
@@ -201,9 +205,19 @@ updateCopyButtonState();
 
 // --- Load initial content: from URL hash if present, else first example ---
 const rawHash = window.location.hash ?? '';
-const sharedContent = decodeShareHash(rawHash);
-if (sharedContent !== null) {
-  editor.setValue(sharedContent);
+const shared = decodeShareState(rawHash);
+if (shared !== null) {
+  // Restore style before the first render so the shared look applies
+  // immediately; ignore unknown values from tampered links.
+  const sharedStyle = shared.style as StyleName | null;
+  if (
+    sharedStyle &&
+    ['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'].includes(sharedStyle)
+  ) {
+    preview.setStyle(sharedStyle);
+    styleSelect.value = sharedStyle;
+  }
+  editor.setValue(shared.markdown);
 } else {
   if (rawHash.length > 1) {
     showToast(toast, 'Could not load shared link — opening default');

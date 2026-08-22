@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { decodeShareHash, encodeShareHash, SHARE_HASH_KEY } from '../src/url-share.js';
+import { compressToEncodedURIComponent } from 'lz-string';
+import {
+  decodeShareHash,
+  decodeShareState,
+  encodeShareHash,
+  SHARE_HASH_KEY,
+  SHARE_STYLE_KEY,
+} from '../src/url-share.js';
 
 describe('url-share', () => {
   it('round-trips a typical wiremd document', () => {
@@ -46,5 +53,35 @@ describe('url-share', () => {
     const md = '# hi';
     const encoded = encodeShareHash(md);
     expect(decodeShareHash(encoded.slice(1))).toBe(md);
+  });
+
+  it('round-trips style alongside the document', () => {
+    const md = '# Login';
+    const encoded = encodeShareHash(md, 'clean');
+    expect(encoded).toContain(`&${SHARE_STYLE_KEY}=clean`);
+    const state = decodeShareState(encoded);
+    expect(state).toEqual({ markdown: md, style: 'clean' });
+    // Markdown-only decode still works on styled links
+    expect(decodeShareHash(encoded)).toBe(md);
+  });
+
+  it('omits the style component when not provided', () => {
+    const encoded = encodeShareHash('# hi');
+    expect(encoded).not.toContain(SHARE_STYLE_KEY);
+    expect(decodeShareState(encoded)).toEqual({ markdown: '# hi', style: null });
+  });
+
+  it('tolerates legacy links that carry no style', () => {
+    // Legacy format = code payload only, exactly what encodeShareHash produced
+    // before style support existed.
+    const legacy = encodeShareHash('# hi');
+    expect(legacy).not.toContain(SHARE_STYLE_KEY);
+    expect(decodeShareState(legacy)).toEqual({ markdown: '# hi', style: null });
+  });
+
+  it('returns style=null for malformed style components', () => {
+    const md = 'hello';
+    const encoded = `#${SHARE_HASH_KEY}=${compressToEncodedURIComponent(md)}&${SHARE_STYLE_KEY}=%ZZ`;
+    expect(decodeShareState(encoded)).toEqual({ markdown: md, style: null });
   });
 });
