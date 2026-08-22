@@ -17,25 +17,25 @@ wiremd includes 7 built-in visual styles. Pass one with `--style` on the CLI or 
 ## Previews
 
 ### sketch
-![sketch style](/screenshots/showcase-sketch-screenshot.png)
+![sketch style](/screenshots/showcase-sketch-screenshot.webp)
 
 ### clean
-![clean style](/screenshots/showcase-clean-screenshot.png)
+![clean style](/screenshots/showcase-clean-screenshot.webp)
 
 ### wireframe
-![wireframe style](/screenshots/showcase-wireframe-screenshot.png)
+![wireframe style](/screenshots/showcase-wireframe-screenshot.webp)
 
 ### material
-![material style](/screenshots/showcase-material-screenshot.png)
+![material style](/screenshots/showcase-material-screenshot.webp)
 
 ### brutal
-![brutal style](/screenshots/showcase-brutal-screenshot.png)
+![brutal style](/screenshots/showcase-brutal-screenshot.webp)
 
 ### tailwind
-![tailwind style](/screenshots/showcase-tailwind-screenshot.png)
+![tailwind style](/screenshots/showcase-tailwind-screenshot.webp)
 
 ### none
-![none style](/screenshots/showcase-none-screenshot.png)
+![none style](/screenshots/showcase-none-screenshot.webp)
 
 ## CLI
 
