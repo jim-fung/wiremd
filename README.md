@@ -101,9 +101,9 @@ This is an open-source MIT-licensed project containing:
 
 ## Installation
 
-### npm
+### bun
 ```bash
-npm install -g wiremd
+bun add -g wiremd
 ```
 
 ### yarn
@@ -125,9 +125,9 @@ brew install teezeit/wiremd/wiremd
 ```bash
 git clone https://github.com/teezeit/wiremd.git
 cd wiremd
-npm install
-npm run build
-npm link
+bun install
+bun run build
+bun link
 ```
 
 ## Use with Claude
@@ -157,7 +157,7 @@ Surfaces that only accept skill uploads (no GitHub import) take a zip:
 
 1. Download the latest skill bundle:
    **[wireframe-skill.zip](https://github.com/teezeit/wiremd/releases/latest/download/wireframe-skill.zip)**
-   *(attached to each GitHub release; or build locally with `npm run skill:zip`)*
+   *(attached to each GitHub release; or build locally with `bun run skill:zip`)*
 2. Open Claude → **Settings → Capabilities → Skills → Upload skill**
 3. Select `wireframe-skill.zip`
 
@@ -260,8 +260,8 @@ wiremd has a native **Obsidian plugin** that brings live wireframe previews dire
    cd /path/to/your/vault/.obsidian/plugins/
    git clone https://github.com/teezeit/wiremd-obsidian.git wiremd-preview
    cd wiremd-preview
-   npm install
-   npm run build
+   bun install
+   bun run build
    ```
 
 2. **Enable the plugin** in Obsidian:
@@ -421,16 +421,16 @@ git clone https://github.com/teezeit/wiremd.git
 cd wiremd
 
 # Install dependencies
-npm install
+bun install
 
 # Run tests
-npm test
+bun run test
 
 # Build
-npm run build
+bun run build
 
 # Run type check
-npm run typecheck
+bun run typecheck
 ```
 
 ## License

@@ -21,8 +21,8 @@ Search for "Wiremd Live Preview" in VS Code Extensions marketplace.
 
 1. Clone the repository
 2. Navigate to `vscode-extension` directory
-3. Run `npm install`
-4. Run `npm run compile`
+3. Run `bun install`
+4. Run `bun run compile`
 5. Press F5 to launch Extension Development Host
 
 ## Usage
@@ -86,7 +86,7 @@ Configure the extension through VS Code settings:
 This extension requires the `wiremd` package to be installed in your project:
 
 ```bash
-npm install wiremd
+bun add wiremd
 ```
 
 If wiremd is not installed, the extension will show a fallback view with installation instructions.
@@ -106,20 +106,20 @@ If wiremd is not installed, the extension will show a fallback view with install
 ### Building
 
 ```bash
-npm install
-npm run compile
+bun install
+bun run compile
 ```
 
 ### Watch Mode
 
 ```bash
-npm run watch
+bun run watch
 ```
 
 ### Packaging
 
 ```bash
-npm run package
+bun run package
 ```
 
 This creates a `.vsix` file that can be installed in VS Code.

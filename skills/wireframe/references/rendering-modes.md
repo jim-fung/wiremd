@@ -11,7 +11,7 @@ each supports a different subset of these routes.
 |---|---|---|
 | Write files **and** run shell | **Files in folder** *(default)* — render `.html` into the user's folder; they open via `file://` or double-click | `wiremd x.md -o x.html --style sketch` (+ `.md`→`.html` sed rewrite if multi-page; see `multi-page.md`) |
 | Write + shell, **and user runs Claude locally** on their own machine | **Dev server** — live reload while iterating. Only works when the user can reach `localhost` on the Claude host. | `wiremd x.md --style sketch --serve 3001 --watch --watch-pattern "*.md"` |
-| Shell but no shared folder with user | **Screenshot for self-verification** — can't deliver to user this way, but useful to confirm Claude's own output renders correctly | `npx playwright screenshot --browser chromium --full-page "file://$(pwd)/out.html" /tmp/wf.png` (then read the PNG) |
+| Shell but no shared folder with user | **Screenshot for self-verification** — can't deliver to user this way, but useful to confirm Claude's own output renders correctly | `bunx playwright screenshot --browser chromium --full-page "file://$(pwd)/out.html" /tmp/wf.png` (then read the PNG) |
 | Chat only (no filesystem, no exec) | **Hand off to the web editor** — Claude writes the `.md`; user pastes it into the hosted editor for rendering | Share `https://tobiashoelzer.com/wiremd/editor` + the `.md` content |
 
 ## Files-in-folder (the default)
@@ -45,7 +45,7 @@ Rules:
 Useful for Claude to check its own output before replying:
 
 ```bash
-npx playwright screenshot --browser chromium --full-page \
+bunx playwright screenshot --browser chromium --full-page \
   "file://$(pwd)/out.html" /tmp/wf-check.png
 ```
 

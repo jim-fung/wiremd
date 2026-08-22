@@ -35,7 +35,7 @@ The Wiremd VS Code extension is built using the VS Code Extension API and provid
 
 ```bash
 cd vscode-extension
-npm install
+bun install
 ```
 
 ### Development Workflow
@@ -51,12 +51,12 @@ npm install
 3. **Start both watchers** in two terminals:
    ```bash
    # Terminal 1 (repo root) — rebuilds wiremd dist/ on src/ changes
-   npm run dev
+   bun run dev
 
    # Terminal 2 (vscode-extension/) — rebundles extension whenever wiremd dist/ changes
-   cd vscode-extension && npm run dev
+   cd vscode-extension && bun run dev
    ```
-   The extension watcher (`scripts/watch.mjs`) watches `../dist/index.cjs` and triggers `npm run bundle` only after vite finishes — no race condition.
+   The extension watcher (`scripts/watch.mjs`) watches `../dist/index.cjs` and triggers `bun run bundle` only after vite finishes — no race condition.
 
 4. **Reload the window**: `Cmd+Shift+P` → "Developer: Reload Window"
 
@@ -64,10 +64,10 @@ npm install
 
 ```bash
 # Bundle extension (one-shot, minified)
-npm run bundle
+bun run bundle
 
 # Package extension as .vsix
-npm run package
+bun run package
 ```
 
 This creates a `.vsix` file in the project root.
@@ -215,7 +215,7 @@ webview.options = {
 
 ```bash
 # Install vsce
-npm install -g @vscode/vsce
+bun add -g @vscode/vsce
 
 # Create publisher account at https://marketplace.visualstudio.com/
 

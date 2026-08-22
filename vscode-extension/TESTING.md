@@ -9,15 +9,15 @@ The extension uses wiremd from the parent directory, so **you must build wiremd 
 ```bash
 # From the root wiremd directory
 cd /home/user/wiremd
-npm install
-npm run build  # This creates dist/ files
+bun install
+bun run build  # This creates dist/ files
 ```
 
 ### 1. Install Extension Dependencies
 
 ```bash
 cd vscode-extension
-npm install  # This links wiremd from parent directory
+bun install  # This links wiremd from parent directory
 ```
 
 This creates a symlink: `node_modules/wiremd -> ../..`
@@ -25,7 +25,7 @@ This creates a symlink: `node_modules/wiremd -> ../..`
 ### 2. Compile the Extension
 
 ```bash
-npm run compile
+bun run compile
 ```
 
 ### 3. Launch Extension Development Host
@@ -133,7 +133,7 @@ In the Extension Development Host window:
 ### Common Issues
 
 **Issue: Preview shows "Wiremd not installed"**
-- Solution: Run `npm install` in the main wiremd directory
+- Solution: Run `bun install` in the main wiremd directory
 - The extension needs wiremd to be available in workspace
 
 **Issue: Preview doesn't update**
@@ -154,8 +154,8 @@ Create test projects in different directories:
 # Project 1: Simple wireframe
 mkdir ~/test-wiremd-1
 cd ~/test-wiremd-1
-npm init -y
-npm install wiremd
+bun init -y
+bun add wiremd
 
 # Create test file
 cat > app.md << 'EOF'
@@ -198,7 +198,7 @@ Create a large markdown file (1000+ lines) and test:
 
 ```bash
 cd vscode-extension
-npm test
+bun run test
 ```
 
 Note: Extension testing framework not yet set up. Would need:
@@ -212,7 +212,7 @@ Note: Extension testing framework not yet set up. Would need:
 
 ```bash
 cd vscode-extension
-npm install -g @vscode/vsce
+bun add -g @vscode/vsce
 vsce package
 ```
 
@@ -262,7 +262,7 @@ Would need:
 
 1. Check `package.json` syntax
 2. Verify `main` points to correct file
-3. Check TypeScript compilation: `npm run compile`
+3. Check TypeScript compilation: `bun run compile`
 4. Look for errors in Extension Development Host
 
 ### Preview Blank

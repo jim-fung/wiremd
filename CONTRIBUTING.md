@@ -35,7 +35,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 3. **Make your changes** following our coding standards
 4. **Add tests** for any new functionality
 5. **Update documentation** as needed
-6. **Ensure tests pass** with `npm test`
+6. **Ensure tests pass** with `bun run test`
 7. **Submit a pull request**
 
 ## Development Setup
@@ -43,7 +43,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Prerequisites
 
 - Node.js >= 18.0.0
-- npm or yarn
+- Bun (>= 1.4.0)
 
 ### Getting Started
 
@@ -53,22 +53,22 @@ git clone https://github.com/YOUR_USERNAME/wiremd.git
 cd wiremd
 
 # Install dependencies
-npm install
+bun install
 
 # Run tests
-npm test
+bun run test
 
 # Run tests in watch mode
-npm run test:watch
+bun run test:watch
 
 # Build the project
-npm run build
+bun run build
 
 # Type check
-npm run typecheck
+bun run typecheck
 
 # Run linter
-npm run lint
+bun run lint
 ```
 
 ### Project Structure
@@ -150,16 +150,16 @@ test(parser): add tests for nested containers
 
 ```bash
 # Run all tests
-npm test
+bun run test
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run specific test file
-npm test -- tests/parser.test.ts
+bun run test -- tests/parser.test.ts
 
 # Watch mode
-npm run test:watch
+bun run test:watch
 ```
 
 ### Writing Tests
@@ -197,12 +197,12 @@ Releases are managed by project maintainers following semantic versioning (semve
 
 1. Update version in `package.json`
 2. Update `CHANGELOG.md` with changes
-3. Run `npm run build` and verify
-4. Run `npm test` - all tests must pass
+3. Run `bun run build` and verify
+4. Run `bun run test` - all tests must pass
 5. Commit: `chore: release v0.x.x`
 6. Create git tag: `git tag v0.x.x`
 7. Push: `git push && git push --tags`
-8. Publish to npm: `npm publish`
+8. Publish to npm: `bun publish`
 9. Create GitHub release with changelog
 
 ## Documentation

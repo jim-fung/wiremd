@@ -33,7 +33,7 @@ Password
 Install:
 
 ```bash
-npm install -g wiremd
+bun add -g wiremd
 ```
 
 Create `my-wireframe.md`, then render with live reload:

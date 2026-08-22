@@ -5,14 +5,14 @@
 ## Requirements
 
 - Node.js >= 18.0.0
-- npm, yarn, or pnpm
+- bun (or yarn/pnpm)
 
 ## Package Installation
 
-### npm
+### bun
 
 ```bash
-npm install wiremd
+bun add wiremd
 ```
 
 ### yarn
@@ -32,7 +32,7 @@ pnpm add wiremd
 To use the `wiremd` command globally:
 
 ```bash
-npm install -g wiremd
+bun add -g wiremd
 ```
 
 Verify installation:
@@ -51,16 +51,16 @@ git clone https://github.com/teezeit/wiremd.git
 cd wiremd
 
 # Install dependencies
-npm install
+bun install
 
 # Build the project
-npm run build
+bun run build
 
 # Run tests
-npm test
+bun run test
 
 # Link globally for development
-npm link
+bun link
 ```
 
 ## Verify Installation
@@ -110,23 +110,15 @@ import type { DocumentNode, WiremdNode } from 'wiremd';
 If you see "Cannot find module 'wiremd'":
 
 1. Ensure you're in the correct directory
-2. Run `npm install` again
+2. Run `bun install` again
 3. Check that `node_modules/wiremd` exists
 
-### Permission errors (global install)
+### Command not found after global install
 
-On macOS/Linux, you may need sudo:
-
-```bash
-sudo npm install -g wiremd
-```
-
-Or configure npm to use a different directory:
+Bun installs global binaries to `~/.bun/bin`, which is user-writable — no `sudo` is ever needed. If the `wiremd` command isn't found, make sure that directory is on your `PATH`:
 
 ```bash
-mkdir ~/.npm-global
-npm config set prefix '~/.npm-global'
-export PATH=~/.npm-global/bin:$PATH
+echo 'export PATH=~/.bun/bin:$PATH' >> ~/.zshrc   # or ~/.bashrc
 ```
 
 ### Node version issues

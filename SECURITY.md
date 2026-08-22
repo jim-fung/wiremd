@@ -59,7 +59,7 @@ wiremd parses markdown input. While markdown is generally safe, be aware:
 1. **Sanitize output**: If displaying wiremd HTML output in a web context, use a sanitization library
 2. **Validate input**: If accepting user input, validate and sanitize before parsing
 3. **Keep updated**: Use the latest version to get security patches
-4. **Review dependencies**: Regularly audit dependencies with `npm audit`
+4. **Review dependencies**: Regularly audit dependencies with `bun audit`
 
 ### Dependency Security
 
@@ -67,10 +67,10 @@ We regularly monitor our dependencies for vulnerabilities:
 
 ```bash
 # Check for vulnerabilities
-npm audit
+bun audit
 
 # Fix vulnerabilities
-npm audit fix
+bun audit fix
 ```
 
 ## Known Issues

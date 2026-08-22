@@ -6,16 +6,16 @@ Comprehensive test suite for the wiremd Figma plugin.
 
 ```bash
 # Run all tests once
-npm test
+bun run test
 
 # Run tests in watch mode
-npm run test:watch
+bun run test:watch
 
 # Run tests with coverage report
-npm run test:coverage
+bun run test:coverage
 
 # Type check without running tests
-npm run typecheck
+bun run typecheck
 ```
 
 ## Test Structure
@@ -85,7 +85,7 @@ npm run typecheck
 
 ## Current Coverage
 
-Run `npm run test:coverage` to see detailed coverage report.
+Run `bun run test:coverage` to see detailed coverage report.
 
 ## Writing New Tests
 
@@ -186,19 +186,19 @@ Tests run automatically on:
 ### Run Single Test File
 
 ```bash
-npm test -- ast-to-figma.test.ts
+bun run test -- ast-to-figma.test.ts
 ```
 
 ### Run Single Test
 
 ```bash
-npm test -- -t "should create button"
+bun run test -- -t "should create button"
 ```
 
 ### Verbose Output
 
 ```bash
-npm test -- --reporter=verbose
+bun run test -- --reporter=verbose
 ```
 
 ### Debug Mode
@@ -251,7 +251,7 @@ node --inspect-brk node_modules/.bin/vitest run
 ### Type Errors
 
 ```bash
-npm run typecheck
+bun run typecheck
 ```
 
 ### Mock Not Working

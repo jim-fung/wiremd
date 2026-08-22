@@ -20,7 +20,7 @@ wiremd provides a powerful programmatic API for parsing and rendering wireframes
 ## Installation
 
 ```bash
-npm install wiremd
+bun add wiremd
 ```
 
 ## Quick Example

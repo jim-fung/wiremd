@@ -190,14 +190,14 @@ For very large mockups (100+ components):
 
 ```bash
 cd figma-plugin
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 ### Development Mode
 
 ```bash
-npm run watch
+bun run watch
 ```
 
 Then in Figma:

@@ -9,14 +9,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run build        # TypeScript + Vite → dist/
-npm test             # Run all tests (vitest)
-npm test -- tests/parser.test.ts              # Single test file
-npm test -- tests/parser.test.ts -t "Button"  # Single test by name
-npm run test:coverage
-npm run typecheck    # Strict TypeScript check
-npm run lint         # ESLint on src/
-npm run docs:dev     # VitePress docs dev server
+bun run build        # TypeScript + Vite → dist/
+bun run test             # Run all tests (vitest)
+bun run test -- tests/parser.test.ts              # Single test file
+bun run test -- tests/parser.test.ts -t "Button"  # Single test by name
+bun run test:coverage
+bun run test:e2e     # Cypress e2e (editor app + CLI preview server); requires dist built; records video & screenshots
+bun run typecheck    # Strict TypeScript check
+bun run lint         # ESLint on src/
+bun run docs:dev     # VitePress docs dev server
 ```
 
 CLI usage (after build):
@@ -60,14 +61,16 @@ code --extensionDevelopmentPath=$(pwd)/vscode-extension .
 ```
 Run both watchers in parallel terminals:
 ```bash
-npm run dev                              # root: rebuilds dist/ on src/ changes
-cd vscode-extension && npm run dev       # extension: rebuilds dist/ on changes
+bun run dev                              # root: rebuilds dist/ on src/ changes
+cd vscode-extension && bun run dev       # extension: rebuilds dist/ on changes
 ```
 After edits rebuild: `Cmd+Shift+P` → "Developer: Reload Window".
 
 ## Testing
 
 Tests live in `tests/`. 515 tests across 14 files. Key files: `parser.test.ts` (29 tests), `renderer.test.ts`, `react-renderer.test.ts`, `tailwind-renderer.test.ts`, `integration.test.ts`, `cli.test.ts`, `cli-unit.test.ts`, `server.test.ts`, `error-handling.test.ts`, `validation.test.ts`, `api-examples.test.ts`. Vitest with node environment; globals enabled. Assert on `renderToHTML(parse(md), { style: 'sketch' })` for renderer tests.
+
+E2E lives in `cypress/e2e/`, orchestrated by `scripts/run-e2e.mjs` (`bun run test:e2e` headless in Chrome via `--browser chrome` — never Electron; `E2E_BROWSER` overrides, `--open` for interactive, `E2E_CYPRESS_ARGS="--spec …"` to scope). It starts the editor Vite server (port 5174) and the CLI preview server over `cypress/fixtures/pages` (port 3017) itself. Every run records video (`cypress/videos/`) and screenshots (`cypress/screenshots/`), both gitignored. Gotcha: Chromium (Electron or Chrome alike) drops raw CDP keystrokes inside the editor's Monaco instance — drive content changes with a synthetic paste event on `.inputarea`, as `editor.cy.ts` does. The preview iframe is sandboxed without allow-same-origin, so assert on the `srcdoc` attribute instead of `contentDocument`.
 
 ## Build output
 

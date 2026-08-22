@@ -12,15 +12,16 @@ Before publishing, ensure you have:
    - Token type: "Automation" (for CI/CD) or "Publish"
    - Add as GitHub secret: Settings → Secrets and variables → Actions → New repository secret
    - Secret name: `NPM_TOKEN`
+3. **Bun**: The release toolchain uses bun (>= 1.4.0)
 
 ## Pre-Publication Checklist
 
 Before creating a release, verify:
 
-- [ ] All tests pass: `npm test`
-- [ ] Build succeeds: `npm run build`
-- [ ] Type checking passes: `npm run typecheck`
-- [ ] Linting passes: `npm run lint`
+- [ ] All tests pass: `bun run test`
+- [ ] Build succeeds: `bun run build`
+- [ ] Type checking passes: `bun run typecheck`
+- [ ] Linting passes: `bun run lint`
 - [ ] Documentation is up to date
 - [ ] CHANGELOG.md is updated with release notes
 - [ ] Version number follows [Semantic Versioning](https://semver.org/)
@@ -29,23 +30,19 @@ Before creating a release, verify:
 
 ### 1. Update Version
 
-Update the version in `package.json`:
+Bun has no equivalent of `npm version`, so bump the version manually:
+
+1. Edit the `version` field in `package.json`
+   - **Patch** (bug fixes): `0.1.7` → `0.1.8`
+   - **Minor** (new features, backward compatible): `0.1.7` → `0.2.0`
+   - **Major** (breaking changes): `0.1.7` → `1.0.0`
+2. Commit and tag the release:
 
 ```bash
-# For patch releases (bug fixes)
-npm version patch
-
-# For minor releases (new features, backward compatible)
-npm version minor
-
-# For major releases (breaking changes)
-npm version major
+git add package.json
+git commit -m "chore: release v0.1.8"
+git tag v0.1.8
 ```
-
-This will:
-- Update version in `package.json`
-- Create a git commit with the version change
-- Create a git tag (e.g., `v0.1.1`)
 
 ### 2. Push Changes and Tag
 
@@ -75,7 +72,11 @@ Once you publish the GitHub release:
   2. Install dependencies
   3. Run tests
   4. Build the project
-  5. Publish to npm with provenance
+  5. Publish to npm with `bun publish`
+
+Note: `bun publish` does not yet generate npm provenance attestations
+([tracking issue](https://github.com/oven-sh/bun/issues/15601)); the publish
+workflow switched to bun in August 2026 and drops `--provenance` accordingly.
 
 You can monitor the progress at: https://github.com/teezeit/wiremd/actions
 
@@ -85,27 +86,25 @@ After the workflow completes:
 
 1. Check npm: https://www.npmjs.com/package/wiremd
 2. Verify the new version is listed
-3. Test installation: `npm install wiremd@latest`
+3. Test installation: `bun add wiremd@latest`
 
 ## Manual Publishing (Not Recommended)
 
-If you need to publish manually (use only in emergencies):
+If you need to publish manually (use only in emergencies), authenticate by
+writing your token to `~/.npmrc` (bun reads it for publishing):
 
 ```bash
-# Login to npm
-npm login
-
-# Verify you're logged in as the correct user
-npm whoami
+# One-time auth setup (bun has no interactive `login`)
+echo '//registry.npmjs.org/:_authToken=YOUR_TOKEN' >> ~/.npmrc
 
 # Ensure you're on the correct git tag
 git checkout v0.1.1
 
 # Build the project
-npm run build
+bun run build
 
-# Publish with provenance
-npm publish --provenance --access public
+# Publish (public access comes from publishConfig.access in package.json)
+bun publish
 ```
 
 ## Troubleshooting

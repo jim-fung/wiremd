@@ -92,28 +92,28 @@ Users can switch styles via CLI flag: `--style clean`
 ### Core Library (when implemented)
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Build library
-npm run build
+bun run build
 
 # Run tests
-npm test
+bun run test
 
 # Run tests in watch mode
-npm test -- --watch
+bun run test -- --watch
 
 # Run specific test file
-npm test -- path/to/test.spec.ts
+bun run test -- path/to/test.spec.ts
 
 # Lint code
-npm run lint
+bun run lint
 
 # Type check
-npm run typecheck
+bun run typecheck
 
 # Start documentation dev server
-npm run docs:dev
+bun run docs:dev
 ```
 
 ### CLI Tool Usage (in development)

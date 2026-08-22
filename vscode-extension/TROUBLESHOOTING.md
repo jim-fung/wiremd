@@ -38,14 +38,14 @@ ls -la dist/
 # preview-provider.js.map
 
 # If missing, recompile:
-npm run compile
+bun run compile
 ```
 
 ### 4. Check for TypeScript Errors
 
 ```bash
 cd vscode-extension
-npm run compile
+bun run compile
 ```
 
 If there are errors, fix them before testing.
@@ -54,7 +54,7 @@ If there are errors, fix them before testing.
 
 ```bash
 cd /home/user/wiremd  # or your root directory
-npm run build
+bun run build
 
 # Check it created files:
 ls -la dist/index.js
@@ -67,8 +67,8 @@ ls -la dist/renderer.js
 ```bash
 cd vscode-extension
 rm -rf node_modules
-npm install
-npm run compile
+bun install
+bun run compile
 ```
 
 ## Detailed Debugging
@@ -115,7 +115,7 @@ The extension should activate on:
 1. Check Extension Host output for errors
 2. Ensure you're in a markdown file
 3. Reload Extension Development Host window
-4. Recompile extension: `npm run compile`
+4. Recompile extension: `bun run compile`
 
 ---
 
@@ -127,7 +127,7 @@ The extension should activate on:
 ```bash
 cd vscode-extension
 ls -la node_modules/wiremd  # Should show symlink to ../..
-npm install  # Recreate symlink
+bun install  # Recreate symlink
 ```
 
 ---
@@ -139,8 +139,8 @@ npm install  # Recreate symlink
 **Fix**:
 ```bash
 cd vscode-extension
-npm install  # Ensure all deps installed
-npm run compile  # Check for errors
+bun install  # Ensure all deps installed
+bun run compile  # Check for errors
 ```
 
 ---
@@ -153,12 +153,12 @@ npm run compile  # Check for errors
 ```bash
 # Build wiremd
 cd /home/user/wiremd
-npm run build
+bun run build
 
 # Link to extension
 cd vscode-extension
-npm install
-npm run compile
+bun install
+bun run compile
 ```
 
 ## Manual Testing Steps
@@ -168,20 +168,20 @@ npm run compile
 1. **Build wiremd**:
    ```bash
    cd /home/user/wiremd
-   npm run build
+   bun run build
    ls dist/index.js  # Verify exists
    ```
 
 2. **Install extension deps**:
    ```bash
    cd vscode-extension
-   npm install
+   bun install
    ls -la node_modules/wiremd  # Verify symlink
    ```
 
 3. **Compile extension**:
    ```bash
-   npm run compile
+   bun run compile
    ls dist/extension.js  # Verify exists
    ```
 
@@ -216,5 +216,5 @@ Provide these details when asking for help:
 - Extension Host output
 - Any error messages
 - TypeScript compilation output
-- Node/npm versions: `node -v && npm -v`
+- Node/Bun versions: `node -v && bun -v`
 - VS Code version: Check Help → About

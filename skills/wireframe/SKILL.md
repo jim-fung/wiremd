@@ -42,7 +42,7 @@ Answer three questions up front — they determine what you build and how you ha
 - `[[ [Label](./page.md) | ... ]]` — cross-page hrefs in nav (stock 0.1.5 drops them silently)
 - `![[file.md]]` — shared partial includes
 
-If older, build from source: `git clone https://github.com/teezeit/wiremd && cd wiremd && npm install && npm run build`, then invoke via `node path/to/wiremd-fork/bin/wiremd.js`.
+If older, build from source: `git clone https://github.com/teezeit/wiremd && cd wiremd && bun install && bun run build`, then invoke via `node path/to/wiremd-fork/bin/wiremd.js`.
 
 **2. Single page or multi-page?** Ask the user up front. For multi-page, scaffold from the start — don't bolt on later:
 
@@ -78,7 +78,7 @@ Tell the user: open `http://localhost:3001` for live preview, or the HTML path f
 
 To screenshot and verify from the CLI:
 ```bash
-npx playwright screenshot --browser chromium --full-page "file://$(pwd)/output.html" /tmp/wf-check.png
+bunx playwright screenshot --browser chromium --full-page "file://$(pwd)/output.html" /tmp/wf-check.png
 ```
 Then read the PNG with the Read tool.
 

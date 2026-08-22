@@ -45,22 +45,22 @@ Wiremd includes comprehensive test coverage for all features, including the live
 
 ### Run all tests
 ```bash
-npm test
+bun run test
 ```
 
 ### Run tests in watch mode
 ```bash
-npm run test:watch
+bun run test:watch
 ```
 
 ### Run tests with coverage
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 ### Run specific test file
 ```bash
-npm test -- tests/server.test.ts
+bun run test -- tests/server.test.ts
 ```
 
 ## Test Coverage
@@ -199,10 +199,10 @@ Tests run automatically on:
 ```yaml
 # Example GitHub Actions workflow
 - name: Run tests
-  run: npm test
+  run: bun run test
 
 - name: Upload coverage
-  run: npm run test:coverage
+  run: bun run test:coverage
 ```
 
 ## Coverage Goals
@@ -216,7 +216,7 @@ Current coverage targets:
 
 View coverage report:
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 ## Common Test Patterns
@@ -260,13 +260,13 @@ it('should include feature code', () => {
 ### Run single test
 
 ```bash
-npm test -- -t "test name"
+bun run test -- -t "test name"
 ```
 
 ### Run with verbose output
 
 ```bash
-npm test -- --reporter=verbose
+bun run test -- --reporter=verbose
 ```
 
 ### Debug in VS Code
@@ -317,7 +317,7 @@ afterEach(() => {
 Monitor test performance:
 
 ```bash
-npm test -- --reporter=verbose
+bun run test -- --reporter=verbose
 ```
 
 Slow tests (>1s) should be optimized or moved to integration suite.

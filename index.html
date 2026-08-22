@@ -1525,7 +1525,7 @@
                     <p class="feature-description">
                         Built with TypeScript in strict mode. Unified/Remark-based parser with custom plugins for container syntax and inline components.
                     </p>
-                    <div class="feature-code">npm install wiremd</div>
+                    <div class="feature-code">bun add wiremd</div>
                 </div>
 
                 <div class="feature-card">
@@ -1620,14 +1620,14 @@
             </div>
 
             <div class="install-tabs" role="tablist" aria-label="Installation method">
-                <button type="button" class="install-tab active" data-tab="npm" role="tab" aria-selected="true" aria-controls="install-panel" id="tab-npm">npm</button>
+                <button type="button" class="install-tab active" data-tab="bun" role="tab" aria-selected="true" aria-controls="install-panel" id="tab-bun">bun</button>
                 <button type="button" class="install-tab" data-tab="yarn" role="tab" aria-selected="false" aria-controls="install-panel" id="tab-yarn">yarn</button>
                 <button type="button" class="install-tab" data-tab="pnpm" role="tab" aria-selected="false" aria-controls="install-panel" id="tab-pnpm">pnpm</button>
                 <button type="button" class="install-tab" data-tab="brew" role="tab" aria-selected="false" aria-controls="install-panel" id="tab-brew">brew</button>
             </div>
 
-            <div class="install-content" role="tabpanel" id="install-panel" aria-labelledby="tab-npm">
-                <code class="install-command" id="install-command">npm install -g wiremd</code>
+            <div class="install-content" role="tabpanel" id="install-panel" aria-labelledby="tab-bun">
+                <code class="install-command" id="install-command">bun add -g wiremd</code>
                 <button type="button" class="copy-btn" id="copy-btn" aria-label="Copy installation command">Copy</button>
             </div>
         </div>
@@ -1863,7 +1863,7 @@
 
                 // Update the command text
                 const commands = {
-                    npm: 'npm install -g wiremd',
+                    bun: 'bun add -g wiremd',
                     yarn: 'yarn global add wiremd',
                     pnpm: 'pnpm add -g wiremd',
                     brew: 'brew install wiremd'

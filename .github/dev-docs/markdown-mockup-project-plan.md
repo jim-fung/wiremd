@@ -654,7 +654,7 @@ markdown-mockup/
 ### Get Started
 ```bash
 # Install core library
-npm install -g wiremd
+bun add -g wiremd
 
 # Create your first mockup
 echo "[Hello World]" > hello.md

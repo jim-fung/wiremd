@@ -70,8 +70,8 @@ If you want to modify the extension or use an unreleased build:
 
 ```bash
 cd vscode-extension
-npm install
-npm run compile
+bun install
+bun run compile
 ```
 
 Press `F5` in VS Code to launch an Extension Development Host with the local build loaded.

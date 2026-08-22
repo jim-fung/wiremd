@@ -39,7 +39,7 @@ The extensions add three things on top: `:::` container blocks for layout and co
 
 ### Can I use wiremd without installing anything?
 
-wiremd requires Node.js. Install it as a library (`npm install wiremd`) for programmatic use, or install it globally (`npm install -g wiremd`) to use the `wiremd` CLI command. There is no web-based playground at this time.
+wiremd requires Node.js. Install it as a library (`bun add wiremd`) for programmatic use, or install it globally (`bun add -g wiremd`) to use the `wiremd` CLI command. There is no web-based playground at this time.
 
 ### Where can I find a quick lookup of all syntax?
 
@@ -203,12 +203,12 @@ Search existing issues first at [github.com/teezeit/wiremd/issues](https://githu
 
 ### `wiremd: command not found`
 
-Install globally or use npx:
+Install globally or use bunx:
 
 ```bash
-npm install -g wiremd   # then: wiremd file.md
+bun add -g wiremd   # then: wiremd file.md
 # or without installing:
-npx wiremd file.md
+bunx wiremd file.md
 ```
 
 ### Port already in use (`EADDRINUSE`)

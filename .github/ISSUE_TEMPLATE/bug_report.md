@@ -43,7 +43,7 @@ What actually happened instead.
 - **wiremd version**: [e.g., 0.1.0]
 - **Node version**: [run `node --version`]
 - **OS**: [e.g., macOS 13.0, Ubuntu 22.04, Windows 11]
-- **Package manager**: [npm, yarn, pnpm]
+- **Package manager**: [bun, npm, yarn, pnpm]
 
 ## Additional Context
 

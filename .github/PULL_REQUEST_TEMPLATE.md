@@ -40,7 +40,7 @@ Related to #
 
 - [ ] Added new tests for new functionality
 - [ ] Updated existing tests
-- [ ] All tests pass locally (`npm test`)
+- [ ] All tests pass locally (`bun run test`)
 - [ ] No decrease in code coverage
 
 ### Manual Testing
