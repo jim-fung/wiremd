@@ -171,7 +171,10 @@ describe('Dev Server', () => {
     it('should inject WebSocket connection code', () => {
       const serverModule = readFileSync('./src/cli/server.ts', 'utf-8');
       expect(serverModule).toContain('WebSocket');
-      expect(serverModule).toContain('ws://localhost:');
+      // Host must derive from page location (not hardcoded localhost) so
+      // LAN IP / container / tunnel access connects to the right server.
+      expect(serverModule).toContain('location.host');
+      expect(serverModule).not.toContain('ws://localhost:');
       expect(serverModule).toContain('onopen');
       expect(serverModule).toContain('onmessage');
       expect(serverModule).toContain('onclose');

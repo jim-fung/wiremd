@@ -313,7 +313,11 @@ const liveReloadScript = `
     }
 
     function connect() {
-      ws = new WebSocket('ws://localhost:__PORT__/__ws');
+      // Derive host from the page location so LAN IP / container / tunnel
+      // access connects to the right server instead of always localhost.
+      ws = new WebSocket(
+        (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/__ws'
+      );
 
       ws.onopen = () => {
         console.log('[wiremd] Connected to live-reload server');
@@ -362,20 +366,37 @@ const liveReloadScript = `
 </script>
 `;
 
-const wsClients: Set<any> = new Set();
+// Live-reload sockets of the most recently started server instance. Reassigned
+// by startServer so a second instance never leaks notifications across ports.
+let activeWsClients: Set<any> = new Set();
 
 interface TreeNode {
   dirs: Record<string, TreeNode>;
   files: string[];
 }
 
-function buildTree(dir: string, base: string): TreeNode {
+function buildTree(dir: string, base: string, depth = 0): TreeNode {
   const node: TreeNode = { dirs: {}, files: [] };
-  for (const entry of readdirSync(dir).sort()) {
-    if (entry.startsWith('_') || entry.startsWith('.')) continue;
+  // Depth cap guards against symlink cycles; unreadable dirs/entries are skipped
+  // instead of killing the request handler with an unhandled throw.
+  if (depth > 32) return node;
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return node;
+  }
+  for (const entry of entries.sort()) {
+    if (entry.startsWith('_') || entry.startsWith('.') || entry === 'node_modules') continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
-      node.dirs[entry] = buildTree(full, base);
+    let stat;
+    try {
+      stat = statSync(full);
+    } catch {
+      continue;
+    }
+    if (stat.isDirectory()) {
+      node.dirs[entry] = buildTree(full, base, depth + 1);
     } else if (entry.endsWith('.md')) {
       node.files.push(relative(base, full));
     }
@@ -387,7 +408,10 @@ function renderTree(node: TreeNode, depth = 0): string {
   const parts: string[] = [];
   for (const file of node.files) {
     const name = file.split('/').pop()!;
-    parts.push(`<li class="file"><a href="/${file}">${name}</a></li>`);
+    // Encode each path segment so filenames with spaces / non-ASCII produce
+    // working links (the request handler decodes them again).
+    const href = file.split('/').map(encodeURIComponent).join('/');
+    parts.push(`<li class="file"><a href="/${href}">${name}</a></li>`);
   }
   for (const [dirName, child] of Object.entries(node.dirs)) {
     const inner = renderTree(child, depth + 1);
@@ -425,9 +449,20 @@ export function startServer(options: ServerOptions): ReturnType<typeof createSer
   const { port, outputPath, renderFile, inputFile } = options;
   const rootDir = options.rootDir || (outputPath ? dirname(outputPath) : process.cwd());
 
+  const wsClients = new Set<any>();
+  activeWsClients = wsClients;
+
   const injectScript = (html: string) => {
-    const script = liveReloadScript.replace('__PORT__', String(port));
-    return html.replace('</body>', `${script}\n</body>`);
+    // lastIndexOf so a literal '</body>' inside page content doesn't get the
+    // script injected into the middle of the document.
+    const idx = html.lastIndexOf('</body>');
+    if (idx === -1) return html + liveReloadScript;
+    return (
+      html.slice(0, idx) +
+      liveReloadScript +
+      '\n</body>' +
+      html.slice(idx + '</body>'.length)
+    );
   };
 
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -447,7 +482,13 @@ export function startServer(options: ServerOptions): ReturnType<typeof createSer
         return;
       }
       if (!outputPath) {
-        html = renderIndex(rootDir);
+        try {
+          html = renderIndex(rootDir);
+        } catch (err: any) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end(`Error listing ${rootDir}: ${err.message}`);
+          return;
+        }
         res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate' });
         res.end(injectScript(html));
         return;
@@ -460,7 +501,15 @@ export function startServer(options: ServerOptions): ReturnType<typeof createSer
         return;
       }
     } else if (renderFile) {
-      const requestedFile = urlPath.replace(/^\//, '');
+      let requestedFile: string;
+      try {
+        // Browsers percent-encode non-ASCII/space filenames; decode before fs.
+        requestedFile = decodeURIComponent(urlPath.replace(/^\//, ''));
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end(`Bad request: malformed URL encoding in ${urlPath}`);
+        return;
+      }
       const targetPath = join(rootDir, requestedFile);
 
       if (targetPath.endsWith('.md') && existsSync(targetPath)) {
@@ -483,6 +532,18 @@ export function startServer(options: ServerOptions): ReturnType<typeof createSer
               res.end(`Error rendering ${mdPath}: ${err.message}`);
               return;
             }
+          }
+        }
+      } else {
+        // Directory-style URL (e.g. /subdir or /subdir/): fall back to its index.md
+        const dirIndex = join(rootDir, requestedFile, 'index.md');
+        if (existsSync(dirIndex)) {
+          try {
+            html = renderFile(dirIndex);
+          } catch (err: any) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end(`Error rendering ${dirIndex}: ${err.message}`);
+            return;
           }
         }
       }
@@ -524,6 +585,19 @@ export function startServer(options: ServerOptions): ReturnType<typeof createSer
       socket.on('error', () => {
         wsClients.delete(socket);
       });
+    } else {
+      // Not our WebSocket endpoint: destroy instead of leaving the socket open forever.
+      socket.destroy();
+    }
+  });
+
+  // Surface bind failures as a readable message; without this, EADDRINUSE and
+  // friends escape as uncaught exceptions after startServer has returned.
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use. Stop the other process or choose another port: wiremd --serve <port>`);
+    } else {
+      console.error(`❌ Dev server error: ${err.message}`);
     }
   });
 
@@ -545,17 +619,33 @@ export function notifyError(errorMessage: string): void {
 }
 
 function sendMessageToClients(message: string): void {
-  // Send message to all connected clients
-  wsClients.forEach((socket) => {
+  // Build one RFC 6455-compliant server-to-client text frame (FIN=1, opcode=1,
+  // unmasked) and fan it out. Payload length uses BYTE count and the extended
+  // 16/64-bit length forms above 125 bytes — the naive 7-bit encoding set the
+  // mask bit and truncated long payloads, killing client connections with a
+  // protocol error.
+  const payload = Buffer.from(message, 'utf-8');
+  const len = payload.length;
+  let header: Buffer;
+  if (len <= 125) {
+    header = Buffer.from([0x81, len]);
+  } else if (len <= 0xffff) {
+    header = Buffer.alloc(4);
+    header[0] = 0x81;
+    header[1] = 126;
+    header.writeUInt16BE(len, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[0] = 0x81;
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(len), 2);
+  }
+  const frame = Buffer.concat([header, payload]);
+  activeWsClients.forEach((socket) => {
     try {
-      // WebSocket frame format: FIN=1, opcode=1 (text)
-      const buffer = Buffer.alloc(2 + message.length);
-      buffer[0] = 0x81; // FIN + text frame
-      buffer[1] = message.length; // payload length
-      buffer.write(message, 2);
-      socket.write(buffer);
-    } catch (error) {
-      wsClients.delete(socket);
+      socket.write(frame);
+    } catch {
+      activeWsClients.delete(socket);
     }
   });
 }
