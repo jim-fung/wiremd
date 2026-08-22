@@ -25,6 +25,7 @@ coverage/
 logs/
 *.log
 npm-debug.log*
+bun-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
@@ -60,3 +61,8 @@ docs/.vitepress/cache/
 
 # Generated skill zip (built on release, not checked in)
 wireframe-skill.zip
+
+# Cypress e2e artifacts (videos & screenshots)
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/

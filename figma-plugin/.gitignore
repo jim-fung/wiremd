@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+bun.lock
 package-lock.json
 
 # Build output
@@ -16,6 +17,7 @@ coverage/
 logs
 *.log
 npm-debug.log*
+bun-debug.log*
 yarn-debug.log*
 yarn-error.log*
 

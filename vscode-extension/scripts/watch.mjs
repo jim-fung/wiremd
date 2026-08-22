@@ -13,7 +13,7 @@ watch(distFile, () => {
   debounce = setTimeout(() => {
     console.log('[wiremd-ext] detected wiremd rebuild, bundling...');
     try {
-      execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
+      execSync('bun run bundle', { cwd: root, stdio: 'inherit' });
       console.log('[wiremd-ext] done — reload VS Code window to pick up changes');
     } catch {
       console.error('[wiremd-ext] bundle failed');

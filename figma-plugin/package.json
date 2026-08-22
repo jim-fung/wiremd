@@ -4,10 +4,10 @@
   "description": "Import wiremd markdown mockups into Figma as editable designs",
   "main": "dist/code.js",
   "scripts": {
-    "build": "tsc && npm run build:ui",
+    "build": "tsc && bun run build:ui",
     "build:ui": "cp src/ui.html dist/ui.html",
     "watch": "tsc --watch",
-    "dev": "concurrently \"npm run watch\" \"npm run build:ui\"",
+    "dev": "concurrently \"bun run watch\" \"bun run build:ui\"",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
