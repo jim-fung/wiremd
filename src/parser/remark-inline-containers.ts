@@ -15,11 +15,18 @@ import type { Plugin } from 'unified';
  */
 function serializeChild(c: any): string {
   if (c.type === 'link') {
-    const text = (c.children || []).map((cc: any) => cc.value || '').join('');
-    return `[${text}](${c.url})`;
+    const text = (c.children || []).map(serializeChild).join('');
+    // Parens in URLs must be encoded or the downstream [text](url) re-parse
+    // (\(([^)]+)\)) truncates the href at the first ')'.
+    const url = String(c.url ?? '').replace(/\(/g, '%28').replace(/\)/g, '%29');
+    return `[${text}](${url})`;
+  }
+  if (c.type === 'image') {
+    return `![${c.alt || ''}](${c.url || ''})`;
   }
   if (c.type === 'strong') return `**${(c.children || []).map(serializeChild).join('')}**`;
   if (c.type === 'emphasis') return `*${(c.children || []).map(serializeChild).join('')}*`;
+  if (c.type === 'inlineCode') return '`' + (c.value || '') + '`';
   return c.value || '';
 }
 
