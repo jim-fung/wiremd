@@ -9,33 +9,33 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          registry-url: 'https://registry.npmjs.org'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: bun run build
 
       - name: Run tests
-        run: npm test
+        run: bun run test
 
+      # Note: bun publish does not support npm's --provenance attestations yet
+      # (https://github.com/oven-sh/bun/issues/15601).
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
+          bun publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Package wireframe skill for Claude Desktop / Cowork upload
-        run: npm run skill:zip
+        run: bun run skill:zip
 
       - name: Attach skill zip to GitHub release
         uses: softprops/action-gh-release@v2
