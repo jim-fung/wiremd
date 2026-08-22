@@ -253,7 +253,16 @@ function collectGridItemsFromContainer(
 ): WiremdNode[] {
   const gridItems: WiremdNode[] = [];
   const firstHeading = children.find((n: any) => n.type === 'heading');
-  if (!firstHeading) return gridItems;
+  if (!firstHeading) {
+    // Heading-less grid (e.g. ::: grid-N wrapping ::: card blocks): each direct
+    // child becomes its own grid-item — mirroring ::: row — so nested
+    // containers are not silently dropped.
+    return children.map((child: any) => ({
+      type: 'grid-item',
+      props: { classes: isCard ? ['card'] : [] } as any,
+      children: processNodeList([child], options) as any,
+    }));
+  }
   const itemDepth = firstHeading.depth;
 
   let i = 0;
@@ -312,7 +321,11 @@ function collectRowItemsFromContainer(
         const itemProps: any = { classes: [] };
         if (alignMatch) itemProps.classes.push(`align-${alignMatch[1]}`);
         i++;
-        const rawItemNodes: any[] = [];
+        // Class-only headings ("###" or "### {.left}") are invisible item
+        // separators; a heading with real text is content — keep it so typed
+        // text is never silently dropped.
+        const bareHeadingText = headingContent.replace(/\{[^}]*\}/g, '').trim();
+        const rawItemNodes: any[] = bareHeadingText ? [child] : [];
         while (i < children.length) {
           const next = children[i];
           if (next.type === 'heading' && next.depth <= itemDepth) break;
@@ -478,7 +491,15 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
   // Parse each item - could be text, icon, or button
   let brandEmitted = false;
   for (const item of items) {
-    const trimmed = item.trim();
+    // Split a trailing {attrs} group off the item so attributes style the node
+    // instead of leaking into its text.
+    let trimmed = item.trim();
+    let itemProps: any = { classes: [] };
+    const attrMatch = trimmed.match(/^([\s\S]+?)\s*(\{[^}]+\})$/);
+    if (attrMatch) {
+      trimmed = attrMatch[1].trim();
+      itemProps = parseAttributes(attrMatch[2]);
+    }
 
     // Check if it's an active/emphasized item: *Text* or **Text**
     const activeMatch = trimmed.match(/^\*\*?([^*]+)\*\*?$/);
@@ -486,7 +507,7 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
       children.push({
         type: 'nav-item',
         content: activeMatch[1],
-        props: { classes: ['active'] },
+        props: { ...itemProps, classes: [...(itemProps.classes ?? []), 'active'] },
       });
       continue;
     }
@@ -498,7 +519,10 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
         type: 'nav-item',
         content: linkMatch[1],
         href: linkMatch[2],
-        props: { variant: linkMatch[3] ? 'primary' : undefined },
+        props: {
+          ...itemProps,
+          ...(linkMatch[3] ? { variant: 'primary' } : {}),
+        },
       });
       continue;
     }
@@ -510,7 +534,8 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
         type: 'button',
         content: buttonMatch[1],
         props: {
-          variant: buttonMatch[2] ? 'primary' : undefined,
+          ...itemProps,
+          ...(buttonMatch[2] ? { variant: 'primary' } : {}),
         },
       });
       continue;
@@ -521,7 +546,7 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
     if (iconMatch) {
       children.push({
         type: 'icon',
-        props: { name: iconMatch[1] },
+        props: { ...itemProps, name: iconMatch[1] },
       });
       continue;
     }
@@ -541,7 +566,7 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
           { type: 'icon', props: { name: iconName } },
           { type: 'text', content: text },
         ],
-        props: {},
+        props: itemProps,
       });
       continue;
     }
@@ -552,13 +577,13 @@ function transformInlineContainer(node: any, _options: ParseOptions): WiremdNode
       children.push({
         type: 'brand',
         children: [{ type: 'text', content: trimmed, props: {} }] as any,
-        props: {},
+        props: itemProps,
       });
     } else {
       children.push({
         type: 'nav-item',
         content: trimmed,
-        props: {},
+        props: itemProps,
       });
     }
   }

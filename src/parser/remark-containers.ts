@@ -74,24 +74,48 @@ function makeContainerNode(
  * Collect and build a container starting at nodes[startIdx] (the opener paragraph).
  * Returns the container node and the index of the first node after the container.
  */
-function finishContainer(containerType: string, attrs: string, inline: string, children: any[], nextIndex: number): { node: any; nextIndex: number } {
+/**
+ * Strip every trailing ':::' closer line off a text value.
+ * Returns [valueWithoutClosers, closerCount].
+ */
+function stripTrailingClosers(value: string): [string, number] {
+  const match = value.match(/(?:\n:::)+$/) ?? (value.trim() === ':::' ? [value] : null);
+  if (!match) return [value, 0];
+  const count = (match[0].match(/:::/g) || []).length;
+  return [value.slice(0, value.length - match[0].length), count];
+}
+
+function finishContainer(
+  containerType: string,
+  attrs: string,
+  inline: string,
+  children: any[],
+  nextIndex: number,
+  extraClosers = 0,
+): { node: any; nextIndex: number; extraClosers: number } {
   const node = makeContainerNode(containerType, attrs, children);
   if (inline) node.inline = inline;
   if (containerType === 'demo') {
     node.rawContent = mdastNodesToText(children);
   }
-  return { node, nextIndex };
+  return { node, nextIndex, extraClosers };
 }
+
+/** Safety cap for nested ::: containers; beyond this we stop recursing instead of overflowing the stack. */
+const MAX_CONTAINER_DEPTH = 100;
 
 function collectContainer(
   nodes: any[],
   startIdx: number,
-): { node: any; nextIndex: number } {
+  depth = 0,
+): { node: any; nextIndex: number; extraClosers: number } {
   const openerNode = nodes[startIdx];
   const opener = parseContainerOpener(openerNode)!;
 
   // === CASE 1: Complete container in a single plain-text paragraph ===
-  // e.g. ":::card\ncontent\n:::" — no blank lines, no inline elements
+  // e.g. ":::card\ncontent\n:::" — no blank lines, no inline elements.
+  // A run of several ':::' lines closes this container once; the extras belong
+  // to enclosing containers and are reported back via extraClosers.
   if (
     openerNode.children.length === 1 &&
     openerNode.children[0].type === 'text'
@@ -99,11 +123,12 @@ function collectContainer(
     const fullText = openerNode.children[0].value as string;
     const lines = fullText.split('\n');
     let closingIdx = -1;
+    let closerCount = 0;
     for (let j = lines.length - 1; j >= 1; j--) {
       if (lines[j].trim() === ':::') {
+        closerCount++;
         closingIdx = j;
-        break;
-      }
+      } else break;
     }
     if (closingIdx > 0) {
       const contentText = lines.slice(1, closingIdx).join('\n').trim();
@@ -120,18 +145,20 @@ function collectContainer(
           children: [{ type: 'text', value: contentText }],
         });
       }
-      return finishContainer(opener.containerType, opener.attrs, opener.inline, children, startIdx + 1);
+      return finishContainer(opener.containerType, opener.attrs, opener.inline, children, startIdx + 1, closerCount - 1);
     }
   }
 
   // === CASE 2: Complete container in a single paragraph with inline elements ===
-  // e.g. ":::card\nSome **bold** text\n:::" — last text child ends with \n:::
+  // e.g. ":::card\nSome **bold** text\n:::" — trailing ':::' lines are stripped
+  // (all of them; extras belong to enclosing containers).
   const lastChild = openerNode.children[openerNode.children.length - 1];
   if (
     lastChild?.type === 'text' &&
     (lastChild.value.trim().endsWith(':::') ||
       /\n:::\s*$/.test(lastChild.value))
   ) {
+    const [strippedLast, strippedCount] = stripTrailingClosers(lastChild.value as string);
     const processedChildren: any[] = [];
     let startChildIdx = 0;
     if (openerNode.children[0].type === 'text') {
@@ -147,7 +174,7 @@ function collectContainer(
     for (let j = startChildIdx; j < openerNode.children.length; j++) {
       const ch = openerNode.children[j];
       if (j === openerNode.children.length - 1 && ch.type === 'text') {
-        const value = (ch.value as string).replace(/\n?:::$/, '').trim();
+        const value = strippedLast.trim();
         if (value) processedChildren.push({ ...ch, value });
       } else {
         processedChildren.push(ch);
@@ -163,7 +190,7 @@ function collectContainer(
         children: [{ type: 'text', value: opener.inline }],
       });
     }
-    return finishContainer(opener.containerType, opener.attrs, opener.inline, contentChildren, startIdx + 1);
+    return finishContainer(opener.containerType, opener.attrs, opener.inline, contentChildren, startIdx + 1, Math.max(0, strippedCount - 1));
   }
 
   // === CASE 3: Multi-block container — collect until matching closer ::: ===
@@ -210,11 +237,16 @@ function collectContainer(
     // Build a virtual list so collectContainer can consume the nested opener
     // plus the real nodes that follow it.
     const virtualNodes = [pendingAfterOpener, ...nodes.slice(startIdx + 1)];
-    const inner = collectContainer(virtualNodes, 0);
+    const inner = collectContainer(virtualNodes, 0, depth + 1);
     containerChildren.push(inner.node);
     // inner.nextIndex is relative to virtualNodes whose [0] is the synthetic para;
     // real nodes start at startIdx+1, so advance i by (inner.nextIndex - 1).
     i = startIdx + inner.nextIndex;
+    // If the nested container swallowed closers meant for outer levels, this
+    // container is the next level to close.
+    if (inner.extraClosers > 0) {
+      return finishContainer(opener.containerType, opener.attrs, opener.inline, containerChildren, i, inner.extraClosers - 1);
+    }
   }
 
   while (i < nodes.length) {
@@ -229,35 +261,43 @@ function collectContainer(
     // a paragraph like "::: tab Label\ncontent\n:::" is treated as a nested container,
     // not as an implicit closer for the outer container).
     if (parseContainerOpener(child)) {
-      const inner = collectContainer(nodes, i);
+      if (depth >= MAX_CONTAINER_DEPTH) {
+        // Depth cap hit: treat the opener as plain content rather than
+        // recursing (avoids RangeError on pathologically nested input).
+        containerChildren.push(child);
+        i++;
+        continue;
+      }
+      const inner = collectContainer(nodes, i, depth + 1);
       containerChildren.push(inner.node);
       i = inner.nextIndex;
+      // Closers beyond the ones the nested level needed terminate THIS level;
+      // any remainder keeps propagating to enclosing containers.
+      if (inner.extraClosers > 0) {
+        return finishContainer(opener.containerType, opener.attrs, opener.inline, containerChildren, i, inner.extraClosers - 1);
+      }
       continue;
     }
 
     // Implicit closer: paragraph whose last text node ends with \n:::
     // Happens when content and ::: share a paragraph (no blank line between them).
     // e.g. "[Save]* [Cancel]\n:::" — remark folds both into one paragraph.
+    // Multiple consecutive ::: lines close multiple nesting levels at once.
     if (child.type === 'paragraph' && child.children?.length) {
       const lastInline = child.children[child.children.length - 1];
       if (lastInline?.type === 'text' && lastInline.value.includes('\n:::')) {
-        const trimmed = lastInline.value.replace(/\n:::$/, '').trimEnd();
-        if (trimmed) {
+        const [stripped, closerCount] = stripTrailingClosers(lastInline.value as string);
+        const trimmed = stripped.trimEnd();
+        if (trimmed || child.children.length > 1) {
           containerChildren.push({
             ...child,
             children: [
               ...child.children.slice(0, -1),
-              { ...lastInline, value: trimmed },
+              ...(trimmed ? [{ ...lastInline, value: trimmed }] : []),
             ],
           });
-        } else if (child.children.length > 1) {
-          containerChildren.push({
-            ...child,
-            children: child.children.slice(0, -1),
-          });
         }
-        i++;
-        break;
+        return finishContainer(opener.containerType, opener.attrs, opener.inline, containerChildren, i + 1, Math.max(0, closerCount - 1));
       }
     }
 
@@ -340,6 +380,53 @@ function mdastNodesToText(nodes: any[]): string {
   }).filter(Boolean).join('\n\n');
 }
 
+/**
+ * Explode a flat multi-line container paragraph (::: directives folded together
+ * with content lines, e.g. "::: grid-3\n::: card\nText\n:::\n:::") into one
+ * synthetic paragraph per line so the normal nesting machinery sees distinct
+ * opener/closer nodes. Applies only to pure-text paragraphs — anything with
+ * inline markup keeps the legacy single-paragraph handling.
+ */
+function explodeFlatContainerParagraph(node: any): any[] | null {
+  if (
+    node.type !== 'paragraph' ||
+    node.children?.length !== 1 ||
+    node.children[0].type !== 'text'
+  ) {
+    return null;
+  }
+  const lines = (node.children[0].value as string).split('\n');
+  if (!/^:::\s*\S+/.test(lines[0].trim())) return null;
+  const isDirectiveLine = (line: string) =>
+    /^:::(\s|$)/.test(line.trim()) && line.trim().length >= 3;
+  if (!lines.slice(1).some(isDirectiveLine)) return null;
+
+  const out: any[] = [];
+  let buffer: string[] = [];
+  const flush = () => {
+    if (buffer.length) {
+      out.push({
+        type: 'paragraph',
+        children: [{ type: 'text', value: buffer.join('\n') }],
+      });
+      buffer = [];
+    }
+  };
+  for (const line of lines) {
+    if (isDirectiveLine(line)) {
+      flush();
+      out.push({
+        type: 'paragraph',
+        children: [{ type: 'text', value: line.trim() }],
+      });
+    } else {
+      buffer.push(line);
+    }
+  }
+  flush();
+  return out.length > 1 ? out : null;
+}
+
 /** Process a flat array of AST nodes and return nodes with containers properly nested. */
 function processNodes(nodes: any[]): any[] {
   const result: any[] = [];
@@ -347,6 +434,18 @@ function processNodes(nodes: any[]): any[] {
 
   while (i < nodes.length) {
     const node = nodes[i];
+
+    const exploded = explodeFlatContainerParagraph(node);
+    if (exploded) {
+      nodes.splice(i, 1, ...exploded);
+      continue;
+    }
+
+    if (isContainerCloser(node)) {
+      // A ':::' with no open container above it is a dangling terminator — drop it.
+      i++;
+      continue;
+    }
 
     if (parseContainerOpener(node)) {
       const { node: containerNode, nextIndex } = collectContainer(nodes, i);

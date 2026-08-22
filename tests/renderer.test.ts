@@ -360,6 +360,24 @@ Spans two
       expect(html).toContain('margin-left: auto');
     });
 
+    it('renders text-bearing ### headings inside ::: row (class-only headings stay invisible separators)', () => {
+      const input = `
+::: row
+
+### Left label
+[All]*
+
+### {.right}
+[+ New]*
+
+:::
+      `.trim();
+
+      const html = renderToHTML(parse(input), { style: 'sketch' });
+      expect(html).toContain('Left label');
+      expect(html).toContain('wmd-align-right');
+    });
+
     it('dropdown inside implicit row renders <select> with <option> elements (not a stray <ul>)', () => {
       const input = `
 ::: row

@@ -670,7 +670,7 @@ function renderParagraph(node: any, context: PreviewRenderContext): string {
  */
 function renderInlineRichText(content: string, context: PreviewRenderContext): string {
   let result = '';
-  let remaining = content;
+  const remaining = content;
   const pattern = /<(strong|em|code)>([\s\S]*?)<\/\1>|<a href="([^"]*)">([\s\S]*?)<\/a>/g;
   let match: RegExpExecArray | null;
   let lastIndex = 0;

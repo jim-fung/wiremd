@@ -423,6 +423,90 @@ Nested content
       expect(card.children[0].type).toBe('paragraph');
     });
 
+    it('should keep nested ::: card containers inside ::: grid-3 as grid items', () => {
+      const input = `
+::: grid-3
+
+::: card
+
+### Card A
+
+# 1
+
+:::
+
+::: card
+
+### Card B
+
+# 2
+
+:::
+
+:::
+      `.trim();
+
+      const result = parse(input);
+      const grid = result.children[0];
+      expect(grid.type).toBe('grid');
+      expect(grid.children).toHaveLength(2);
+      expect(grid.children.every((c: any) => c.type === 'grid-item')).toBe(true);
+      expect(grid.children[0].children[0]).toMatchObject({
+        type: 'container',
+        containerType: 'card',
+      });
+    });
+
+    it('should strip every trailing ::: closer from a multi-closer paragraph', () => {
+      const input = `
+::: demo
+Inner content
+:::
+:::
+
+## After
+
+After content
+      `.trim();
+
+      const result = parse(input);
+      const inner = result.children[0];
+      expect(inner.type).toBe('demo');
+      // No ':::' may leak into the container's own content
+      expect(
+        inner.children.some((c: any) => String(c.content ?? '').includes(':::')),
+      ).toBe(false);
+      // Content after the double close stays outside the container
+      expect(result.children[1]).toMatchObject({ type: 'heading' });
+      expect(result.children[1].content).toBe('After');
+      expect(result.children[2]).toMatchObject({ type: 'paragraph' });
+      expect(result.children[2].content).toBe('After content');
+    });
+
+    it('should consume one ::: per nesting level and propagate extras upward', () => {
+      const input = `
+::: grid-3
+::: card
+Card A text
+:::
+:::
+
+## After
+      `.trim();
+
+      const result = parse(input);
+      const grid = result.children[0];
+      expect(grid.type).toBe('grid');
+      expect(grid.children).toHaveLength(1);
+      const cardA = grid.children[0].children[0];
+      expect(cardA).toMatchObject({ type: 'container', containerType: 'card' });
+      expect(cardA.children).toHaveLength(1);
+      expect(cardA.children[0].content).toBe('Card A text');
+      // The trailing content must not be swallowed into the grid
+      expect(result.children[1]).toMatchObject({ type: 'heading' });
+      expect(result.children[1].content).toBe('After');
+    });
+
     it('should extract inline content from the opener line', () => {
       const input = `
 ::: alert Warning: this action is irreversible
@@ -458,6 +542,23 @@ Nested content
         type: 'nav-item',
         content: 'Products',
       });
+    });
+
+    it('should apply attributes on inline container items without leaking them as text', () => {
+      const input = `[[ Home | Products | [Admin]{.primary} ]]`;
+
+      const result = parse(input);
+      const nav = result.children[0];
+      const admin = nav.children.find((c: any) => c.type === 'button');
+      expect(admin).toMatchObject({
+        type: 'button',
+        content: 'Admin',
+        props: { classes: ['primary'] },
+      });
+      // No item may carry the raw attribute syntax as content
+      for (const child of nav.children) {
+        expect(String(child.content ?? '')).not.toContain('{.');
+      }
     });
 
     it('should parse navigation with brand (icon + text)', () => {
