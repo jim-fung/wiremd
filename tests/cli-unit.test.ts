@@ -155,7 +155,7 @@ describe('CLI Unit Tests', () => {
       it('should error on invalid serve port', () => {
         expect(() => parseArgs(['test.md', '--serve', 'abc'])).toThrow('process.exit(1)');
         expect(consoleErrorSpy).toHaveBeenCalledWith(
-          expect.stringContaining('--serve requires a numeric port')
+          expect.stringContaining('--serve requires a port')
         );
       });
 

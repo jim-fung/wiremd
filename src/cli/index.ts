@@ -16,6 +16,7 @@ import { parse } from '../parser/index.js';
 import { resolveIncludes } from '../parser/includes.js';
 import { renderToHTML, renderToJSON } from '../renderer/index.js';
 import { startServer, notifyReload, notifyError } from './server.js';
+import { VERSION } from '../version.js';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
 
@@ -94,8 +95,21 @@ export function showVersion(): void {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     console.log(`wiremd v${pkg.version}`);
   } catch {
-    console.log('wiremd v0.1.2');
+    console.log(`wiremd v${VERSION}`);
   }
+}
+
+/**
+ * Read a value-flag's argument, erroring clearly if it is missing or is
+ * another flag (prevents silent swallowing like `-o --serve 3000`).
+ */
+function readFlagValue(args: string[], i: number, flag: string): { value: string; next: number } {
+  const value = args[i + 1];
+  if (value === undefined || value.startsWith('-')) {
+    console.error(`Error: ${flag} requires a value`);
+    process.exit(1);
+  }
+  return { value, next: i + 1 };
 }
 
 export function parseArgs(args: string[]): CLIOptions | null {
@@ -121,13 +135,16 @@ export function parseArgs(args: string[]): CLIOptions | null {
         return null;
 
       case '-o':
-      case '--output':
-        options.output = args[++i];
+      case '--output': {
+        const { value, next } = readFlagValue(args, i, arg);
+        options.output = value;
+        i = next;
         break;
+      }
 
       case '-f':
       case '--format': {
-        const format = args[++i];
+        const { value: format } = readFlagValue(args, i, arg);
         if (format !== 'html' && format !== 'json') {
           console.error(`Error: Invalid format "${format}". Must be html or json.`);
           process.exit(1);
@@ -138,7 +155,7 @@ export function parseArgs(args: string[]): CLIOptions | null {
 
       case '-s':
       case '--style': {
-        const style = args[++i];
+        const { value: style } = readFlagValue(args, i, arg);
         if (!['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'].includes(style)) {
           console.error(`Error: Invalid style "${style}". Must be sketch, clean, wireframe, none, tailwind, material, or brutal.`);
           process.exit(1);
@@ -152,21 +169,30 @@ export function parseArgs(args: string[]): CLIOptions | null {
         options.watch = true;
         break;
 
-      case '--serve':
-        options.serve = parseInt(args[++i], 10);
-        if (isNaN(options.serve)) {
-          console.error('Error: --serve requires a numeric port');
+      case '--serve': {
+        const { value } = readFlagValue(args, i, arg);
+        const port = parseInt(value, 10);
+        if (isNaN(port) || !Number.isInteger(port) || port < 1 || port > 65535) {
+          console.error('Error: --serve requires a port between 1 and 65535');
           process.exit(1);
         }
+        options.serve = port;
         break;
+      }
 
-      case '--watch-pattern':
-        options.watchPattern = args[++i];
+      case '--watch-pattern': {
+        const { value, next } = readFlagValue(args, i, arg);
+        options.watchPattern = value;
+        i = next;
         break;
+      }
 
-      case '--ignore':
-        options.ignorePattern = args[++i];
+      case '--ignore': {
+        const { value, next } = readFlagValue(args, i, arg);
+        options.ignorePattern = value;
+        i = next;
         break;
+      }
 
       case '-p':
       case '--pretty':
@@ -476,6 +502,10 @@ export function main(): void {
         // If the main input file was deleted, notify but keep watching
         if (path === options.input) {
           logger.warning('Main input file deleted. Waiting for restoration...');
+          // Tell any connected live-reload browser instead of leaving it stale
+          if (options.serve) {
+            notifyError(`Input file removed: ${relativePath}`);
+          }
         }
       })
       .on('error', (error: any) => {
@@ -524,7 +554,9 @@ export function main(): void {
 
 // Only run main() if this file is executed directly (not imported)
 // Use pathToFileURL to handle Windows paths correctly
-const isMainModule = import.meta.url === pathToFileURL(process.argv[1]).href;
+const isMainModule =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMainModule) {
   main();
 }
