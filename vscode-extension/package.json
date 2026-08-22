@@ -132,6 +132,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show error overlay in preview"
+        },
+        "wiremd.autoOpenPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open the preview when a Markdown file becomes active (once per session)"
         }
       }
     }

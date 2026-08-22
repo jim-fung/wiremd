@@ -140,14 +140,17 @@ export function activate(context: vscode.ExtensionContext) {
     });
   }
 
-  // Auto-open preview if configured
+  // Auto-open preview if configured (once per session, so closing it sticks)
+  let autoOpenFired = false;
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (editor && editor.document.languageId === 'markdown') {
-        const config = vscode.workspace.getConfiguration('wiremd');
-        if (config.get('autoOpenPreview')) {
-          // Auto-open preview
-        }
+      if (!editor || autoOpenFired || editor.document.languageId !== 'markdown') {
+        return;
+      }
+      const config = vscode.workspace.getConfiguration('wiremd');
+      if (config.get('autoOpenPreview')) {
+        autoOpenFired = true;
+        vscode.commands.executeCommand('wiremd.openPreviewToSide');
       }
     })
   );

@@ -6,7 +6,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse, resolveIncludes, renderToHTML } from 'wiremd';
+import { parse, renderToHTML } from 'wiremd';
+import { resolveIncludes } from 'wiremd/parser/includes';
 
 export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
   public static readonly viewType = 'wiremd.preview';
@@ -228,7 +229,17 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
    * Handle active editor changes
    */
   private onActiveEditorChanged(editor: vscode.TextEditor | undefined): void {
-    if (!editor || editor.document.languageId !== 'markdown') {
+    if (!editor) {
+      // Every editor closed: drop the stale document so the preview shows its
+      // empty state instead of re-rendering a dead buffer.
+      if (this.currentEditor) {
+        this.currentEditor = undefined;
+        this.refresh();
+      }
+      return;
+    }
+    if (editor.document.languageId !== 'markdown') {
+      // Focus moved to another file type; keep the last render (split-view).
       return;
     }
 
@@ -455,7 +466,7 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
       }
     });
     vscode.postMessage({ type: 'ready' });
-  <\/script>`;
+  </script>`;
 
     // Inject CSP into <head>, toolbar styles just before </head> (after wiremd styles so they win),
     // and toolbar HTML at start of <body>
@@ -729,7 +740,7 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
       }
     });
     ${sourceScript}
-  <\/script>`;
+  </script>`;
 
     const withCSP = html.replace(
       '<head>',
