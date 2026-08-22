@@ -38,7 +38,10 @@ export default defineConfig({
         exports: 'named',
       },
     },
-    sourcemap: true,
+    // Sourcemaps are opt-in (`bun run build:maps`): they're pure debug
+    // artifacts, and shipping them in dist put ~1.2MB of .map files into the
+    // published tarball (2/3 of its unpacked size) for every consumer.
+    sourcemap: process.env.WIREMD_SOURCEMAPS === '1',
     minify: false,
   },
   plugins: [
