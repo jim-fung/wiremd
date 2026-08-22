@@ -14,6 +14,7 @@
  *   - tabs render as statically stacked panels (all visible, in order)
  *   - all text is escaped; authored markup appears as visible text
  *   - URL schemes allowlist: `https:`, `mailto:`, `#fragment`, `/root-relative`
+ *     (protocol-relative `//host/…` URLs are blocked — they resolve externally)
  *   - remote images load over `https:` only; relative sources are placeholders
  *   - CSS carries no `@import`; external fonts fall back to local stacks
  *   - every class and selector carries the caller's class prefix
@@ -54,6 +55,11 @@ export interface PreviewRenderOptions {
  * Markup and CSS are generated from ONE walk of the AST and must be injected
  * together or not at all — mixing stale CSS under fresh markup (or vice
  * versa) is the host bug this atomic contract exists to make impossible.
+ *
+ * Throws a documented TypeError when `classPrefix` is not a safe ASCII
+ * identifier: the prefix is host-supplied (never author content), it is
+ * interpolated into markup, CSS, and a RegExp, and emitting a partially
+ * prefixed or markup-breaking payload is worse than refusing to render.
  */
 export function renderPreview(
   documentNode: DocumentNode,
@@ -61,6 +67,13 @@ export function renderPreview(
 ): PreviewResult {
   const style = options.style ?? 'sketch';
   const classPrefix = options.classPrefix;
+  if (!CLASS_PREFIX_PATTERN.test(classPrefix)) {
+    throw new TypeError(
+      `classPrefix must be a non-empty ASCII identifier (${CLASS_PREFIX_PATTERN.source}); ` +
+        `received ${JSON.stringify(classPrefix)}. Recommended shape: "ok-wiremd-" ` +
+        `(trailing separator keeps generated class names token-separated).`
+    );
+  }
   const diagnostics: WiremdDiagnostic[] = [];
   const context: PreviewRenderContext = {
     style,
@@ -134,20 +147,72 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function buildClasses(prefix: string, baseClass: string, props: any): string {
+/**
+ * A class prefix is interpolated into markup attributes, CSS selectors, and
+ * a RegExp (`body\.${prefix}`), so it must be a plain ASCII identifier:
+ * letters/digits/underscore/hyphen with a letter or underscore leading.
+ * Anything else is a host bug and is refused at the render boundary.
+ */
+const CLASS_PREFIX_PATTERN = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+/**
+ * Author-controlled class vocabulary (classes/variant/state tokens from
+ * parsed properties). Tokens are emitted inside `class="…"` attributes and
+ * CSS selectors, so anything outside this grammar — quotes, spaces,
+ * attribute-breaking characters — is dropped with a diagnostic instead of
+ * being interpolated.
+ */
+const CLASS_TOKEN_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * Build one element's class attribute under the prefix contract.
+ *
+ * Code-owned segments (prefix + baseClass) are trusted; every author-derived
+ * token (props.classes entries, variant, state) must match
+ * {@link CLASS_TOKEN_PATTERN} or it is dropped with a `wmd-class-sanitized`
+ * warning. The joined attribute value is HTML-escaped as defense in depth —
+ * even a future code path that smuggles a quote through cannot break out of
+ * the attribute.
+ */
+function buildClasses(
+  context: PreviewRenderContext,
+  baseClass: string,
+  props: any
+): string {
+  const { classPrefix: prefix } = context;
   const classes = [`${prefix}${baseClass}`];
-  if (props?.classes && Array.isArray(props.classes)) {
-    props.classes.forEach((cls: string) => {
-      classes.push(`${prefix}${cls}`);
+  const drop = (kind: string, raw: string) => {
+    context.diagnostics.push({
+      severity: 'warning',
+      code: 'wmd-class-sanitized',
+      message: `Author ${kind} "${raw}" is not a safe CSS class token and was omitted from the preview.`,
+      source: 'renderer',
     });
+  };
+  if (Array.isArray(props?.classes)) {
+    for (const cls of props.classes) {
+      if (typeof cls === 'string' && CLASS_TOKEN_PATTERN.test(cls)) {
+        classes.push(`${prefix}${cls}`);
+      } else {
+        drop('class', String(cls));
+      }
+    }
   }
-  if (props?.variant) {
-    classes.push(`${prefix}${baseClass}-${props.variant}`);
+  if (typeof props?.variant === 'string') {
+    if (CLASS_TOKEN_PATTERN.test(props.variant)) {
+      classes.push(`${prefix}${baseClass}-${props.variant}`);
+    } else {
+      drop('variant', props.variant);
+    }
   }
-  if (props?.state) {
-    classes.push(`${prefix}state-${props.state}`);
+  if (typeof props?.state === 'string') {
+    if (CLASS_TOKEN_PATTERN.test(props.state)) {
+      classes.push(`${prefix}state-${props.state}`);
+    } else {
+      drop('state', props.state);
+    }
   }
-  return classes.join(' ');
+  return escapeHtml(classes.join(' '));
 }
 
 /**
@@ -167,6 +232,19 @@ function safeUrl(
 
   if (raw.startsWith('#')) return { url: raw };
   if (raw.startsWith('/') && !raw.startsWith('//')) return { url: raw };
+
+  // Protocol-relative ("//host/path") resolves against the embedding page's
+  // scheme to an external origin — it is NOT root-relative and must not
+  // reach the scheme-less branch below, which passes links through.
+  if (raw.startsWith('//')) {
+    context.diagnostics.push({
+      severity: 'warning',
+      code: 'wmd-url-blocked',
+      message: 'Blocked protocol-relative "//" URL in preview content.',
+      source: 'renderer',
+    });
+    return { url: '#', blocked: true };
+  }
 
   const schemeMatch = raw.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
   if (!schemeMatch) {
@@ -248,7 +326,7 @@ function renderChildren(node: { children?: WiremdNode[] }, context: PreviewRende
 
 function renderButton(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'button', node.props);
+  const classes = buildClasses(context, 'button', node.props);
   const disabled = node.props.state === 'disabled' ? ' disabled' : '';
   const loading = node.props.state === 'loading' ? ` ${prefix}loading` : '';
 
@@ -264,14 +342,12 @@ function renderButton(node: any, context: PreviewRenderContext): string {
 }
 
 function renderBadge(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'badge', node.props);
+  const classes = buildClasses(context, 'badge', node.props);
   return `<span class="${classes}">${escapeHtml(node.content)}</span>`;
 }
 
 function renderInput(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'input', node.props);
+  const classes = buildClasses(context, 'input', node.props);
   const type = node.props.inputType || node.props.type || 'text';
   const required = node.props.required ? ' required' : '';
   const disabled = node.props.disabled ? ' disabled' : '';
@@ -283,8 +359,7 @@ function renderInput(node: any, context: PreviewRenderContext): string {
 }
 
 function renderTextarea(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'textarea', node.props);
+  const classes = buildClasses(context, 'textarea', node.props);
   const rows = node.props.rows || 4;
   const required = node.props.required ? ' required' : '';
   const disabled = node.props.disabled ? ' disabled' : '';
@@ -295,8 +370,7 @@ function renderTextarea(node: any, context: PreviewRenderContext): string {
 }
 
 function renderSelect(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'select', node.props);
+  const classes = buildClasses(context, 'select', node.props);
   const required = node.props.required ? ' required' : '';
   const disabled = node.props.disabled ? ' disabled' : '';
   const multiple = node.props.multiple ? ' multiple' : '';
@@ -317,8 +391,7 @@ function renderSelect(node: any, context: PreviewRenderContext): string {
 }
 
 function renderCheckbox(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'checkbox', node.props);
+  const classes = buildClasses(context, 'checkbox', node.props);
   const checked = node.checked ? ' checked' : '';
   const disabled = node.props.disabled ? ' disabled' : '';
   const value = node.props.value ? ` value="${escapeHtml(node.props.value)}"` : '';
@@ -348,8 +421,7 @@ function renderCheckbox(node: any, context: PreviewRenderContext): string {
 }
 
 function renderRadio(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'radio', node.props);
+  const classes = buildClasses(context, 'radio', node.props);
   const checked = node.selected ? ' checked' : '';
   const disabled = node.props.disabled ? ' disabled' : '';
   const name = node.props.name ? ` name="${escapeHtml(node.props.name)}"` : '';
@@ -369,7 +441,7 @@ function renderRadio(node: any, context: PreviewRenderContext): string {
 function renderRadioGroup(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
   const isInline = node.props?.inline;
-  const classes = buildClasses(prefix, 'radio-group', node.props);
+  const classes = buildClasses(context, 'radio-group', node.props);
   const inlineClass = isInline ? ` ${prefix}radio-group-inline` : '';
 
   // Deterministic per-render group name (the standalone renderer uses
@@ -391,8 +463,7 @@ function renderRadioGroup(node: any, context: PreviewRenderContext): string {
 }
 
 function renderIcon(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'icon', node.props);
+  const classes = buildClasses(context, 'icon', node.props);
   const iconName = node.props.name || 'default';
 
   const iconMap: Record<string, string> = {
@@ -427,8 +498,7 @@ function renderIcon(node: any, context: PreviewRenderContext): string {
 }
 
 function renderContainer(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, `container-${node.containerType}`, node.props);
+  const classes = buildClasses(context, `container-${node.containerType}`, node.props);
 
   const nodeClasses: string[] = node.props?.classes || [];
   if (node.containerType === 'layout' && nodeClasses.includes('sidebar-main')) {
@@ -479,7 +549,7 @@ ${sectionsHTML}
 
 function renderNav(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'nav', node.props);
+  const classes = buildClasses(context, 'nav', node.props);
   const childrenHTML = renderChildren(node, context);
 
   return `<nav class="${classes}">
@@ -499,11 +569,11 @@ function renderNavItem(node: any, context: PreviewRenderContext): string {
   const hrefResult = safeUrl(node.href, context, 'link');
 
   if (node.props?.variant === 'primary') {
-    const classes = `${buildClasses(prefix, 'button', node.props)} ${prefix}button-primary`;
+    const classes = `${buildClasses(context, 'button', node.props)} ${prefix}button-primary`;
     return `<a href="${escapeHtml(hrefResult.url)}" class="${classes.trim()}" style="text-decoration:none;color:inherit;">${contentHTML}</a>`;
   }
 
-  const classes = buildClasses(prefix, 'nav-item', node.props);
+  const classes = buildClasses(context, 'nav-item', node.props);
   return `<a href="${escapeHtml(hrefResult.url)}" class="${classes}">${contentHTML}</a>`;
 }
 
@@ -521,15 +591,14 @@ function renderBreadcrumbs(node: any, context: PreviewRenderContext): string {
 }
 
 function renderBrand(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'brand', node.props);
+  const classes = buildClasses(context, 'brand', node.props);
   const childrenHTML = renderChildren(node, context);
   return `<div class="${classes}">${childrenHTML}</div>`;
 }
 
 function renderGrid(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'grid', node.props);
+  const classes = buildClasses(context, 'grid', node.props);
   const columns = node.columns || 3;
   const gridClass = `${classes} ${prefix}grid-${columns}`;
   const isCard = !!node.props?.card;
@@ -541,10 +610,9 @@ function renderGrid(node: any, context: PreviewRenderContext): string {
 }
 
 function renderGridItem(node: any, context: PreviewRenderContext, isCard = false): string {
-  const { classPrefix: prefix } = context;
   const extraClasses = isCard ? [...(node.props?.classes || []), 'grid-item-card'] : (node.props?.classes || []);
   const itemProps = { ...node.props, classes: extraClasses };
-  const classes = buildClasses(prefix, 'grid-item', itemProps);
+  const classes = buildClasses(context, 'grid-item', itemProps);
   const childrenHTML = renderChildren(node, context);
 
   return `<div class="${classes}">
@@ -553,8 +621,7 @@ function renderGridItem(node: any, context: PreviewRenderContext, isCard = false
 }
 
 function renderRow(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'row', node.props);
+  const classes = buildClasses(context, 'row', node.props);
   const childrenHTML = (node.children || []).map((child: any) => renderGridItem(child, context)).join('\n  ');
 
   return `<div class="${classes}">
@@ -565,9 +632,8 @@ function renderRow(node: any, context: PreviewRenderContext): string {
 function renderHeading(node: any, context: PreviewRenderContext): string {
   if (!node.content && !node.children?.length) return '';
 
-  const { classPrefix: prefix } = context;
   const level = Math.min(Math.max(Number(node.level) || 1, 1), 6);
-  const classes = buildClasses(prefix, `h${level}`, node.props);
+  const classes = buildClasses(context, `h${level}`, node.props);
   const content = node.content || '';
 
   const childrenHTML = node.children
@@ -578,8 +644,7 @@ function renderHeading(node: any, context: PreviewRenderContext): string {
 }
 
 function renderParagraph(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'paragraph', node.props);
+  const classes = buildClasses(context, 'paragraph', node.props);
 
   let childrenHTML: string;
   if (node.children) {
@@ -639,7 +704,7 @@ function renderText(node: any, context: PreviewRenderContext): string {
 
 function renderImage(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'image', node.props);
+  const classes = buildClasses(context, 'image', node.props);
   const alt = node.alt || '';
   const width = node.props.width ? ` width="${escapeHtml(String(node.props.width))}"` : '';
   const height = node.props.height ? ` height="${escapeHtml(String(node.props.height))}"` : '';
@@ -653,8 +718,7 @@ function renderImage(node: any, context: PreviewRenderContext): string {
 }
 
 function renderLink(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'link', node.props);
+  const classes = buildClasses(context, 'link', node.props);
   const title = node.title ? ` title="${escapeHtml(node.title)}"` : '';
 
   const childrenHTML = node.children
@@ -666,8 +730,7 @@ function renderLink(node: any, context: PreviewRenderContext): string {
 }
 
 function renderList(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'list', node.props);
+  const classes = buildClasses(context, 'list', node.props);
   const tag = node.ordered ? 'ol' : 'ul';
   const childrenHTML = (node.children || []).map((child: any) => renderPreviewNode(child, context)).join('\n  ');
 
@@ -677,8 +740,7 @@ function renderList(node: any, context: PreviewRenderContext): string {
 }
 
 function renderListItem(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'list-item', node.props);
+  const classes = buildClasses(context, 'list-item', node.props);
 
   let html = '';
   if (node.content) {
@@ -693,8 +755,7 @@ function renderListItem(node: any, context: PreviewRenderContext): string {
 }
 
 function renderTable(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'table', node.props);
+  const classes = buildClasses(context, 'table', node.props);
 
   const headerNode = node.children?.find((child: any) => child.type === 'table-header');
   const rowNodes = node.children?.filter((child: any) => child.type === 'table-row') || [];
@@ -728,7 +789,7 @@ function renderTableCell(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
   const tag = node.header ? 'th' : 'td';
   const align = node.align || 'left';
-  const classes = buildClasses(prefix, `table-cell ${prefix}align-${align}`, {});
+  const classes = buildClasses(context, `table-cell ${prefix}align-${align}`, {});
 
   const contentHTML = node.children && node.children.length > 0
     ? node.children.map((child: any) => renderPreviewNode(child, context)).join('')
@@ -738,8 +799,7 @@ function renderTableCell(node: any, context: PreviewRenderContext): string {
 }
 
 function renderBlockquote(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'blockquote', node.props);
+  const classes = buildClasses(context, 'blockquote', node.props);
   const childrenHTML = renderChildren(node, context);
 
   return `<blockquote class="${classes}">
@@ -748,21 +808,19 @@ function renderBlockquote(node: any, context: PreviewRenderContext): string {
 }
 
 function renderCode(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
   const inline = node.inline !== false;
 
   if (inline) {
-    const classes = buildClasses(prefix, 'code-inline', {});
+    const classes = buildClasses(context, 'code-inline', {});
     return `<code class="${classes}">${escapeHtml(node.value)}</code>`;
   }
-  const classes = buildClasses(prefix, 'code-block', {});
+  const classes = buildClasses(context, 'code-block', {});
   const lang = node.lang ? ` data-lang="${escapeHtml(node.lang)}"` : '';
   return `<pre class="${classes}"><code${lang}>${escapeHtml(node.value)}</code></pre>`;
 }
 
 function renderSeparator(node: any, context: PreviewRenderContext): string {
-  const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'separator', node.props);
+  const classes = buildClasses(context, 'separator', node.props);
   return `<hr class="${classes}" />`;
 }
 
@@ -772,7 +830,7 @@ function renderSeparator(node: any, context: PreviewRenderContext): string {
  */
 function renderTabs(node: any, context: PreviewRenderContext): string {
   const { classPrefix: prefix } = context;
-  const classes = buildClasses(prefix, 'tabs', node.props);
+  const classes = buildClasses(context, 'tabs', node.props);
   const tabs: any[] = node.children || [];
 
   context.diagnostics.push({

@@ -178,6 +178,65 @@ describe('security policy (S1–S5)', () => {
   });
 });
 
+describe('hostile attribute surfaces (class/variant/state/classPrefix)', () => {
+  function stripEscaped(html: string): string {
+    return html.replace(/&lt;[\s\S]*?&gt;/g, '');
+  }
+
+  test('author class tokens cannot break out of the class attribute', () => {
+    // Attribute tokens are whitespace-split by the parser, so the hostile
+    // payload must be one space-free token to reach buildClasses intact.
+    const result = preview('[Save]{.x"onmouseover="alert(1) .hero}');
+    const unescaped = stripEscaped(result.html);
+    expect(unescaped).not.toMatch(/\son[a-z]+\s*=/i);
+    expect(result.html).toContain('wmd-hero');
+    expect(result.html).not.toContain('"onmouseover=');
+    expect(result.html).not.toMatch(/onmouseover=/i);
+    expect(result.diagnostics.some((d) => d.severity === 'warning')).toBe(true);
+  });
+
+  test('hand-built AST nodes cannot inject through classes, variant, or state', () => {
+    const doc = {
+      type: 'document',
+      children: [
+        {
+          type: 'button',
+          props: {
+            classes: ['x" onmouseover="alert(1)'],
+            variant: 'y" data-evil="1',
+            state: 'z" data-evil2="2',
+          },
+          content: 'Go',
+        },
+      ],
+    } as never;
+    const result = renderToPreview(doc, { classPrefix: 'wmd-' });
+    const unescaped = stripEscaped(result.html);
+    expect(unescaped).not.toMatch(/\son[a-z]+\s*=/i);
+    expect(unescaped).not.toMatch(/data-evil/i);
+    expect(result.diagnostics.some((d) => d.severity === 'warning')).toBe(true);
+  });
+
+  test('unsafe classPrefix values throw a documented argument error', () => {
+    // Markup-injection prefix.
+    expect(() => preview('# Title', 'x" onmouseover="y')).toThrow(/classPrefix/);
+    // Regex-breaking prefix (previously crashed preparePreviewCss).
+    expect(() => preview('# Title', '[bad')).toThrow(/classPrefix/);
+    // Empty prefix is rejected too: every class would collide with host page classes.
+    expect(() => preview('# Title', '')).toThrow(/classPrefix/);
+    // Safe prefixes keep working.
+    expect(preview('# Title', 'ok-wiremd-').classPrefix).toBe('ok-wiremd-');
+  });
+
+  test('protocol-relative URLs are blocked, not emitted', () => {
+    const result = preview('[evil](//evil.example/path)\n![pic](//evil.example/pic.png)');
+    expect(result.html).not.toMatch(/(href|src)="\/\//);
+    expect(result.html).toMatch(/href="#"/);
+    const blocked = result.diagnostics.filter((d) => d.code === 'wmd-url-blocked');
+    expect(blocked.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('atomic html+css contract', () => {
   test('html and css are produced from one walk; both present together', () => {
     const result = preview('# Title\n[Go]*');
