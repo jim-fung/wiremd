@@ -27,7 +27,7 @@ import { remarkWiremdInlineContainers } from './remark-inline-containers.js';
  *
  * @example
  * ```ts
- * import { parse } from 'markdown-mockup/parser';
+ * import { parse } from 'wiremd/parser';
  *
  * const ast = parse(`
  *   ## Contact Form

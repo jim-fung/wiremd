@@ -22,8 +22,8 @@ import * as TailwindRenderer from './tailwind-renderer.js';
  *
  * @example
  * ```ts
- * import { parse } from 'markdown-mockup/parser';
- * import { renderToHTML } from 'markdown-mockup/renderer';
+ * import { parse } from 'wiremd/parser';
+ * import { renderToHTML } from 'wiremd/renderer';
  *
  * const ast = parse('## Title\n[Button]*');
  * const html = renderToHTML(ast, { style: 'sketch' });
