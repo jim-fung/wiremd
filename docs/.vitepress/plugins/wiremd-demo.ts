@@ -1,8 +1,9 @@
 import * as path from 'path'
 import type { Plugin } from 'vite'
 // Import from the built package (dist/) so this works in both dev and build.
-// Run `npm run build` before `npm run docs:dev` to keep dist/ fresh.
-import { parse, renderToHTML, resolveIncludes } from '../../../dist/index.js'
+// Run `bun run build` before `bun run docs:dev` to keep dist/ fresh.
+import { parse, renderToHTML } from '../../../dist/index.js'
+import { resolveIncludes } from '../../../dist/parser/includes.js'
 
 export function wiremdDemoPlugin(): Plugin {
   return {
@@ -16,6 +17,22 @@ export function wiremdDemoPlugin(): Plugin {
 }
 
 type StackEntry = { type: string; invisible: boolean }
+
+/** If the line opens a CommonMark fenced code block, return its char/length. */
+function fenceOpener(line: string): { char: string; len: number } | null {
+  const m = line.trim().match(/^(`{3,}|~{3,})/)
+  return m ? { char: m[1][0], len: m[1].length } : null
+}
+
+/**
+ * True when `line` closes the fence opened with the given char/length.
+ * Closing fence: same char, at least as long, nothing but whitespace after.
+ */
+function fenceCloser(line: string, char: string, len: number): boolean {
+  const t = line.trim()
+  const runMatch = t.match(new RegExp(`^\\${char}{${len},}`))
+  return runMatch !== null && t.slice(runMatch[0].length).trim() === ''
+}
 
 // VitePress's own container types — leave them untouched
 const VITEPRESS_CONTAINERS = new Set(['tip', 'warning', 'danger', 'info', 'details'])
@@ -130,9 +147,27 @@ function extractDemo(
   const contentLines: string[] = []
   let depth = 1
   let i = startLine
+  let fence: { char: string; len: number } | null = null
 
   while (i < lines.length) {
     const trimmed = lines[i].trim()
+
+    // Inside a fenced code block everything is content — including ':::' lines.
+    if (fence) {
+      contentLines.push(lines[i])
+      if (fenceCloser(lines[i], fence.char, fence.len)) fence = null
+      i++
+      continue
+    }
+
+    // A fence opener is content too; start tracking until its closer.
+    const opened = fenceOpener(lines[i])
+    if (opened) {
+      fence = opened
+      contentLines.push(lines[i])
+      i++
+      continue
+    }
 
     if (trimmed === ':::') {
       depth--
@@ -175,10 +210,28 @@ function extractWiremdContainer(
   const blockLines: string[] = []
   let depth = 1
   let i = startLine
+  let fence: { char: string; len: number } | null = null
   blockLines.push(lines[i]) // include opener
+
   i++
 
   while (i < lines.length) {
+    // Inside a fenced code block everything is content — including ':::' lines.
+    if (fence) {
+      blockLines.push(lines[i])
+      if (fenceCloser(lines[i], fence.char, fence.len)) fence = null
+      i++
+      continue
+    }
+
+    const opened = fenceOpener(lines[i])
+    if (opened) {
+      fence = opened
+      blockLines.push(lines[i])
+      i++
+      continue
+    }
+
     const trimmed = lines[i].trim()
     if (trimmed === ':::') {
       depth--
@@ -192,7 +245,6 @@ function extractWiremdContainer(
     }
     i++
   }
-
   const source = blockLines.join('\n')
   let renderedHtml = ''
 
