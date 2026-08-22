@@ -12,18 +12,13 @@
 // Export types
 export * from './types.js';
 
+// Export diagnostics surface
+export * from './diagnostics.js';
+
 // Export parser
 export * from './parser/index.js';
 
 // Export renderer
 export * from './renderer/index.js';
 
-/**
- * Package version
- */
-export const VERSION = '0.1.0';
-
-/**
- * Syntax version
- */
-export const SYNTAX_VERSION = '0.1';
+export { VERSION, SYNTAX_VERSION } from './version.js';

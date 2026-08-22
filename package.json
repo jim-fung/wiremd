@@ -22,6 +22,11 @@
       "types": "./dist/renderer/index.d.ts",
       "import": "./dist/renderer.js",
       "require": "./dist/renderer.cjs"
+    },
+    "./embed": {
+      "types": "./dist/embed/index.d.ts",
+      "import": "./dist/embed.js",
+      "require": "./dist/embed.cjs"
     }
   },
   "bin": {

@@ -11,6 +11,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import type { DocumentNode, ParseOptions, ValidationError } from '../types.js';
+import type { DiagnosticSink } from '../diagnostics.js';
 import { transformToWiremdAST } from './transformer.js';
 import { remarkWiremdContainers } from './remark-containers.js';
 import { remarkWiremdInlineContainers } from './remark-inline-containers.js';
@@ -20,6 +21,8 @@ import { remarkWiremdInlineContainers } from './remark-inline-containers.js';
  *
  * @param input - Markdown string with wiremd syntax
  * @param options - Parse options
+ * @param sink - Optional diagnostics receiver (e.g. unsupported-syntax
+ *   drops). Omit to keep the historical console-only behavior.
  * @returns wiremd AST (DocumentNode)
  *
  * @example
@@ -34,7 +37,11 @@ import { remarkWiremdInlineContainers } from './remark-inline-containers.js';
  * `);
  * ```
  */
-export function parse(input: string, options: ParseOptions = {}): DocumentNode {
+export function parse(
+  input: string,
+  options: ParseOptions = {},
+  sink?: DiagnosticSink
+): DocumentNode {
   // Create unified processor with remark
   const processor = unified()
     .use(remarkParse)
@@ -49,7 +56,7 @@ export function parse(input: string, options: ParseOptions = {}): DocumentNode {
   const processed = processor.runSync(mdast) as any;
 
   // Transform MDAST to wiremd AST
-  const wiremdAST = transformToWiremdAST(processed, options);
+  const wiremdAST = transformToWiremdAST(processed, options, sink);
 
   return wiremdAST;
 }

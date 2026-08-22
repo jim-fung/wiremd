@@ -14,33 +14,122 @@ import type {
   ParseOptions,
   DocumentMeta,
 } from '../types.js';
-import { SYNTAX_VERSION } from '../index.js';
+import type { DiagnosticSink, WiremdDiagnostic } from '../diagnostics.js';
+import { spansFromPosition } from '../diagnostics.js';
+import { SYNTAX_VERSION } from '../version.js';
+
+/**
+ * Sink receiving diagnostics for the currently-running transform. Parsing is
+ * synchronous, so a module-scoped slot set around `transformToWiremdAST` is
+ * sufficient and avoids threading a second parameter through every helper.
+ * Absent a sink, the drop path keeps its historical console.warn behavior.
+ */
+let activeDiagnosticSink: DiagnosticSink | null = null;
 
 /**
  * Transform MDAST to wiremd AST
+ *
+ * @param sink - Optional diagnostics receiver. Unsupported-syntax drops are
+ *   reported here (severity `warning`, code `wmd-unsupported-node`) instead
+ *   of being silently discarded. When omitted, drops fall back to
+ *   `console.warn`.
  */
 export function transformToWiremdAST(
   mdast: MdastRoot,
-  options: ParseOptions = {}
+  options: ParseOptions = {},
+  sink?: DiagnosticSink
 ): DocumentNode {
-  const meta: DocumentMeta = {
-    version: SYNTAX_VERSION,
-    viewport: 'desktop',
-    theme: 'sketch',
-  };
+  const previousSink = activeDiagnosticSink;
+  activeDiagnosticSink = sink ?? null;
+  try {
+    const meta: DocumentMeta = {
+      version: SYNTAX_VERSION,
+      viewport: 'desktop',
+      theme: 'sketch',
+    };
 
-  return {
-    type: 'document',
-    version: SYNTAX_VERSION,
-    meta,
-    children: processNodeList(mdast.children as any[], options),
-  };
+    const document: DocumentNode = {
+      type: 'document',
+      version: SYNTAX_VERSION,
+      meta,
+      children: processNodeList(mdast.children as any[], options),
+    };
+    if (options.position && (mdast as any).position && !document.position) {
+      document.position = (mdast as any).position;
+    }
+    return document;
+  } finally {
+    activeDiagnosticSink = previousSink;
+  }
+}
+
+/**
+ * Copy source-span data from the triggering mdast node onto a freshly built
+ * wiremd node. Runs only when the caller asked for positions
+ * (`ParseOptions.position`). Synthetic nodes assembled from several mdast
+ * pieces (containers, form-groups) inherit the span of the mdast node that
+ * triggered them — every descendant missing a span receives the trigger's
+ * span, keeping the tree fully located on a best-effort basis.
+ */
+function applySourceSpans(
+  node: WiremdNode,
+  mdastNode: any,
+  options: ParseOptions
+): WiremdNode {
+  if (!options.position) return node;
+  const position = mdastNode?.position;
+  if (!position || !position.start || !position.end) return node;
+
+  const stack: any[] = [node];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current || typeof current !== 'object') continue;
+    if (!current.position) {
+      current.position = position;
+    }
+    if (Array.isArray(current.children)) {
+      for (const child of current.children) stack.push(child);
+    }
+    if (Array.isArray(current.options)) {
+      for (const option of current.options) stack.push(option);
+    }
+  }
+  return node;
 }
 
 /**
  * Transform a single MDAST node to wiremd node
  */
 function transformNode(
+  node: any,
+  options: ParseOptions,
+  nextNode?: any
+): WiremdNode | null {
+  const transformed = transformNodeInner(node, options, nextNode);
+  if (!transformed) return null;
+  return applySourceSpans(transformed, node, options);
+}
+
+function reportUnsupportedNode(node: any): void {
+  const diagnostic: WiremdDiagnostic = {
+    severity: 'warning',
+    code: 'wmd-unsupported-node',
+    message: `Unsupported markdown construct "${node.type}" was omitted from the wiremd output.`,
+    source: 'parser',
+    ...spansFromPosition(node.position),
+  };
+  const sink = activeDiagnosticSink;
+  if (sink) {
+    sink(diagnostic);
+    return;
+  }
+  // No host sink attached (plain parse()/CLI path): keep the historical
+  // dev-visible console warning. Never reference `process` here — this
+  // module also runs in raw browser contexts.
+  console.warn(`[wiremd] Unsupported node type: ${node.type}`);
+}
+
+function transformNodeInner(
   node: any,
   options: ParseOptions,
   nextNode?: any
@@ -115,10 +204,10 @@ function transformNode(
       };
 
     default:
-      // Warn about unsupported nodes in development
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`[wiremd] Unsupported node type: ${node.type}`);
-      }
+      // Unsupported syntax is dropped from the AST but must be visible to
+      // hosts: report through the active diagnostics sink, falling back to
+      // console.warn on the plain parse path.
+      reportUnsupportedNode(node);
       return null;
   }
 }

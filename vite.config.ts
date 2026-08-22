@@ -9,6 +9,7 @@ export default defineConfig({
         index: resolve(__dirname, 'src/index.ts'),
         parser: resolve(__dirname, 'src/parser/index.ts'),
         renderer: resolve(__dirname, 'src/renderer/index.ts'),
+        embed: resolve(__dirname, 'src/embed/index.ts'),
         'cli/index': resolve(__dirname, 'src/cli/index.ts'),
       },
       formats: ['es', 'cjs'],
