@@ -200,3 +200,141 @@ export const emitBreadcrumbs: NodeEmitter<BreadcrumbsNode> = (node, format) => {
   const list = element('ol', [classAttr(format, BREADCRUMB_LIST_CLASSES)], lines, format);
   return element('nav', [{ name: 'aria-label', value: 'breadcrumb' }], [list], format);
 };
+
+// ---------------------------------------------------------------------------
+// Phase 3 Task 4: pagination / segmented-control / scroll-area / sidebar / menubar
+// ---------------------------------------------------------------------------
+
+type PaginationNode = Extract<WiremdNode, { type: 'pagination' }>;
+type SegmentedControlNode = Extract<WiremdNode, { type: 'segmented-control' }>;
+type ScrollAreaNode = Extract<WiremdNode, { type: 'scroll-area' }>;
+type SidebarNode = Extract<WiremdNode, { type: 'sidebar' }>;
+type MenubarNode = Extract<WiremdNode, { type: 'menubar' }>;
+
+/** Flatten the button-group containers the parser wraps bracket items in. */
+function flattenBracketItems(children: readonly WiremdNode[] | undefined): WiremdNode[] {
+  const out: WiremdNode[] = [];
+  for (const child of children ?? []) {
+    const anyChild = child as { type: string; containerType?: string; children?: WiremdNode[] };
+    if (anyChild.type === 'container' && anyChild.containerType === 'button-group') {
+      out.push(...(anyChild.children ?? []));
+    } else {
+      out.push(child);
+    }
+  }
+  return out;
+}
+
+function bracketItemActive(node: WiremdNode): boolean {
+  const classes: string[] = (node as { props?: { classes?: string[] } }).props?.classes ?? [];
+  return classes.includes('active') || (node as { props?: { variant?: string } }).props?.variant === 'primary';
+}
+
+const PAGINATION_LINK_CLASSES =
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-medium text-zinc-950 hover:bg-zinc-100';
+const PAGINATION_LINK_ACTIVE_CLASSES =
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-sm font-medium text-zinc-950 shadow-sm';
+
+export const emitPagination: NodeEmitter<PaginationNode> = (node, format) => {
+  const label = typeof node.props?.label === 'string' ? node.props.label : 'pagination';
+  const items = flattenBracketItems(node.children).filter(
+    (i) => i.type === 'button' || i.type === 'nav-item',
+  );
+  const listItems = items.map((item) => {
+    const active = bracketItemActive(item);
+    const linkClasses = active ? PAGINATION_LINK_ACTIVE_CLASSES : PAGINATION_LINK_CLASSES;
+    const attrs: Attr[] = [
+      { name: 'href', value: '#' },
+      classAttr(format, linkClasses),
+    ];
+    if (active) attrs.push({ name: 'aria-current', value: 'page' });
+    const text = escapeText((item as { content?: string }).content ?? '', format);
+    return inlineElement('li', [], inlineElement('a', attrs, text, format), format);
+  });
+  const list = element('ul', [classAttr(format, 'flex flex-row items-center gap-1')], listItems, format);
+  return element('nav', [{ name: 'aria-label', value: label }, classAttr(format, 'mx-auto flex w-full justify-center')], [list], format);
+};
+
+const SEGMENTED_ITEM_CLASSES =
+  'inline-flex h-8 items-center justify-center rounded-lg px-4 text-sm font-medium text-zinc-500 hover:text-zinc-950';
+const SEGMENTED_ITEM_ACTIVE_CLASSES =
+  'inline-flex h-8 items-center justify-center rounded-lg bg-white px-4 text-sm font-medium text-zinc-950 shadow-sm';
+
+export const emitSegmentedControl: NodeEmitter<SegmentedControlNode> = (node, format) => {
+  const items = flattenBracketItems(node.children).filter(
+    (i) => i.type === 'button' || i.type === 'nav-item',
+  );
+  const buttons = items.map((item) => {
+    const active = bracketItemActive(item);
+    const attrs: Attr[] = [
+      { name: 'type', value: 'button' },
+      classAttr(format, active ? SEGMENTED_ITEM_ACTIVE_CLASSES : SEGMENTED_ITEM_CLASSES),
+      { name: 'aria-pressed', value: active ? 'true' : 'false' },
+    ];
+    const text = escapeText((item as { content?: string }).content ?? '', format);
+    return inlineElement('button', attrs, text, format);
+  });
+  return element(
+    'div',
+    [classAttr(format, 'inline-flex items-center gap-0.5 rounded-lg bg-zinc-100 p-1'), { name: 'role', value: 'group' }],
+    buttons,
+    format,
+  );
+};
+
+export const emitScrollArea: NodeEmitter<ScrollAreaNode> = (node, format, recurse) => {
+  const maxHeight = node.props?.maxHeight;
+  const styleValue =
+    maxHeight !== undefined
+      ? `max-height:${typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight}`
+      : undefined;
+  const attrs: Attr[] = [
+    classAttr(format, 'relative size-full min-h-0 overflow-hidden rounded-lg border border-zinc-200'),
+  ];
+  if (styleValue !== undefined) attrs.push({ name: 'style', value: styleValue });
+  return element('div', attrs, childFragments(node.children, format, recurse), format);
+};
+
+const SIDEBAR_ITEM_CLASSES =
+  'flex h-8 w-full items-center gap-2 rounded-lg p-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950';
+const SIDEBAR_ITEM_ACTIVE_CLASSES =
+  'flex h-8 w-full items-center gap-2 rounded-lg bg-zinc-100 p-2 text-sm font-medium text-zinc-950';
+
+export const emitSidebar: NodeEmitter<SidebarNode> = (node, format, recurse) => {
+  const title = typeof node.props?.title === 'string' ? node.props.title : undefined;
+  const inner = (node.children ?? []).map((child) => {
+    if (child.type === 'list') {
+      const items = (child.children ?? [])
+        .filter((li): li is Extract<WiremdNode, { type: 'list-item' }> => li.type === 'list-item')
+        .map((li) => {
+          const active = (li.props?.classes ?? []).includes('active');
+          const text = escapeText((li.content ?? '').replace(/\s*:::\s*$/, '').trim(), format);
+          return inlineElement(
+            'a',
+            [{ name: 'href', value: '#' }, classAttr(format, active ? SIDEBAR_ITEM_ACTIVE_CLASSES : SIDEBAR_ITEM_CLASSES)],
+            text,
+            format,
+          );
+        });
+      return element('nav', [classAttr(format, 'flex flex-col gap-0.5')], items, format);
+    }
+    return recurse(child, format);
+  }).filter((f) => f.length > 0);
+  const header = title !== undefined
+    ? inlineElement('div', [classAttr(format, 'px-2 pb-3 text-sm font-semibold text-zinc-950')], escapeText(title, format), format)
+    : '';
+  return element(
+    'aside',
+    [classAttr(format, 'flex w-64 flex-col gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-3')],
+    [header, ...inner],
+    format,
+  );
+};
+
+export const emitMenubar: NodeEmitter<MenubarNode> = (node, format, recurse) =>
+  element(
+    'div',
+    [classAttr(format, 'flex w-fit items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-1'), { name: 'role', value: 'menubar' }],
+    childFragments(node.children, format, recurse),
+    format,
+  );

@@ -106,7 +106,7 @@ describe('Type Guards', () => {
     });
 
     it('should work with different container types', () => {
-      const containers = ['hero', 'card', 'modal', 'sidebar'];
+      const containers = ['hero', 'card', 'modal'];
 
       containers.forEach(type => {
         const ast = parse(`::: ${type}\nContent\n:::`);
@@ -117,6 +117,13 @@ describe('Type Guards', () => {
           expect(node.containerType).toBe(type);
         }
       });
+
+      // Since Phase 3 Task 4, ::: sidebar promotes to the dedicated sidebar
+      // discriminant instead of a generic container.
+      const ast = parse('::: sidebar\n- Home\n:::');
+      const node = ast.children[0];
+      expect(isContainerNode(node)).toBe(false);
+      expect(node.type).toBe('sidebar');
     });
   });
 

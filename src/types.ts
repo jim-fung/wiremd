@@ -122,6 +122,13 @@ export type WiremdNode =
   | { type: 'tooltip'; props: ComponentProps & { content: string; side?: 'top' | 'right' | 'bottom' | 'left' }; children: WiremdNode[]; position?: Location }
   | { type: 'preview-card'; props: ComponentProps & { href?: string }; children: WiremdNode[]; position?: Location }
 
+  // Navigation family (Phase 3 Task 4) - pagination / segmented-control / scroll-area / sidebar / menubar
+  | { type: 'pagination'; props: ComponentProps & { label?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'segmented-control'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+  | { type: 'scroll-area'; props: ComponentProps & { maxHeight?: number | string }; children: WiremdNode[]; position?: Location }
+  | { type: 'sidebar'; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'menubar'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 

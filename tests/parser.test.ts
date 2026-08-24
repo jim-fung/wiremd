@@ -1755,7 +1755,9 @@ Content here
       expect(layout.type).toBe('container');
       expect(layout.containerType).toBe('layout');
       expect(layout.props.classes).toContain('sidebar-main');
-      const sidebar = layout.children.find((c: any) => c.containerType === 'sidebar');
+      // Since Phase 3 Task 4 a nested ::: sidebar promotes to the dedicated
+      // `sidebar` discriminant (used by renderSidebarNav + emitSidebar).
+      const sidebar = layout.children.find((c: any) => c.type === 'sidebar' || c.containerType === 'sidebar');
       const main = layout.children.find((c: any) => c.containerType === 'main');
       expect(sidebar).toBeDefined();
       expect(main).toBeDefined();

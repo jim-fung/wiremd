@@ -167,6 +167,21 @@ export function renderNode(node: WiremdNode, context: RenderContext): string {
     case 'preview-card':
       return renderPreviewCard(node, context);
 
+    case 'pagination':
+      return renderPagination(node, context);
+
+    case 'segmented-control':
+      return renderSegmentedControl(node, context);
+
+    case 'scroll-area':
+      return renderScrollArea(node, context);
+
+    case 'sidebar':
+      return renderSidebarNav(node, context);
+
+    case 'menubar':
+      return renderMenubar(node, context);
+
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -501,9 +516,13 @@ function renderSidebarMainLayout(node: any, context: RenderContext, classes: str
   let current: { name: string; nodes: any[] } | null = null;
 
   for (const child of children) {
-    if (child.type === 'container' && (child.containerType === 'sidebar' || child.containerType === 'main')) {
+    if (
+      (child.type === 'container' && (child.containerType === 'sidebar' || child.containerType === 'main')) ||
+      child.type === 'sidebar'
+    ) {
       if (current) sections.push(current);
-      sections.push({ name: child.containerType, nodes: child.children || [] });
+      const name = child.type === 'sidebar' ? 'sidebar' : child.containerType;
+      sections.push({ name, nodes: child.children || [] });
       current = null;
     } else {
       const childClasses: string[] = child.props?.classes || [];
@@ -1106,4 +1125,114 @@ function renderPreviewCard(node: any, context: RenderContext): string {
   const wrap = (inner: string) =>
     href ? `<a class="${prefix}preview-card-link" href="${escapeHtml(href)}">${inner}</a>` : inner;
   return wrap(`<div class="${cls}">\n  ${childrenHTML}\n</div>`);
+}
+
+// ============================================================================
+// Phase 3 Task 4: navigation family
+// ============================================================================
+
+function renderPagination(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label: string = node.props?.label || 'pagination';
+  // Children arrive as a button-group container (from bracket parsing) or as
+  // loose nodes; flatten either way and render each as a page link.
+  const raw: any[] = node.children || [];
+  const items: any[] = [];
+  for (const child of raw) {
+    if (child.type === 'container' && child.containerType === 'button-group') {
+      items.push(...(child.children || []));
+    } else {
+      items.push(child);
+    }
+  }
+  const linksHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item' || item.type === 'text')
+    .map((item) => {
+      const isCurrent = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const linkCls = `${prefix}pagination-link${isCurrent ? ` ${prefix}pagination-active` : ''}`;
+      const currentAttr = isCurrent ? ' aria-current="page"' : '';
+      return `      <li class="${prefix}pagination-item"><a class="${linkCls}" href="#"${currentAttr}>${escapeHtml(text)}</a></li>`;
+    })
+    .join('\n');
+  return `<nav class="${prefix}pagination" aria-label="${escapeHtml(label)}" role="navigation">
+    <ul class="${prefix}pagination-content">
+${linksHTML}
+    </ul>
+</nav>`;
+}
+
+function renderSegmentedControl(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const raw: any[] = node.children || [];
+  const items: any[] = [];
+  for (const child of raw) {
+    if (child.type === 'container' && child.containerType === 'button-group') {
+      items.push(...(child.children || []));
+    } else {
+      items.push(child);
+    }
+  }
+  const buttonsHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item')
+    .map((item) => {
+      const isActive = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const btnCls = `${prefix}segmented-item${isActive ? ` ${prefix}segmented-active` : ''}`;
+      const activeAttr = isActive ? ' aria-pressed="true"' : ' aria-pressed="false"';
+      return `  <button type="button" class="${btnCls}"${activeAttr}>${escapeHtml(text)}</button>`;
+    })
+    .join('\n');
+  return `<div class="${prefix}segmented-control" role="group">\n${buttonsHTML}\n</div>`;
+}
+
+function renderScrollArea(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cleaned = { ...(node.props || {}) };
+  delete cleaned.maxHeight;
+  const cls = buildClasses(prefix, 'scroll-area', cleaned);
+  const maxHeight = node.props?.maxHeight;
+  const styleAttr = maxHeight !== undefined
+    ? ` style="max-height:${typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight}"`
+    : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n    ');
+  return `<div class="${cls}"${styleAttr}>\n  <div class="${prefix}scroll-area-viewport">\n    ${childrenHTML}\n  </div>\n</div>`;
+}
+
+function renderSidebarNav(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cleaned = { ...(node.props || {}) };
+  delete cleaned.title;
+  const cls = buildClasses(prefix, 'sidebar-nav', cleaned);
+  const title = node.props?.title;
+  const titleHTML = title ? `  <div class="${prefix}sidebar-header">${escapeHtml(title)}</div>\n` : '';
+  // Lists become nav menus; other children render as-is.
+  const childrenHTML = (node.children || []).map((c: any) => {
+    if (c.type === 'list') {
+      const itemsHTML = (c.children || [])
+        .map((li: any) => {
+          const liClasses: string[] = li.props?.classes || [];
+          const isActive = liClasses.includes('active');
+          const itemCls = `${prefix}sidebar-item${isActive ? ` ${prefix}sidebar-item-active` : ''}`;
+          const text = (li.content ?? '').replace(/\s*:::\s*$/, '').trim();
+          return `    <a class="${itemCls}" href="#">${escapeHtml(text)}</a>`;
+        })
+        .join('\n');
+      return `  <nav class="${prefix}sidebar-menu">\n${itemsHTML}\n  </nav>`;
+    }
+    return renderNode(c, context)
+      .split('\n')
+      .map((l: string) => (l ? `  ${l}` : l))
+      .join('\n');
+  }).join('\n');
+  return `<aside class="${cls}">\n${titleHTML}${childrenHTML}\n</aside>`;
+}
+
+function renderMenubar(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'menubar', node.props || {});
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${cls}" role="menubar">\n  ${childrenHTML}\n</div>`;
 }

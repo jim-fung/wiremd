@@ -225,6 +225,36 @@ This cannot be undone.
 Press S to save
 :::
 
+## Navigation
+
+::: pagination
+[Previous] [1]* [2] [3] [Next]
+:::
+
+::: segmented-control
+[Day]* [Week] [Month] [Year]
+:::
+
+::: scroll-area {maxHeight:220}
+- Item one
+- Item two
+- Item three
+- Item four
+- Item five
+- Item six
+:::
+
+::: sidebar
+### Menu
+- Home
+- Projects
+- Settings
+:::
+
+::: menubar
+[File] [Edit] [View]
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo

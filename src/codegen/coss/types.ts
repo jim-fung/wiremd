@@ -39,7 +39,8 @@ export type SupportedType =
   | 'table' | 'table-header' | 'table-row' | 'table-cell' | 'blockquote' | 'code' | 'separator'
   | 'tabs' | 'tab' | 'breadcrumbs' | 'demo'
   | 'toast' | 'skeleton' | 'spinner' | 'kbd' | 'progress' | 'meter'
-  | 'dialog' | 'alert-dialog' | 'sheet' | 'drawer' | 'popover' | 'tooltip' | 'preview-card';
+  | 'dialog' | 'alert-dialog' | 'sheet' | 'drawer' | 'popover' | 'tooltip' | 'preview-card'
+  | 'pagination' | 'segmented-control' | 'scroll-area' | 'sidebar' | 'menubar';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through

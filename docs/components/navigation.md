@@ -92,3 +92,15 @@ Use `[[ ... ]]` with `>` separators for breadcrumb trails.
 :::
 
 :::
+
+## Navigation family (Phase 3 Task 4)
+
+Five additional primitives with first-class codegen discriminants:
+
+- `::: pagination` — bracket items become page links; the `*` marker sets `aria-current="page"`.
+- `::: segmented-control` — `[Day]* [Week] [Month]` becomes a pill group with `aria-pressed`.
+- `::: scroll-area {maxHeight:220}` — bordered overflow viewport with inline max-height.
+- `::: sidebar` — now a dedicated discriminant: first heading is the header, list children render as a nav menu with `{.active}` support.
+- `::: menubar` — horizontal `role="menubar"` bar for app-style menu triggers.
+
+All five appear in the gallery page under "Navigation" and in the 52-entry `SupportedType` codegen contract.

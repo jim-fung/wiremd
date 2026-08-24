@@ -172,6 +172,28 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-overlays', { capture: 'viewport' });
   });
 
+  it('renders navigation family: pagination, segmented-control, scroll-area, sidebar, menubar', () => {
+    // pagination
+    cy.get('.wmd-pagination[aria-label="pagination"]').should('have.length.at.least', 1);
+    cy.get('.wmd-pagination-active').should('exist');
+    cy.get('.wmd-pagination-link[aria-current="page"]').should('exist');
+    cy.contains('.wmd-pagination', 'Next').should('be.visible');
+    // segmented-control
+    cy.get('.wmd-segmented-control[role="group"]').should('have.length.at.least', 1);
+    cy.get('.wmd-segmented-item.wmd-segmented-active').should('exist');
+    cy.contains('.wmd-segmented-control', 'Week').should('be.visible');
+    // scroll-area
+    cy.get('.wmd-scroll-area').should('have.length.at.least', 1);
+    cy.get('.wmd-scroll-area[style*="max-height"]').should('exist');
+    // sidebar
+    cy.get('aside.wmd-sidebar-nav').should('have.length.at.least', 1);
+    cy.get('.wmd-sidebar-menu .wmd-sidebar-item').should('have.length.at.least', 3);
+    // menubar
+    cy.get('.wmd-menubar[role="menubar"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-menubar', 'File').should('be.visible');
+    cy.screenshot('coss-navigation', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

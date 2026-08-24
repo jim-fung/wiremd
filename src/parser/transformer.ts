@@ -570,6 +570,35 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
     }
   }
 
+  // Phase 3 Task 4: navigation family
+  if (
+    containerType === 'pagination' || containerType === 'segmented-control' ||
+    containerType === 'scroll-area' || containerType === 'sidebar' ||
+    containerType === 'menubar'
+  ) {
+    const firstChild = (node.children || [])[0];
+    let titleFromOpener: string | undefined;
+    if (firstChild && (firstChild as any).type === 'heading') {
+      titleFromOpener = (firstChild as any).content;
+    }
+    const childrenToUse = titleFromOpener
+      ? (node.children || []).slice(1)
+      : (node.children || []);
+    const processedChildren = processNodeList(childrenToUse, options) as any;
+    switch (containerType) {
+      case 'pagination':
+        return { type: 'pagination', props, children: processedChildren };
+      case 'segmented-control':
+        return { type: 'segmented-control', props, children: processedChildren };
+      case 'scroll-area':
+        return { type: 'scroll-area', props, children: processedChildren };
+      case 'sidebar':
+        return { type: 'sidebar', props: { ...props, title: titleFromOpener }, children: processedChildren };
+      case 'menubar':
+        return { type: 'menubar', props, children: processedChildren };
+    }
+  }
+
   return {
     type: 'container',
     containerType: containerType as any,

@@ -33,7 +33,7 @@ import {
   emitTableRow,
   emitText,
 } from './emitters/content.js';
-import { emitBrand, emitBreadcrumbs, emitNav, emitNavItem, emitTab, emitTabs } from './emitters/navigation.js';
+import { emitBrand, emitBreadcrumbs, emitMenubar, emitNav, emitNavItem, emitPagination, emitScrollArea, emitSegmentedControl, emitSidebar, emitTab, emitTabs } from './emitters/navigation.js';
 import { emitContainer, emitDemo, emitGrid, emitGridItem, emitRow } from './emitters/layout.js';
 import {
   emitKbd,
@@ -56,7 +56,7 @@ import {
 /** Per-discriminant table: TypeScript verifies each emitter against its exact node shape. */
 type FamilyTable = { readonly [K in SupportedType]: NodeEmitter<Extract<WiremdNode, { type: K }>> };
 
-/** All 47 allowlisted discriminants, in contract order. */
+/** All 52 allowlisted discriminants, in contract order. */
 const FAMILY_EMITTERS: FamilyTable = {
   button: emitButton,
   input: emitInput,
@@ -107,6 +107,12 @@ const FAMILY_EMITTERS: FamilyTable = {
   popover: emitPopover,
   tooltip: emitTooltip,
   'preview-card': emitPreviewCard,
+  // Phase 3 Task 4: navigation family
+  pagination: emitPagination,
+  'segmented-control': emitSegmentedControl,
+  'scroll-area': emitScrollArea,
+  sidebar: emitSidebar,
+  menubar: emitMenubar,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */

@@ -4183,5 +4183,83 @@ body.${prefix}root {
   box-shadow: 0 8px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.04);
   transition: box-shadow 0.2s;
 }
+
+/* Phase 3 Task 4: navigation family */
+.${prefix}pagination {
+  display: flex; justify-content: center; width: 100%;
+  margin: 16px 0;
+}
+.${prefix}pagination-content {
+  display: flex; flex-direction: row; align-items: center; gap: 4px;
+  list-style: none; margin: 0; padding: 0;
+}
+.${prefix}pagination-item { list-style: none; }
+.${prefix}pagination-link {
+  display: inline-flex; height: 36px; min-width: 36px; align-items: center; justify-content: center;
+  padding: 0 10px; border-radius: 8px; border: 1px solid transparent;
+  font-size: 14px; font-weight: 500; color: #18181b; text-decoration: none;
+  cursor: pointer;
+}
+.${prefix}pagination-link:hover { background: #f4f4f5; }
+.${prefix}pagination-active {
+  border-color: #e4e4e7; background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.${prefix}segmented-control {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 3px; border-radius: 10px; background: #f4f4f5;
+  margin: 12px 0;
+}
+.${prefix}segmented-item {
+  display: inline-flex; height: 32px; align-items: center; justify-content: center;
+  padding: 0 14px; border: 0; border-radius: 8px;
+  font-size: 14px; font-weight: 500; color: #71717a; background: transparent;
+  cursor: pointer; transition: color 0.15s, background 0.15s;
+}
+.${prefix}segmented-item:hover { color: #18181b; }
+.${prefix}segmented-active {
+  background: #ffffff; color: #18181b;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.${prefix}scroll-area {
+  position: relative; width: 100%; height: 100%; min-height: 0;
+  overflow: hidden; margin: 12px 0;
+}
+.${prefix}scroll-area-viewport {
+  height: 100%; width: 100%; overflow: auto; border-radius: inherit;
+  outline: none;
+}
+
+.${prefix}sidebar-nav {
+  display: flex; flex-direction: column; gap: 4px;
+  width: 256px; padding: 16px 12px;
+  background: #fafafa; border: 1px solid #e4e4e7; border-radius: 12px;
+  margin: 12px 0;
+}
+.${prefix}sidebar-header {
+  font-size: 14px; font-weight: 600; color: #18181b;
+  padding: 4px 8px 12px;
+}
+.${prefix}sidebar-menu {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.${prefix}sidebar-item {
+  display: flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 8px; border-radius: 8px;
+  font-size: 14px; color: #52525b; text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.${prefix}sidebar-item:hover { background: #f4f4f5; color: #18181b; }
+.${prefix}sidebar-item-active {
+  background: #f4f4f5; color: #18181b; font-weight: 500;
+}
+
+.${prefix}menubar {
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px; border-radius: 10px; background: #fafafa;
+  border: 1px solid #e4e4e7; margin: 12px 0; width: fit-content;
+}
 `;
 }
