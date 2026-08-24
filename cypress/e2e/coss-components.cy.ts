@@ -293,3 +293,52 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-gallery-full', { capture: 'fullPage' });
   });
 });
+
+describe('coss particles (composition page, default style)', () => {
+  beforeEach(() => {
+    cy.visit('/coss-particles.md');
+    cy.get('body.wmd-root.wmd-coss').should('exist');
+  });
+
+  it('renders all 12 composition demos with codegen panes', () => {
+    cy.get('.wmd-demo').should('have.length', 12);
+    cy.get('.wmd-demo-code').should('have.length.at.least', 12);
+  });
+
+  it('renders login, signup, and pricing cards', () => {
+    cy.contains('.wmd-container-card', 'Sign in').should('exist');
+    cy.contains('.wmd-container-card', 'Create account').should('exist');
+    cy.contains('.wmd-container-card', 'Pro plan').should('exist');
+  });
+
+  it('renders navbar, settings panel, and empty state', () => {
+    cy.get('nav.wmd-nav .wmd-brand').should('contain.text', 'Acme');
+    // Inside a ::: layout, the sidebar section renders as div.wmd-layout-sidebar
+    // (aside.wmd-sidebar-nav only exists for top-level ::: sidebar blocks).
+    cy.get('.wmd-layout-sidebar').should('contain.text', 'Workspace');
+    cy.get('.wmd-layout-main').should('contain.text', 'Notifications');
+    cy.get('.wmd-switch').should('have.length.at.least', 2);
+    cy.get('.wmd-switch[aria-checked="true"]').should('exist');
+    cy.contains('.wmd-switch-label', 'Email notifications').should('exist');
+    cy.get('.wmd-empty').should('contain.text', 'No projects yet');
+  });
+
+  it('renders dialog, toast, table, popover, notifications, and stepper', () => {
+    cy.get('.wmd-alert-dialog[role="alertdialog"]').should(
+      'contain.text',
+      'Delete project?',
+    );
+    cy.contains('.wmd-alert-dialog', 'Cancel').should('exist');
+    cy.get('.wmd-toast').should('contain.text', 'Changes saved.');
+    cy.get('table.wmd-table').should('exist');
+    cy.contains('table.wmd-table', 'Acme redesign').should('exist');
+    cy.get('.wmd-popover').should('contain.text', 'Profile');
+    cy.contains('.wmd-demo', 'Mark all as read').should('exist');
+    cy.contains('.wmd-demo', 'Invite team').should('exist');
+    cy.screenshot('coss-particles', { capture: 'viewport' });
+  });
+
+  it('captures the full particles page', () => {
+    cy.screenshot('coss-particles-full', { capture: 'fullPage' });
+  });
+});
