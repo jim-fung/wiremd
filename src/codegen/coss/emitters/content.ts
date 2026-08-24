@@ -58,14 +58,20 @@ function inlineBody(
   recurse: CodegenRecurse,
 ): string {
   if (node.children !== undefined && node.children.length > 0) {
-    return node.children.map((child) => recurse(child, format)).join('');
+    return node.children
+      .filter((child) => child != null)
+      .map((child) => recurse(child as WiremdNode, format))
+      .join('');
   }
   return text(format, node.content ?? '');
 }
 
 /** Recurse every child (defensive against absent arrays) and join inline. */
 function childBody(children: WiremdNode[] | undefined, format: CodegenFormat, recurse: CodegenRecurse): string {
-  return (children ?? []).map((child) => recurse(child, format)).join('');
+  return (children ?? [])
+    .filter((child) => child != null)
+    .map((child) => recurse(child as WiremdNode, format))
+    .join('');
 }
 
 /** Heading level -> coss size class (h5 and h6 share `text-base`). */

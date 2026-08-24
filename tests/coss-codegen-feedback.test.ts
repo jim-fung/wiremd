@@ -144,7 +144,7 @@ describe('emitAlert (feedback family)', () => {
     expect(() => generateCode({ type: 'alert', alertType: 'warning', props: { classes: [] }, children: [] }))
       .toThrow('Unsupported codegen node type: alert');
     // `form` etc. still throw.
-    for (const t of ['form', 'accordion', 'accordion-item', 'loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item'] as const) {
+    for (const t of ['accordion', 'accordion-item', 'loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item'] as const) {
       expect(() => generateCode({ type: t, props: {} } as unknown as WiremdNode))
         .toThrow(`Unsupported codegen node type: ${t}`);
     }

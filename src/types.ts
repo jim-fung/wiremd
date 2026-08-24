@@ -129,6 +129,23 @@ export type WiremdNode =
   | { type: 'sidebar'; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
   | { type: 'menubar'; props: ComponentProps; children: WiremdNode[]; position?: Location }
 
+  // Data entry family (Phase 3 Task 5)
+  | { type: 'form'; props: ComponentProps & { action?: string; method?: 'get' | 'post' }; children: WiremdNode[]; position?: Location }
+  | { type: 'field'; props: ComponentProps & { label?: string; description?: string; error?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'fieldset'; props: ComponentProps & { legend?: string; description?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'label'; content: string; props: ComponentProps & { htmlFor?: string }; position?: Location }
+  | { type: 'input-group'; props: ComponentProps & { addonStart?: string; addonEnd?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'otp-field'; props: ComponentProps & { length?: number; maxLength?: number }; position?: Location }
+  | { type: 'number-field'; props: ComponentProps & { value?: number; min?: number; max?: number; step?: number; placeholder?: string }; position?: Location }
+  | { type: 'autocomplete'; props: ComponentProps & { placeholder?: string; suggestions?: string[] }; children: WiremdNode[]; position?: Location }
+  | { type: 'combobox'; props: ComponentProps & { placeholder?: string; options?: string[] }; children: WiremdNode[]; position?: Location }
+  | { type: 'command'; props: ComponentProps & { placeholder?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'checkbox-group'; props: ComponentProps & { label?: string; description?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'toggle-group'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+  | { type: 'switch'; checked: boolean; props: ComponentProps & { label?: string; description?: string; disabled?: boolean }; position?: Location }
+  | { type: 'slider'; value: number; props: ComponentProps & { min?: number; max?: number; step?: number; label?: string }; position?: Location }
+  | { type: 'toggle'; pressed: boolean; props: ComponentProps & { label?: string }; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 

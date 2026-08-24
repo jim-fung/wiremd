@@ -34,6 +34,23 @@ import {
   emitText,
 } from './emitters/content.js';
 import { emitBrand, emitBreadcrumbs, emitMenubar, emitNav, emitNavItem, emitPagination, emitScrollArea, emitSegmentedControl, emitSidebar, emitTab, emitTabs } from './emitters/navigation.js';
+import {
+  emitAutocomplete,
+  emitCheckboxGroup,
+  emitCombobox,
+  emitCommand,
+  emitField,
+  emitFieldset,
+  emitForm,
+  emitInputGroup,
+  emitLabel,
+  emitNumberField,
+  emitOtpField,
+  emitSlider,
+  emitSwitch,
+  emitToggle,
+  emitToggleGroup,
+} from './emitters/data-entry.js';
 import { emitContainer, emitDemo, emitGrid, emitGridItem, emitRow } from './emitters/layout.js';
 import {
   emitKbd,
@@ -56,7 +73,7 @@ import {
 /** Per-discriminant table: TypeScript verifies each emitter against its exact node shape. */
 type FamilyTable = { readonly [K in SupportedType]: NodeEmitter<Extract<WiremdNode, { type: K }>> };
 
-/** All 52 allowlisted discriminants, in contract order. */
+/** All 67 allowlisted discriminants, in contract order. */
 const FAMILY_EMITTERS: FamilyTable = {
   button: emitButton,
   input: emitInput,
@@ -113,6 +130,22 @@ const FAMILY_EMITTERS: FamilyTable = {
   'scroll-area': emitScrollArea,
   sidebar: emitSidebar,
   menubar: emitMenubar,
+  // Phase 3 Task 5: data entry family
+  form: emitForm,
+  field: emitField,
+  fieldset: emitFieldset,
+  label: emitLabel,
+  'input-group': emitInputGroup,
+  'otp-field': emitOtpField,
+  'number-field': emitNumberField,
+  autocomplete: emitAutocomplete,
+  combobox: emitCombobox,
+  command: emitCommand,
+  'checkbox-group': emitCheckboxGroup,
+  'toggle-group': emitToggleGroup,
+  switch: emitSwitch,
+  slider: emitSlider,
+  toggle: emitToggle,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */

@@ -135,7 +135,7 @@ function transformNodeInner(
   nextNode?: any
 ): WiremdNode | null {
   switch (node.type) {
-    case 'wiremdContainer':
+    case 'wiremdBlock':
       return transformContainer(node, options);
 
     case 'wiremdInlineContainer':
@@ -596,6 +596,201 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
         return { type: 'sidebar', props: { ...props, title: titleFromOpener }, children: processedChildren };
       case 'menubar':
         return { type: 'menubar', props, children: processedChildren };
+    }
+  }
+
+  // Phase 3 Task 5: data entry family
+  if (
+    containerType === 'form' || containerType === 'field' || containerType === 'fieldset' ||
+    containerType === 'label' || containerType === 'input-group' || containerType === 'otp-field' ||
+    containerType === 'number-field' || containerType === 'autocomplete' ||
+    containerType === 'combobox' || containerType === 'command' ||
+    containerType === 'checkbox-group' || containerType === 'toggle-group' ||
+    containerType === 'switch' || containerType === 'slider' || containerType === 'toggle'
+  ) {
+    const processedChildren = processNodeList(node.children || [], options) as any;
+    // Promote the first processed heading child to a label/legend string and drop it from children.
+    const takeHeading = (): string | undefined => {
+      const idx = processedChildren.findIndex((c: any) => c.type === 'heading');
+      if (idx === -1) return undefined;
+      const [h] = processedChildren.splice(idx, 1);
+      return String((h as any).content ?? '').trim() || undefined;
+    };
+    const extractText = (): string => {
+      const parts: string[] = [];
+      for (const child of node.children || []) {
+        const any = child as { type: string; value?: string; children?: any[] };
+        if (any.type === 'text') parts.push(any.value ?? '');
+        else if (any.children) {
+          const text = (any.children || [])
+            .map((c: any) => c.value ?? '')
+            .join('');
+          if (text.trim()) parts.push(text.trim());
+        }
+      }
+      return parts.join(' ').trim();
+    };
+    switch (containerType) {
+      case 'form':
+        return { type: 'form', props, children: processedChildren };
+      case 'field': {
+        const label = takeHeading();
+        const labelFromProp = typeof props.label === 'string' ? props.label : undefined;
+        const rest = { ...props };
+        delete rest.label; delete rest.description; delete rest.error;
+        return {
+          type: 'field',
+          props: {
+            ...rest,
+            label: label ?? labelFromProp,
+            description: typeof props.description === 'string' ? props.description : undefined,
+            error: typeof props.error === 'string' ? props.error : undefined,
+          },
+          children: processedChildren,
+        };
+      }
+      case 'fieldset': {
+        const legend = takeHeading();
+        const rest = { ...props };
+        delete rest.legend; delete rest.description;
+        return {
+          type: 'fieldset',
+          props: {
+            ...rest,
+            legend,
+            description: typeof props.description === 'string' ? props.description : undefined,
+          },
+          children: processedChildren,
+        };
+      }
+      case 'label':
+        return { type: 'label', content: extractText(), props };
+      case 'input-group': {
+        const rest = { ...props };
+        delete rest.addonStart; delete rest.addonEnd;
+        return {
+          type: 'input-group',
+          props: {
+            ...rest,
+            addonStart: typeof props.addonStart === 'string' ? props.addonStart : undefined,
+            addonEnd: typeof props.addonEnd === 'string' ? props.addonEnd : undefined,
+          },
+          children: processedChildren,
+        };
+      }
+      case 'otp-field': {
+        const rest = { ...props };
+        delete rest.length; delete rest.maxLength;
+        return {
+          type: 'otp-field',
+          props: {
+            ...rest,
+            length: props.length !== undefined ? Number(props.length) : 6,
+            maxLength: props.maxLength !== undefined ? Number(props.maxLength) : 1,
+          },
+        };
+      }
+      case 'number-field': {
+        const rest = { ...props } as any;
+        const numeric = (v: any): number | undefined => (v !== undefined && !Number.isNaN(Number(v)) ? Number(v) : undefined);
+        const out: any = { type: 'number-field', props: { ...rest } };
+        delete out.props.value; delete out.props.min; delete out.props.max; delete out.props.step;
+        out.props.value = numeric(props.value);
+        out.props.min = numeric(props.min);
+        out.props.max = numeric(props.max);
+        out.props.step = numeric(props.step);
+        out.props.placeholder = typeof props.placeholder === 'string' ? props.placeholder : undefined;
+        return out;
+      }
+      case 'autocomplete':
+      case 'combobox': {
+        const rest = { ...props };
+        delete rest.placeholder; delete rest.options; delete rest.suggestions;
+        // Harvest options from the processed wiremd list (list-item nodes carry .content strings)
+        const listChild = (processedChildren as any[]).find((c: any) => c.type === 'list');
+        const opts: string[] = listChild
+          ? (listChild.children || [])
+              .map((li: any) => String(li.content ?? '').trim())
+              .filter(Boolean)
+          : [];
+        const isAuto = containerType === 'autocomplete';
+        return {
+          type: isAuto ? 'autocomplete' : 'combobox',
+          props: {
+            ...rest,
+            placeholder: typeof props.placeholder === 'string' ? props.placeholder : undefined,
+            ...(isAuto ? { suggestions: opts } : { options: opts }),
+          },
+          children: processedChildren,
+        };
+      }
+      case 'command':
+        return { type: 'command', props, children: processedChildren };
+      case 'checkbox-group': {
+        const label = takeHeading();
+        const rest = { ...props };
+        delete rest.label; delete rest.description;
+        return {
+          type: 'checkbox-group',
+          props: {
+            ...rest,
+            label,
+            description: typeof props.description === 'string' ? props.description : undefined,
+          },
+          children: processedChildren,
+        };
+      }
+      case 'toggle-group':
+        return { type: 'toggle-group', props, children: processedChildren };
+      case 'switch': {
+        const classes = (props.classes || []) as string[];
+        const checked = classes.includes('checked') || props.checked === true;
+        const rest = { ...props } as any;
+        delete rest.checked; delete rest.label; delete rest.description; delete rest.disabled;
+        rest.classes = classes.filter((c) => c !== 'checked');
+        return {
+          type: 'switch',
+          checked,
+          props: {
+            ...rest,
+            label: typeof props.label === 'string' ? props.label : undefined,
+            description: typeof props.description === 'string' ? props.description : undefined,
+            disabled: props.disabled === true,
+          },
+        };
+      }
+      case 'slider': {
+        const rest = { ...props } as any;
+        const numeric = (v: any): number | undefined => (v !== undefined && !Number.isNaN(Number(v)) ? Number(v) : undefined);
+        const value = numeric(props.value) ?? 50;
+        delete rest.value; delete rest.min; delete rest.max; delete rest.step; delete rest.label;
+        return {
+          type: 'slider',
+          value,
+          props: {
+            ...rest,
+            min: numeric(props.min) ?? 0,
+            max: numeric(props.max) ?? 100,
+            step: numeric(props.step) ?? 1,
+            label: typeof props.label === 'string' ? props.label : undefined,
+          },
+        };
+      }
+      case 'toggle': {
+        const classes = (props.classes || []) as string[];
+        const pressed = classes.includes('active') || classes.includes('pressed') || props.pressed === true;
+        const rest = { ...props } as any;
+        delete rest.pressed;
+        rest.classes = classes.filter((c) => c !== 'active' && c !== 'pressed');
+        return {
+          type: 'toggle',
+          pressed,
+          props: {
+            ...rest,
+            label: typeof props.label === 'string' ? props.label : undefined,
+          },
+        };
+      }
     }
   }
 
@@ -2094,6 +2289,21 @@ function parseAttributes(attrString: string): any {
     return props;
   }
 
+  // The input may be a single `{…}` group or several glued together
+  // (e.g. `{.active} {label:"Bold"}`). Split on the glue first so each group
+  // is a standalone attrs blob parseable by the original logic.
+  if (attrString.startsWith('{') && attrString.endsWith('}') && attrString.slice(1, -1).includes('} {')) {
+    const merged: any = { classes: [] };
+    for (const group of attrString.match(/\{[^}]+\}/g) || []) {
+      const sub = parseAttributes(group);
+      for (const cls of sub.classes || []) merged.classes.push(cls);
+      for (const [k, v] of Object.entries(sub)) {
+        if (k === 'classes') continue;
+        merged[k] = v;
+      }
+    }
+    return merged;
+  }
   // Remove outer braces
   const inner = attrString.replace(/^\{|\}$/g, '').trim();
 
@@ -2101,8 +2311,8 @@ function parseAttributes(attrString: string): any {
     return props;
   }
 
-  // Split by spaces (simple parser for now)
-  const parts = inner.split(/\s+/);
+  // Tokenize: a quoted value (key:"multi word") stays one token; bare words split on whitespace
+  const parts = inner.match(/\S+:"[^"]*"|\S+:'[^']*'|\S+/g) ?? [];
 
   for (const part of parts) {
     // Class: .classname
@@ -2113,10 +2323,11 @@ function parseAttributes(attrString: string): any {
     else if (part.startsWith(':')) {
       props.state = part.slice(1);
     }
-    // Key-value: key:value
+    // Key-value: key:value (strip surrounding quotes from the value)
     else if (part.includes(':')) {
       const [key, value] = part.split(':', 2);
-      props[key] = value || true;
+      const unquoted = value.replace(/^["']|["']$/g, '');
+      props[key] = unquoted || true;
     }
     // Boolean: required, disabled, etc.
     else {

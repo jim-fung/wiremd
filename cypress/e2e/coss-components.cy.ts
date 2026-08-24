@@ -194,6 +194,47 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-navigation', { capture: 'viewport' });
   });
 
+  it('renders data entry family: form, field, fieldset, switch, slider, toggle, otp, number, combobox, command', () => {
+    // form
+    cy.get('form.wmd-form').should('have.length.at.least', 1);
+    cy.contains('.wmd-form', 'Sign in').should('exist');
+    // field
+    cy.get('.wmd-field .wmd-field-label').should('contain', 'Workspace name');
+    // fieldset
+    cy.get('fieldset.wmd-fieldset .wmd-fieldset-legend').should('contain', 'Notifications');
+    // label
+    cy.get('.wmd-label').should('contain', 'Email address');
+    // input-group
+    cy.get('.wmd-input-group .wmd-input-group-addon').should('contain', 'example.com/');
+    // otp-field
+    cy.get('.wmd-otp-field .wmd-otp-slot').should('have.length', 6);
+    // number-field
+    cy.get('.wmd-number-field .wmd-number-stepper').should('have.length', 2);
+    // autocomplete
+    cy.get('.wmd-autocomplete-input').should('have.attr', 'placeholder', 'Search fruits...');
+    cy.get('.wmd-autocomplete-option').should('have.length', 3);
+    // combobox
+    cy.get('.wmd-combobox-input').should('have.attr', 'placeholder', 'Select country...');
+    cy.get('.wmd-combobox-option').should('have.length.at.least', 3);
+    // command
+    cy.get('.wmd-command-input').should('have.attr', 'placeholder', 'Type a command...');
+    // checkbox-group
+    cy.get('.wmd-checkbox-group .wmd-checkbox-group-description').should('contain', 'Pick all that apply');
+    // toggle-group
+    cy.contains('.wmd-toggle-group', 'Star').should('exist');
+    // switch
+    cy.get('.wmd-switch[aria-checked="true"]').should('exist');
+    cy.get('.wmd-switch[aria-checked="false"]').should('exist');
+    cy.get('.wmd-switch-on').should('exist');
+    // slider
+    cy.get('.wmd-slider .wmd-slider-track').should('have.attr', 'aria-valuenow', '70');
+    cy.get('.wmd-slider-fill[style*="width:70%"]').should('exist');
+    // toggle
+    cy.get('.wmd-toggle-pressed').should('exist');
+    cy.contains('.wmd-toggle', 'Bold').should('exist');
+    cy.screenshot('coss-data-entry', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

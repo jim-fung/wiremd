@@ -4261,5 +4261,143 @@ body.${prefix}root {
   padding: 4px; border-radius: 10px; background: #fafafa;
   border: 1px solid #e4e4e7; margin: 12px 0; width: fit-content;
 }
+
+/* Phase 3 Task 5: data entry family */
+.${prefix}form { display: flex; flex-direction: column; gap: 16px; margin: 16px 0; }
+
+.${prefix}field { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.${prefix}field-label { font-size: 14px; font-weight: 500; color: #18181b; }
+.${prefix}field-description { font-size: 12px; color: #71717a; }
+.${prefix}field-error { font-size: 12px; color: #dc2626; }
+
+.${prefix}fieldset {
+  display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid #e4e4e7; border-radius: 12px;
+  padding: 16px; margin: 16px 0;
+}
+.${prefix}fieldset-legend { font-size: 14px; font-weight: 600; color: #18181b; padding: 0 4px; }
+.${prefix}fieldset-description { font-size: 13px; color: #71717a; margin: 0; }
+
+.${prefix}label { font-size: 14px; font-weight: 500; color: #18181b; display: inline-block; }
+
+.${prefix}input-group {
+  display: flex; width: 100%; align-items: stretch;
+  border: 1px solid #e4e4e7; border-radius: 10px; overflow: hidden;
+  margin: 8px 0;
+}
+.${prefix}input-group-addon {
+  display: inline-flex; align-items: center; padding: 0 12px;
+  font-size: 14px; color: #71717a; background: #fafafa;
+  border-right: 1px solid #e4e4e7; white-space: nowrap;
+}
+
+.${prefix}otp-field { display: flex; gap: 8px; margin: 12px 0; }
+.${prefix}otp-slot {
+  width: 40px; height: 44px; text-align: center;
+  border: 1px solid #e4e4e7; border-radius: 10px;
+  font-size: 16px; font-variant-numeric: tabular-nums;
+  outline: none; transition: border-color 0.15s;
+}
+.${prefix}otp-slot:focus { border-color: #18181b; }
+
+.${prefix}number-field {
+  display: inline-flex; align-items: center;
+  border: 1px solid #e4e4e7; border-radius: 10px; overflow: hidden;
+  margin: 8px 0; width: fit-content;
+}
+.${prefix}number-input {
+  width: 72px; text-align: center; border: 0; outline: none;
+  padding: 8px 4px; font-size: 14px; color: #18181b;
+  background: transparent; font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.${prefix}number-input::-webkit-outer-spin-button,
+.${prefix}number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.${prefix}number-stepper {
+  width: 32px; height: 36px; border: 0; background: transparent;
+  font-size: 16px; color: #71717a; cursor: pointer;
+}
+.${prefix}number-stepper:hover { background: #f4f4f5; color: #18181b; }
+
+.${prefix}autocomplete, .${prefix}combobox { position: relative; display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.${prefix}autocomplete-input, .${prefix}combobox-input, .${prefix}command-input {
+  width: 100%; height: 36px; padding: 0 12px;
+  border: 1px solid #e4e4e7; border-radius: 10px;
+  font-size: 14px; color: #18181b; outline: none; background: #ffffff;
+}
+.${prefix}autocomplete-input:focus, .${prefix}combobox-input:focus, .${prefix}command-input:focus { border-color: #18181b; }
+.${prefix}autocomplete-list, .${prefix}combobox-list {
+  list-style: none; margin: 0; padding: 4px;
+  border: 1px solid #e4e4e7; border-radius: 10px; background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.${prefix}autocomplete-option, .${prefix}combobox-option {
+  padding: 6px 10px; border-radius: 6px; font-size: 14px; color: #18181b;
+}
+.${prefix}autocomplete-option:hover, .${prefix}combobox-option:hover { background: #f4f4f5; }
+.${prefix}combobox { flex-direction: row; align-items: center; }
+.${prefix}combobox-input { padding-right: 32px; }
+.${prefix}combobox-caret {
+  position: absolute; right: 10px; top: 10px; font-size: 12px;
+  color: #71717a; pointer-events: none;
+}
+
+.${prefix}command {
+  display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid #e4e4e7; border-radius: 12px;
+  padding: 8px; margin: 12px 0; max-width: 420px;
+}
+
+.${prefix}checkbox-group { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 12px 0; }
+.${prefix}checkbox-group-label { font-size: 14px; font-weight: 500; color: #18181b; margin: 0; }
+.${prefix}checkbox-group-description { font-size: 12px; color: #71717a; margin: 0; }
+
+.${prefix}toggle-group {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 10px; background: #f4f4f5; margin: 12px 0;
+}
+.${prefix}toggle {
+  display: inline-flex; height: 32px; align-items: center; justify-content: center;
+  padding: 0 12px; border: 1px solid #e4e4e7; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: #71717a; background: #ffffff;
+  cursor: pointer;
+}
+.${prefix}toggle:hover { color: #18181b; }
+.${prefix}toggle-pressed { background: #18181b; border-color: #18181b; color: #fafafa; }
+
+.${prefix}switch-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.${prefix}switch {
+  position: relative; width: 36px; height: 20px;
+  border-radius: 9999px; border: 0; cursor: pointer;
+  background: #e4e4e7; transition: background 0.2s; padding: 0;
+}
+.${prefix}switch-thumb {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 9999px; background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  transition: left 0.2s;
+}
+.${prefix}switch-on { background: #18181b; }
+.${prefix}switch-on .${prefix}switch-thumb { left: 18px; }
+.${prefix}switch-label { font-size: 14px; color: #18181b; }
+.${prefix}switch-description { font-size: 12px; color: #71717a; }
+
+.${prefix}slider { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; max-width: 360px; }
+.${prefix}slider-label { font-size: 14px; color: #18181b; display: flex; justify-content: space-between; }
+.${prefix}slider-value { font-variant-numeric: tabular-nums; color: #71717a; }
+.${prefix}slider-track {
+  position: relative; height: 6px; border-radius: 9999px; background: #e4e4e7;
+}
+.${prefix}slider-fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  border-radius: 9999px; background: #18181b;
+}
+.${prefix}slider-thumb {
+  position: absolute; top: 50%; width: 16px; height: 16px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px; background: #ffffff;
+  border: 2px solid #18181b;
+}
 `;
 }

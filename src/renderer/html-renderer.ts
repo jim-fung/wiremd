@@ -182,6 +182,51 @@ export function renderNode(node: WiremdNode, context: RenderContext): string {
     case 'menubar':
       return renderMenubar(node, context);
 
+    case 'form':
+      return renderForm(node, context);
+
+    case 'field':
+      return renderField(node, context);
+
+    case 'fieldset':
+      return renderFieldset(node, context);
+
+    case 'label':
+      return renderLabel(node, context);
+
+    case 'input-group':
+      return renderInputGroup(node, context);
+
+    case 'otp-field':
+      return renderOtpField(node, context);
+
+    case 'number-field':
+      return renderNumberField(node, context);
+
+    case 'autocomplete':
+      return renderAutocomplete(node, context);
+
+    case 'combobox':
+      return renderCombobox(node, context);
+
+    case 'command':
+      return renderCommand(node, context);
+
+    case 'checkbox-group':
+      return renderCheckboxGroup(node, context);
+
+    case 'toggle-group':
+      return renderToggleGroup(node, context);
+
+    case 'switch':
+      return renderSwitch(node, context);
+
+    case 'slider':
+      return renderSlider(node, context);
+
+    case 'toggle':
+      return renderToggleNode(node, context);
+
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -1235,4 +1280,202 @@ function renderMenubar(node: any, context: RenderContext): string {
   const cls = buildClasses(prefix, 'menubar', node.props || {});
   const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
   return `<div class="${cls}" role="menubar">\n  ${childrenHTML}\n</div>`;
+}
+
+// ============================================================================
+// Phase 3 Task 5: data entry family
+// ============================================================================
+
+function renderForm(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const action = node.props?.action;
+  const method = node.props?.method;
+  const actionAttr = action ? ` action="${escapeHtml(action)}"` : '';
+  const methodAttr = method ? ` method="${escapeHtml(method)}"` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<form class="${prefix}form"${actionAttr}${methodAttr}>\n  ${childrenHTML}\n</form>`;
+}
+
+function renderField(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label = node.props?.label;
+  const desc = node.props?.description;
+  const error = node.props?.error;
+  const labelHTML = label ? `  <label class="${prefix}field-label">${escapeHtml(label)}</label>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const descHTML = desc ? `\n  <p class="${prefix}field-description">${escapeHtml(desc)}</p>` : '';
+  const errorHTML = error ? `\n  <p class="${prefix}field-error" role="alert">${escapeHtml(error)}</p>` : '';
+  return `<div class="${prefix}field">\n${labelHTML}  ${childrenHTML}${descHTML}${errorHTML}\n</div>`;
+}
+
+function renderFieldset(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const legend = node.props?.legend;
+  const desc = node.props?.description;
+  const legendHTML = legend ? `  <legend class="${prefix}fieldset-legend">${escapeHtml(legend)}</legend>\n` : '';
+  const descHTML = desc ? `  <p class="${prefix}fieldset-description">${escapeHtml(desc)}</p>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<fieldset class="${prefix}fieldset">\n${legendHTML}${descHTML}  ${childrenHTML}\n</fieldset>`;
+}
+
+function renderLabel(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const htmlFor = node.props?.htmlFor;
+  const forAttr = htmlFor ? ` for="${escapeHtml(htmlFor)}"` : '';
+  return `<label class="${prefix}label"${forAttr}>${escapeHtml(node.content ?? '')}</label>`;
+}
+
+function renderInputGroup(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const start = node.props?.addonStart;
+  const end = node.props?.addonEnd;
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const startHTML = start ? `  <span class="${prefix}input-group-addon">${escapeHtml(start)}</span>\n` : '';
+  const endHTML = end ? `\n  <span class="${prefix}input-group-addon">${escapeHtml(end)}</span>` : '';
+  return `<div class="${prefix}input-group">\n${startHTML}  ${childrenHTML}${endHTML}\n</div>`;
+}
+
+function renderOtpField(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const length = Number(node.props?.length ?? 6);
+  const maxLength = Number(node.props?.maxLength ?? 1);
+  const slots = Array.from({ length }, () =>
+    `<input class="${prefix}otp-slot" type="text" inputmode="numeric" maxlength="${maxLength}" aria-label="digit">`,
+  ).join('\n  ');
+  return `<div class="${prefix}otp-field" role="group" aria-label="Verification code">\n  ${slots}\n</div>`;
+}
+
+function renderNumberField(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const numAttrs = (name: 'min' | 'max' | 'step') =>
+    p[name] !== undefined ? ` ${name}="${escapeHtml(String(p[name]))}"` : '';
+  const valueAttr = p.value !== undefined ? ` value="${escapeHtml(String(p.value))}"` : '';
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const btnCls = `${prefix}number-stepper`;
+  return `<div class="${prefix}number-field">
+  <button type="button" class="${btnCls}" aria-label="Decrease">−</button>
+  <input class="${prefix}number-input" type="number"${numAttrs('min')}${numAttrs('max')}${numAttrs('step')}${valueAttr}${placeholderAttr}>
+  <button type="button" class="${btnCls}" aria-label="Increase">+</button>
+</div>`;
+}
+
+function renderAutocomplete(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const suggestions: string[] = p.suggestions || [];
+  const listItems = suggestions
+    .map((s) => `    <li class="${prefix}autocomplete-option" role="option">${escapeHtml(s)}</li>`)
+    .join('\n');
+  const listHTML = suggestions.length > 0
+    ? `\n  <ul class="${prefix}autocomplete-list" role="listbox">\n${listItems}\n  </ul>`
+    : '';
+  return `<div class="${prefix}autocomplete">\n  <input class="${prefix}autocomplete-input" type="text" role="combobox" aria-expanded="false" aria-autocomplete="list"${placeholderAttr}>${listHTML}\n</div>`;
+}
+
+function renderCombobox(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const options: string[] = p.options || [];
+  const listItems = options
+    .map((o) => `    <li class="${prefix}combobox-option" role="option">${escapeHtml(o)}</li>`)
+    .join('\n');
+  const listHTML = options.length > 0
+    ? `\n  <ul class="${prefix}combobox-list" role="listbox">\n${listItems}\n  </ul>`
+    : '';
+  return `<div class="${prefix}combobox">\n  <input class="${prefix}combobox-input" type="text" role="combobox" aria-expanded="false" aria-autocomplete="list"${placeholderAttr}>\n  <span class="${prefix}combobox-caret" aria-hidden="true">▾</span>${listHTML}\n</div>`;
+}
+
+function renderCommand(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${prefix}command" role="dialog" aria-label="Command menu">\n  <input class="${prefix}command-input" type="text"${placeholderAttr}>\n  ${childrenHTML}\n</div>`;
+}
+
+function renderCheckboxGroup(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label = node.props?.label;
+  const desc = node.props?.description;
+  const labelHTML = label ? `  <p class="${prefix}checkbox-group-label">${escapeHtml(label)}</p>\n` : '';
+  const descHTML = desc ? `  <p class="${prefix}checkbox-group-description">${escapeHtml(desc)}</p>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${prefix}checkbox-group" role="group">\n${labelHTML}${descHTML}  ${childrenHTML}\n</div>`;
+}
+
+function renderToggleGroup(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const raw: any[] = node.children || [];
+  const items: any[] = [];
+  for (const child of raw) {
+    if (child.type === 'container' && child.containerType === 'button-group') {
+      items.push(...(child.children || []));
+    } else {
+      items.push(child);
+    }
+  }
+  const buttonsHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item')
+    .map((item) => {
+      const isPressed = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const btnCls = `${prefix}toggle${isPressed ? ` ${prefix}toggle-pressed` : ''}`;
+      const pressedAttr = isPressed ? ' aria-pressed="true"' : ' aria-pressed="false"';
+      return `  <button type="button" class="${btnCls}"${pressedAttr}>${escapeHtml(text)}</button>`;
+    })
+    .join('\n');
+  return `<div class="${prefix}toggle-group" role="group">\n${buttonsHTML}\n</div>`;
+}
+
+function renderSwitch(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const checked: boolean = !!node.checked;
+  const p = node.props || {};
+  const trackCls = `${prefix}switch${checked ? ` ${prefix}switch-on` : ''}`;
+  const disabledAttr = p.disabled ? ' disabled' : '';
+  const labelHTML = p.label
+    ? `  <span class="${prefix}switch-label">${escapeHtml(p.label)}</span>`
+    : '';
+  const descHTML = p.description
+    ? `\n  <span class="${prefix}switch-description">${escapeHtml(p.description)}</span>`
+    : '';
+  const control = `  <button type="button" class="${trackCls}" role="switch" aria-checked="${checked}"${disabledAttr}>\n    <span class="${prefix}switch-thumb"></span>\n  </button>`;
+  const layout = (labelHTML || descHTML)
+    ? `<div class="${prefix}switch-row">\n${control}${labelHTML}${descHTML}\n</div>`
+    : control;
+  return layout;
+}
+
+function renderSlider(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const value = Number(node.value ?? 50);
+  const min = Number(p.min ?? 0);
+  const max = Number(p.max ?? 100);
+  const step = Number(p.step ?? 1);
+  const range = max - min || 1;
+  const pct = Math.max(0, Math.min(100, ((value - min) / range) * 100));
+  const labelHTML = p.label
+    ? `  <label class="${prefix}slider-label">${escapeHtml(p.label)} <span class="${prefix}slider-value">${value}</span></label>\n`
+    : '';
+  return `<div class="${prefix}slider">
+${labelHTML}  <div class="${prefix}slider-track" role="slider" aria-valuenow="${value}" aria-valuemin="${min}" aria-valuemax="${max}" aria-step="${step}">
+    <div class="${prefix}slider-fill" style="width:${pct}%"></div>
+    <div class="${prefix}slider-thumb" style="left:${pct}%"></div>
+  </div>
+</div>`;
+}
+
+function renderToggleNode(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const pressed: boolean = !!node.pressed;
+  const label = node.props?.label;
+  const btnCls = `${prefix}toggle${pressed ? ` ${prefix}toggle-pressed` : ''}`;
+  const pressedAttr = pressed ? ' aria-pressed="true"' : ' aria-pressed="false"';
+  const text = label ?? '';
+  return `<button type="button" class="${btnCls}"${pressedAttr}>${escapeHtml(text)}</button>`;
 }

@@ -255,6 +255,86 @@ Press S to save
 [File] [Edit] [View]
 :::
 
+## Data Entry
+
+::: form
+### Sign in
+Email [____]
+Password [____]
+[Sign in]*
+:::
+
+::: field {label:"Workspace name"}
+[____]
+:::
+
+::: fieldset
+### Notifications
+
+[x] Email notifications
+
+[ ] SMS notifications
+
+:::
+
+::: label
+Email address
+:::
+
+::: input-group {addonStart:"example.com/"}
+[username____]
+:::
+
+::: otp-field
+:::
+
+::: number-field {value:3 min:0 max:10}
+:::
+
+::: autocomplete {placeholder:"Search fruits..."}
+- Apple
+- Banana
+- Cherry
+
+:::
+
+::: combobox {placeholder:"Select country..."}
+- United States
+- Canada
+- Mexico
+
+:::
+
+::: command {placeholder:"Type a command..."}
+- Copy
+- Paste
+- Delete
+
+:::
+
+::: checkbox-group {label:"Interests" description:"Pick all that apply"}
+[x] Design
+
+[ ] Engineering
+
+:::
+
+::: toggle-group
+[Star]* [Heart] [Bookmark]
+:::
+
+::: switch {.checked} {label:"Email notifications"}
+:::
+
+::: switch {label:"Marketing emails"}
+:::
+
+::: slider {value:70 min:0 max:100 label:"Volume"}
+:::
+
+::: toggle {.active} {label:"Bold"}
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo

@@ -30,14 +30,17 @@ function parseContainerOpener(node: any): ContainerOpener | null {
     return null;
 
   const firstLine = (node.children[0].value as string).split('\n')[0].trim();
-  // Match ::: followed by a single-word type, optional {attrs}, optional inline content
-  const match = firstLine.match(/^:::\s*(\S+)(?:\s*(\{[^}]+\}))?(?:\s+(.+))?$/);
+  // Collect every consecutive {…} group on the opener line as attributes.
+  // Anything after the last {…} group is inline content. Example:
+  //   ::: toggle {.active} {label:"Bold"}   →   attrs="{.active} {label:\"Bold\"}"
+  const match = firstLine.match(/^:::\s*(\S+)((?:\s*\{[^}]+\})*)\s*(.*)$/);
   if (!match) return null;
-
+  const attrs = (match[2] || '').trim();
+  const inline = (match[3] || '').trim();
   return {
     containerType: (match[1] || 'section').trim(),
-    attrs: match[2] ? match[2].trim() : '',
-    inline: match[3] ? match[3].trim() : '',
+    attrs,
+    inline,
   };
 }
 
@@ -57,7 +60,11 @@ function makeContainerNode(
   children: any[],
 ): any {
   return {
-    type: 'wiremdContainer',
+    // Use a custom mdast type that does not collide with any remark-gfm
+    // directive (e.g. `container`, `containerDirective`). Otherwise gfm's
+    // directive normalizer walks our node, eats the trailing `{attrs}` chunk
+    // as a `children` paragraph, and zeroes our `attributes` field.
+    type: 'wiremdBlock',
     containerType,
     attributes: attrs,
     children,
@@ -357,7 +364,7 @@ function mdastNodesToText(nodes: any[]): string {
         return '```' + (node.lang || '') + '\n' + node.value + '\n```';
       case 'blockquote':
         return mdastNodesToText(node.children).split('\n').map((l: string) => '> ' + l).join('\n');
-      case 'wiremdContainer': {
+      case 'wiremdBlock': {
         const inlineSuffix = node.inline ? ' ' + node.inline : '';
         const attrs = node.attributes ? ' ' + node.attributes : '';
         const opener = '::: ' + node.containerType + inlineSuffix + attrs;

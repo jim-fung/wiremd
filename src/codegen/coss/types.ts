@@ -40,7 +40,10 @@ export type SupportedType =
   | 'tabs' | 'tab' | 'breadcrumbs' | 'demo'
   | 'toast' | 'skeleton' | 'spinner' | 'kbd' | 'progress' | 'meter'
   | 'dialog' | 'alert-dialog' | 'sheet' | 'drawer' | 'popover' | 'tooltip' | 'preview-card'
-  | 'pagination' | 'segmented-control' | 'scroll-area' | 'sidebar' | 'menubar';
+  | 'pagination' | 'segmented-control' | 'scroll-area' | 'sidebar' | 'menubar'
+  | 'form' | 'field' | 'fieldset' | 'label' | 'input-group' | 'otp-field' | 'number-field'
+  | 'autocomplete' | 'combobox' | 'command' | 'checkbox-group' | 'toggle-group'
+  | 'switch' | 'slider' | 'toggle';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through
