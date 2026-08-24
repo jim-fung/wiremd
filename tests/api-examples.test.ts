@@ -526,3 +526,19 @@ Name
     });
   });
 });
+
+describe('coss codegen API', () => {
+  it('exports generateCode and CodegenOptions from the package root', async () => {
+    const { generateCode } = await import('../src/index.js');
+    type Opts = import('../src/index.js').CodegenOptions;
+    const options: Opts = { format: 'html' };
+    const fragment = generateCode(
+      { type: 'button', content: 'Save', props: { variant: 'primary' } },
+      options,
+    );
+    expect(fragment).toContain('<button');
+    expect(fragment).toContain('bg-zinc-950');
+    const jsx = generateCode({ type: 'separator', props: {} }, { format: 'jsx' });
+    expect(jsx).toContain('className=');
+  });
+});
