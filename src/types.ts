@@ -159,9 +159,23 @@ export interface ParseOptions {
   icons?: Record<string, string>;
 }
 
+/** Ordered style identifiers accepted across renderers, CLI, and embed API. */
+export const WIREMD_STYLES = [
+  'coss',
+  'sketch',
+  'clean',
+  'wireframe',
+  'none',
+  'tailwind',
+  'material',
+  'brutal',
+] as const;
+
+export type WiremdStyle = (typeof WIREMD_STYLES)[number];
+
 export interface RenderOptions {
   format?: 'html' | 'json' | 'react' | 'tailwind';
-  style?: 'sketch' | 'clean' | 'wireframe' | 'none' | 'tailwind' | 'material' | 'brutal';
+  style?: WiremdStyle;
   inlineStyles?: boolean;
   pretty?: boolean;
   classPrefix?: string;

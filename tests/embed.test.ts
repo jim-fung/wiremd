@@ -61,8 +61,9 @@ describe('embed API — compileWiremd', () => {
     expect(JSON.stringify(a.document)).toBe(JSON.stringify(b.document));
   });
 
-  test('A6: WIREMD_STYLES lists the seven documented styles in order', () => {
+  test('A6: WIREMD_STYLES lists the eight documented styles in order', () => {
     expect([...WIREMD_STYLES]).toEqual([
+      'coss',
       'sketch',
       'clean',
       'wireframe',
@@ -272,5 +273,18 @@ describe('includes disabled loudly (v1 include policy)', () => {
     );
     expect(embedSource).not.toMatch(/from\s+'[^']*includes/);
     expect(embedSource).not.toMatch(/require\(/);
+  });
+});
+
+describe('WIREMD_STYLES registry', () => {
+  test('includes coss first and keeps all legacy styles', () => {
+    expect(WIREMD_STYLES[0]).toBe('coss');
+    expect(WIREMD_STYLES).toContain('sketch');
+    expect(WIREMD_STYLES).toContain('clean');
+    expect(WIREMD_STYLES).toContain('wireframe');
+    expect(WIREMD_STYLES).toContain('none');
+    expect(WIREMD_STYLES).toContain('tailwind');
+    expect(WIREMD_STYLES).toContain('material');
+    expect(WIREMD_STYLES).toContain('brutal');
   });
 });

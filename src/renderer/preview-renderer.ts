@@ -24,7 +24,7 @@
  * https://github.com/akonan/wiremd/blob/main/LICENSE
  */
 
-import type { DocumentNode, WiremdNode } from '../types.js';
+import type { DocumentNode, WiremdNode, WiremdStyle } from '../types.js';
 import type { WiremdDiagnostic } from '../diagnostics.js';
 import { getStyleCSS } from './styles.js';
 
@@ -45,7 +45,7 @@ export interface PreviewResult {
 }
 
 export interface PreviewRenderOptions {
-  style?: 'sketch' | 'clean' | 'wireframe' | 'none' | 'tailwind' | 'material' | 'brutal';
+  style?: WiremdStyle;
   classPrefix: string;
 }
 

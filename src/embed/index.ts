@@ -23,10 +23,14 @@
  * https://github.com/akonan/wiremd/blob/main/LICENSE
  */
 
-import type { DocumentNode } from '../types.js';
+import {
+  WIREMD_STYLES,
+  type DocumentNode,
+  type ValidationError,
+  type WiremdStyle,
+} from '../types.js';
 import { SYNTAX_VERSION } from '../version.js';
 import { parse, validate } from '../parser/index.js';
-import type { ValidationError } from '../types.js';
 import type {
   SourceSpan,
   WiremdDiagnostic,
@@ -37,18 +41,9 @@ import {
   type PreviewResult,
 } from '../renderer/preview-renderer.js';
 
-/** Ordered style identifiers accepted by compile/preview options. */
-export const WIREMD_STYLES = [
-  'sketch',
-  'clean',
-  'wireframe',
-  'none',
-  'tailwind',
-  'material',
-  'brutal',
-] as const;
-
-export type WiremdStyle = (typeof WIREMD_STYLES)[number];
+/** @deprecated use the canonical export from 'wiremd' root — kept for back-compat. */
+export { WIREMD_STYLES };
+export type { WiremdStyle };
 
 export interface CompileWiremdOptions {
   /** Visual style recorded for downstream preview rendering. */
