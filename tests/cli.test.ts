@@ -404,7 +404,7 @@ describe('CLI', () => {
       );
 
       expect(result).toContain('Style');
-      expect(result).toContain('sketch');
+      expect(result).toContain('coss');
     });
 
     it('should show format being used', () => {
