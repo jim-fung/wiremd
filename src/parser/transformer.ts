@@ -45,7 +45,7 @@ export function transformToWiremdAST(
     const meta: DocumentMeta = {
       version: SYNTAX_VERSION,
       viewport: 'desktop',
-      theme: 'sketch',
+      theme: 'coss',
     };
 
     const document: DocumentNode = {

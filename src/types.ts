@@ -36,7 +36,7 @@ export interface DocumentMeta {
   title?: string;
   description?: string;
   viewport?: 'mobile' | 'tablet' | 'desktop' | 'auto';
-  theme?: 'sketch' | 'clean' | 'wireframe' | 'none';
+  theme?: WiremdStyle;
   version?: string;
 }
 

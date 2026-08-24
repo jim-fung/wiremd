@@ -1,6 +1,6 @@
 /**
  * CSS Styles for wiremd renderer
- * Provides different visual styles: sketch, clean, wireframe, none
+ * Provides the visual styles registered in WIREMD_STYLES (coss default; 7 deprecated legacy styles)
  *
  * Copyright (c) 2025 wiremd
  * Licensed under MIT License
