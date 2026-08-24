@@ -315,6 +315,47 @@ export function renderPreviewNode(node: WiremdNode, context: PreviewRenderContex
     case 'tab': return renderTab(node as any, context);
     case 'breadcrumbs': return renderBreadcrumbs(node as any, context);
     case 'demo': return renderDemo(node as any, context);
+    // Phase 3 families — static mirrors of the standalone html-renderer
+    // shapes (no scripts, no toggling state; see each render function).
+    case 'toast': return renderToast(node as any, context);
+    case 'skeleton': return renderSkeleton(node as any, context);
+    case 'spinner': return renderSpinner(node as any, context);
+    case 'kbd': return renderKbd(node as any, context);
+    case 'progress': return renderProgress(node as any, context);
+    case 'meter': return renderMeter(node as any, context);
+    case 'dialog': return renderDialog(node as any, context);
+    case 'alert-dialog': return renderAlertDialog(node as any, context);
+    case 'sheet': return renderSheet(node as any, context);
+    case 'drawer': return renderDrawer(node as any, context);
+    case 'popover': return renderPopover(node as any, context);
+    case 'tooltip': return renderTooltip(node as any, context);
+    case 'preview-card': return renderPreviewCard(node as any, context);
+    case 'pagination': return renderPagination(node as any, context);
+    case 'segmented-control': return renderSegmentedControl(node as any, context);
+    case 'scroll-area': return renderScrollArea(node as any, context);
+    case 'sidebar': return renderSidebarNav(node as any, context);
+    case 'menubar': return renderMenubar(node as any, context);
+    case 'form': return renderForm(node as any, context);
+    case 'field': return renderField(node as any, context);
+    case 'fieldset': return renderFieldset(node as any, context);
+    case 'label': return renderLabel(node as any, context);
+    case 'input-group': return renderInputGroup(node as any, context);
+    case 'otp-field': return renderOtpField(node as any, context);
+    case 'number-field': return renderNumberField(node as any, context);
+    case 'autocomplete': return renderAutocomplete(node as any, context);
+    case 'combobox': return renderCombobox(node as any, context);
+    case 'command': return renderCommand(node as any, context);
+    case 'checkbox-group': return renderCheckboxGroup(node as any, context);
+    case 'toggle-group': return renderToggleGroup(node as any, context);
+    case 'switch': return renderSwitch(node as any, context);
+    case 'slider': return renderSlider(node as any, context);
+    case 'toggle': return renderToggle(node as any, context);
+    case 'avatar': return renderAvatar(node as any, context);
+    case 'frame': return renderFrame(node as any, context);
+    case 'group': return renderGroup(node as any, context);
+    case 'empty': return renderEmpty(node as any, context);
+    case 'calendar': return renderCalendar(node as any, context);
+    case 'date-picker': return renderDatePicker(node as any, context);
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -878,5 +919,631 @@ function renderDemo(node: any, context: PreviewRenderContext): string {
   const previewHTML = renderChildren(node, context);
   return `<div class="${prefix}demo">
   <div class="${prefix}demo-preview">${previewHTML}</div>
+</div>`;
+}
+
+// ============================================================================
+// Phase 3 families (feedback / overlay / navigation / data entry / display)
+//
+// Each function mirrors the DOM shape, aria attributes, data attributes, and
+// class-name suffixes of the corresponding `html-renderer.ts` case so host CSS
+// written against the standalone renderer matches the embedded preview. The
+// preview-only divergences are the file-wide policy ones: every author string
+// is escaped, URLs go through safeUrl, author-supplied inline-style lengths
+// are reduced to the cssLength grammar, and state is static (nothing toggles).
+// ============================================================================
+
+/**
+ * Author-controlled CSS lengths (skeleton width/height, scroll-area
+ * max-height) interpolate into `style` attributes. Numbers become `Npx`;
+ * strings must be a bare length token of this narrow grammar or they are
+ * dropped with a diagnostic instead of emitted.
+ */
+const CSS_LENGTH_PATTERN = /^[0-9]*\.?[0-9]+(?:px|em|rem|ch|ex|vh|vw|%)?$/;
+
+function cssLength(value: unknown, context: PreviewRenderContext): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return `${value}px`;
+  if (typeof value === 'string' && CSS_LENGTH_PATTERN.test(value.trim())) return value.trim();
+  if (value !== undefined) {
+    context.diagnostics.push({
+      severity: 'warning',
+      code: 'wmd-style-sanitized',
+      message: `Inline style length ${JSON.stringify(value)} is not a safe CSS length and was omitted from the preview.`,
+      source: 'renderer',
+    });
+  }
+  return undefined;
+}
+
+// --- feedback family -------------------------------------------------------
+
+function renderToast(node: any, context: PreviewRenderContext): string {
+  const toastType: string | undefined = node.props?.toastType;
+  const variantClass = toastType && toastType !== 'loading' ? toastType : undefined;
+  const extraClasses = (node.props?.classes || []).filter(
+    (c: string) => c !== variantClass,
+  );
+  const cls = buildClasses(context, 'toast', { ...node.props, classes: extraClasses });
+  const variantHTML = variantClass
+    ? ` data-variant="${escapeHtml(variantClass)}"`
+    : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${cls}" role="status"${variantHTML}>\n  ${childrenHTML}\n</div>`;
+}
+
+function renderSkeleton(node: any, context: PreviewRenderContext): string {
+  const cls = buildClasses(context, 'skeleton', node.props);
+  const width = cssLength(node.props?.width, context);
+  const height = cssLength(node.props?.height, context);
+  const styleAttr =
+    width !== undefined || height !== undefined
+      ? ` style="${[
+          width !== undefined ? `width:${width}` : '',
+          height !== undefined ? `height:${height}` : '',
+        ]
+          .filter(Boolean)
+          .join(';')}"`
+      : '';
+  return `<div class="${cls}"${styleAttr}></div>`;
+}
+
+function renderSpinner(node: any, context: PreviewRenderContext): string {
+  const size: string = node.props?.size || 'medium';
+  const sizeClass =
+    size === 'small' ? 'spinner-sm' : size === 'large' ? 'spinner-lg' : 'spinner-md';
+  const cls = buildClasses(context, 'spinner', { ...node.props, classes: [sizeClass] });
+  return `<div class="${cls}" role="status" aria-label="Loading"></div>`;
+}
+
+function renderKbd(node: any, context: PreviewRenderContext): string {
+  const cls = buildClasses(context, 'kbd', node.props);
+  return `<kbd class="${cls}">${escapeHtml(node.content ?? '')}</kbd>`;
+}
+
+function renderProgress(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(context, 'progress', node.props);
+  const value = Math.max(0, Math.min(100, Number(node.value ?? 0)));
+  const indeterminate: boolean = !!node.indeterminate;
+  const labelText: string | undefined = node.props?.label;
+  const labelHTML = labelText
+    ? `  <p class="${prefix}progress-label">${escapeHtml(labelText)}</p>\n`
+    : '';
+  const trackWidth = indeterminate ? 100 : value;
+  const indicatorStyle = ` style="width:${trackWidth}%"`;
+  const trackHTML = `  <div class="${prefix}progress-track">
+    <div class="${prefix}progress-indicator"${indicatorStyle}></div>
+  </div>`;
+  const valueHTML = !indeterminate
+    ? `\n  <p class="${prefix}progress-value">${value}%</p>`
+    : '';
+  return `<div class="${cls}" role="progressbar" aria-valuenow="${value}"${indeterminate ? '' : ` aria-valuemin="0" aria-valuemax="100"`}${indeterminate ? ' data-indeterminate="true"' : ''}>
+${labelHTML}${trackHTML}${valueHTML}
+</div>`;
+}
+
+function renderMeter(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(context, 'meter', node.props);
+  const value = Number(node.value ?? 0);
+  const min = Number(node.min ?? 0);
+  const max = Number(node.max ?? 100);
+  const range = max - min || 1;
+  const pct = Math.max(0, Math.min(100, ((value - min) / range) * 100));
+  const labelText: string | undefined = node.props?.label;
+  const labelHTML = labelText
+    ? `  <p class="${prefix}meter-label">${escapeHtml(labelText)}</p>\n`
+    : '';
+  const indicatorStyle = ` style="width:${pct}%"`;
+  const trackHTML = `  <div class="${prefix}meter-track">
+    <div class="${prefix}meter-indicator"${indicatorStyle}></div>
+  </div>`;
+  const valueHTML = `\n  <p class="${prefix}meter-value">${value} / ${max}</p>`;
+  return `<div class="${cls}" role="meter" aria-valuenow="${value}" aria-valuemin="${min}" aria-valuemax="${max}">
+${labelHTML}${trackHTML}${valueHTML}
+</div>`;
+}
+
+// --- overlay family ---------------------------------------------------------
+
+/**
+ * Shared shell for the overlay family. Same shape as the standalone
+ * `overlayShell` (role, title/description, optional close button, data
+ * attributes) minus its interactive behavior — overlays render statically
+ * "open" in a preview fragment.
+ */
+function overlayShell(
+  context: PreviewRenderContext,
+  kind: string,
+  props: any,
+  inner: string,
+  role = 'dialog',
+  ariaLabel?: string,
+  dataAttrs = '',
+): string {
+  const { classPrefix: prefix } = context;
+  const cleanedProps = { ...props };
+  delete cleanedProps.title;
+  delete cleanedProps.description;
+  delete cleanedProps.showClose;
+  delete cleanedProps.cancelText;
+  delete cleanedProps.actionText;
+  delete cleanedProps.actionVariant;
+  delete cleanedProps.content;
+  delete cleanedProps.trigger;
+  const cls = buildClasses(context, kind, cleanedProps);
+  const title = typeof props.title === 'string' ? props.title : undefined;
+  const desc = typeof props.description === 'string' ? props.description : undefined;
+  const showClose = props.showClose !== false;
+  const titleHTML = title
+    ? `  <h2 class="${prefix}${kind}-title">${escapeHtml(title)}</h2>\n`
+    : '';
+  const descHTML = desc
+    ? `  <p class="${prefix}${kind}-description">${escapeHtml(desc)}</p>\n`
+    : '';
+  const closeHTML = showClose && kind === 'dialog'
+    ? `  <button type="button" class="${prefix}${kind}-close" aria-label="Close">×</button>\n`
+    : '';
+  const ariaLabelAttr = ariaLabel ? ` aria-label="${escapeHtml(ariaLabel)}"` : '';
+  return `<div class="${cls}" role="${role}"${ariaLabelAttr}${dataAttrs}>
+${titleHTML}${descHTML}${inner}${closeHTML}</div>`;
+}
+
+function renderDialog(node: any, context: PreviewRenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return overlayShell(context, 'dialog', node.props || {}, inner, 'dialog');
+}
+
+function renderAlertDialog(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const inner = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const actionVariant: string = node.props?.actionVariant || 'danger';
+  const actionText: string = node.props?.actionText || 'Confirm';
+  const cancelText: string = node.props?.cancelText || 'Cancel';
+  const actionsHTML = `\n  <div class="${prefix}alert-dialog-actions">
+    <button type="button" class="${prefix}button ${prefix}${actionVariant}">${escapeHtml(cancelText)}</button>
+    <button type="button" class="${prefix}button ${prefix}${actionVariant === 'danger' ? 'primary' : 'danger'}">${escapeHtml(actionText)}</button>
+  </div>`;
+  return overlayShell(context, 'alert-dialog', node.props || {}, inner + actionsHTML, 'alertdialog');
+}
+
+function renderSheet(node: any, context: PreviewRenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const side = node.side || 'right';
+  return overlayShell(
+    context,
+    'sheet',
+    node.props || {},
+    inner,
+    'dialog',
+    undefined,
+    ` data-side="${escapeHtml(side)}"`,
+  );
+}
+
+function renderDrawer(node: any, context: PreviewRenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const side = node.side || 'left';
+  return overlayShell(
+    context,
+    'drawer',
+    node.props || {},
+    inner,
+    'dialog',
+    undefined,
+    ` data-side="${escapeHtml(side)}"`,
+  );
+}
+
+function renderPopover(node: any, context: PreviewRenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return overlayShell(context, 'popover', node.props || {}, inner, 'dialog');
+}
+
+function renderTooltip(node: any, context: PreviewRenderContext): string {
+  const cleanedProps = { ...(node.props || {}) };
+  delete cleanedProps.content;
+  delete cleanedProps.side;
+  const cls = buildClasses(context, 'tooltip', cleanedProps);
+  const content: string = node.props?.content || '';
+  const side: string = node.props?.side || 'top';
+  const childHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const inner = childHTML || content;
+  return `<span class="${cls}" role="tooltip" data-side="${escapeHtml(side)}">${escapeHtml(inner)}</span>`;
+}
+
+function renderPreviewCard(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(context, 'preview-card', node.props || {});
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const href: string | undefined = node.props?.href;
+  const wrap = (inner: string) => {
+    if (!href) return inner;
+    const hrefResult = safeUrl(href, context, 'link');
+    return `<a class="${prefix}preview-card-link" href="${escapeHtml(hrefResult.url)}">${inner}</a>`;
+  };
+  return wrap(`<div class="${cls}">\n  ${childrenHTML}\n</div>`);
+}
+
+// --- navigation family --------------------------------------------------------
+
+/** Flatten a button-group container's children plus any loose children. */
+function flattenGroupItems(raw: any[]): any[] {
+  const items: any[] = [];
+  for (const child of raw) {
+    if (child.type === 'container' && child.containerType === 'button-group') {
+      items.push(...(child.children || []));
+    } else {
+      items.push(child);
+    }
+  }
+  return items;
+}
+
+function renderPagination(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label: string = node.props?.label || 'pagination';
+  const items = flattenGroupItems(node.children || []);
+  const linksHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item' || item.type === 'text')
+    .map((item) => {
+      const isCurrent = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const linkCls = `${prefix}pagination-link${isCurrent ? ` ${prefix}pagination-active` : ''}`;
+      const currentAttr = isCurrent ? ' aria-current="page"' : '';
+      return `      <li class="${prefix}pagination-item"><a class="${linkCls}" href="#"${currentAttr}>${escapeHtml(text)}</a></li>`;
+    })
+    .join('\n');
+  return `<nav class="${prefix}pagination" aria-label="${escapeHtml(label)}" role="navigation">
+    <ul class="${prefix}pagination-content">
+${linksHTML}
+    </ul>
+</nav>`;
+}
+
+function renderSegmentedControl(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const items = flattenGroupItems(node.children || []);
+  const buttonsHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item')
+    .map((item) => {
+      const isActive = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const btnCls = `${prefix}segmented-item${isActive ? ` ${prefix}segmented-active` : ''}`;
+      const activeAttr = isActive ? ' aria-pressed="true"' : ' aria-pressed="false"';
+      return `  <button type="button" class="${btnCls}"${activeAttr}>${escapeHtml(text)}</button>`;
+    })
+    .join('\n');
+  return `<div class="${prefix}segmented-control" role="group">\n${buttonsHTML}\n</div>`;
+}
+
+function renderScrollArea(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cleaned = { ...(node.props || {}) };
+  delete cleaned.maxHeight;
+  const cls = buildClasses(context, 'scroll-area', cleaned);
+  const maxHeight = cssLength(node.props?.maxHeight, context);
+  const styleAttr = maxHeight !== undefined
+    ? ` style="max-height:${maxHeight}"`
+    : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n    ');
+  return `<div class="${cls}"${styleAttr}>\n  <div class="${prefix}scroll-area-viewport">\n    ${childrenHTML}\n  </div>\n</div>`;
+}
+
+function renderSidebarNav(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cleaned = { ...(node.props || {}) };
+  delete cleaned.title;
+  const cls = buildClasses(context, 'sidebar-nav', cleaned);
+  const title = node.props?.title;
+  const titleHTML = title ? `  <div class="${prefix}sidebar-header">${escapeHtml(title)}</div>\n` : '';
+  // Lists become nav menus; other children render as-is.
+  const childrenHTML = (node.children || []).map((c: any) => {
+    if (c.type === 'list') {
+      const itemsHTML = (c.children || [])
+        .map((li: any) => {
+          const liClasses: string[] = li.props?.classes || [];
+          const isActive = liClasses.includes('active');
+          const itemCls = `${prefix}sidebar-item${isActive ? ` ${prefix}sidebar-item-active` : ''}`;
+          const text = (li.content ?? '').replace(/\s*:::\s*$/, '').trim();
+          return `    <a class="${itemCls}" href="#">${escapeHtml(text)}</a>`;
+        })
+        .join('\n');
+      return `  <nav class="${prefix}sidebar-menu">\n${itemsHTML}\n  </nav>`;
+    }
+    return renderPreviewNode(c, context)
+      .split('\n')
+      .map((l: string) => (l ? `  ${l}` : l))
+      .join('\n');
+  }).join('\n');
+  return `<aside class="${cls}">\n${titleHTML}${childrenHTML}\n</aside>`;
+}
+
+function renderMenubar(node: any, context: PreviewRenderContext): string {
+  const cls = buildClasses(context, 'menubar', node.props || {});
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${cls}" role="menubar">\n  ${childrenHTML}\n</div>`;
+}
+
+// --- data entry family --------------------------------------------------------
+
+function renderForm(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  // A form action is a navigation URL: it rides the same scheme allowlist
+  // as link hrefs, and generated buttons are all type="button" so the
+  // static fragment has no way to submit anyway.
+  const actionAttr = node.props?.action
+    ? ` action="${escapeHtml(safeUrl(node.props.action, context, 'link').url)}"`
+    : '';
+  const method = node.props?.method;
+  const methodAttr = method ? ` method="${escapeHtml(method)}"` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<form class="${prefix}form"${actionAttr}${methodAttr}>\n  ${childrenHTML}\n</form>`;
+}
+
+function renderField(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label = node.props?.label;
+  const desc = node.props?.description;
+  const error = node.props?.error;
+  const labelHTML = label ? `  <label class="${prefix}field-label">${escapeHtml(label)}</label>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const descHTML = desc ? `\n  <p class="${prefix}field-description">${escapeHtml(desc)}</p>` : '';
+  const errorHTML = error ? `\n  <p class="${prefix}field-error" role="alert">${escapeHtml(error)}</p>` : '';
+  return `<div class="${prefix}field">\n${labelHTML}  ${childrenHTML}${descHTML}${errorHTML}\n</div>`;
+}
+
+function renderFieldset(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const legend = node.props?.legend;
+  const desc = node.props?.description;
+  const legendHTML = legend ? `  <legend class="${prefix}fieldset-legend">${escapeHtml(legend)}</legend>\n` : '';
+  const descHTML = desc ? `  <p class="${prefix}fieldset-description">${escapeHtml(desc)}</p>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<fieldset class="${prefix}fieldset">\n${legendHTML}${descHTML}  ${childrenHTML}\n</fieldset>`;
+}
+
+function renderLabel(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const htmlFor = node.props?.htmlFor;
+  const forAttr = htmlFor ? ` for="${escapeHtml(htmlFor)}"` : '';
+  return `<label class="${prefix}label"${forAttr}>${escapeHtml(node.content ?? '')}</label>`;
+}
+
+function renderInputGroup(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const start = node.props?.addonStart;
+  const end = node.props?.addonEnd;
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const startHTML = start ? `  <span class="${prefix}input-group-addon">${escapeHtml(start)}</span>\n` : '';
+  const endHTML = end ? `\n  <span class="${prefix}input-group-addon">${escapeHtml(end)}</span>` : '';
+  return `<div class="${prefix}input-group">\n${startHTML}  ${childrenHTML}${endHTML}\n</div>`;
+}
+
+function renderOtpField(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const length = Number(node.props?.length ?? 6);
+  const maxLength = Number(node.props?.maxLength ?? 1);
+  const slots = Array.from({ length }, () =>
+    `<input class="${prefix}otp-slot" type="text" inputmode="numeric" maxlength="${maxLength}" aria-label="digit" readonly>`,
+  ).join('\n  ');
+  return `<div class="${prefix}otp-field" role="group" aria-label="Verification code">\n  ${slots}\n</div>`;
+}
+
+function renderNumberField(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const numAttrs = (name: 'min' | 'max' | 'step') =>
+    p[name] !== undefined ? ` ${name}="${escapeHtml(String(p[name]))}"` : '';
+  const valueAttr = p.value !== undefined ? ` value="${escapeHtml(String(p.value))}"` : '';
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const btnCls = `${prefix}number-stepper`;
+  return `<div class="${prefix}number-field">
+  <button type="button" class="${btnCls}" aria-label="Decrease">−</button>
+  <input class="${prefix}number-input" type="number"${numAttrs('min')}${numAttrs('max')}${numAttrs('step')}${valueAttr}${placeholderAttr} readonly>
+  <button type="button" class="${btnCls}" aria-label="Increase">+</button>
+</div>`;
+}
+
+function renderAutocomplete(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const suggestions: string[] = p.suggestions || [];
+  const listItems = suggestions
+    .map((s) => `    <li class="${prefix}autocomplete-option" role="option">${escapeHtml(s)}</li>`)
+    .join('\n');
+  const listHTML = suggestions.length > 0
+    ? `\n  <ul class="${prefix}autocomplete-list" role="listbox">\n${listItems}\n  </ul>`
+    : '';
+  return `<div class="${prefix}autocomplete">\n  <input class="${prefix}autocomplete-input" type="text" role="combobox" aria-expanded="false" aria-autocomplete="list"${placeholderAttr} readonly>${listHTML}\n</div>`;
+}
+
+function renderCombobox(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const options: string[] = p.options || [];
+  const listItems = options
+    .map((o) => `    <li class="${prefix}combobox-option" role="option">${escapeHtml(o)}</li>`)
+    .join('\n');
+  const listHTML = options.length > 0
+    ? `\n  <ul class="${prefix}combobox-list" role="listbox">\n${listItems}\n  </ul>`
+    : '';
+  return `<div class="${prefix}combobox">\n  <input class="${prefix}combobox-input" type="text" role="combobox" aria-expanded="false" aria-autocomplete="list"${placeholderAttr} readonly>\n  <span class="${prefix}combobox-caret" aria-hidden="true">▾</span>${listHTML}\n</div>`;
+}
+
+function renderCommand(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const placeholderAttr = p.placeholder ? ` placeholder="${escapeHtml(p.placeholder)}"` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${prefix}command" role="dialog" aria-label="Command menu">\n  <input class="${prefix}command-input" type="text"${placeholderAttr} readonly>\n  ${childrenHTML}\n</div>`;
+}
+
+function renderCheckboxGroup(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const label = node.props?.label;
+  const desc = node.props?.description;
+  const labelHTML = label ? `  <p class="${prefix}checkbox-group-label">${escapeHtml(label)}</p>\n` : '';
+  const descHTML = desc ? `  <p class="${prefix}checkbox-group-description">${escapeHtml(desc)}</p>\n` : '';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${prefix}checkbox-group" role="group">\n${labelHTML}${descHTML}  ${childrenHTML}\n</div>`;
+}
+
+function renderToggleGroup(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const items = flattenGroupItems(node.children || []);
+  const buttonsHTML = items
+    .filter((item) => item.type === 'button' || item.type === 'nav-item')
+    .map((item) => {
+      const isPressed = (item.props?.classes || []).includes('active') ||
+        item.props?.variant === 'primary';
+      const text = item.content ?? '';
+      const btnCls = `${prefix}toggle${isPressed ? ` ${prefix}toggle-pressed` : ''}`;
+      const pressedAttr = isPressed ? ' aria-pressed="true"' : ' aria-pressed="false"';
+      return `  <button type="button" class="${btnCls}"${pressedAttr}>${escapeHtml(text)}</button>`;
+    })
+    .join('\n');
+  return `<div class="${prefix}toggle-group" role="group">\n${buttonsHTML}\n</div>`;
+}
+
+function renderSwitch(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const checked: boolean = !!node.checked;
+  const p = node.props || {};
+  const trackCls = `${prefix}switch${checked ? ` ${prefix}switch-on` : ''}`;
+  const disabledAttr = p.disabled ? ' disabled' : '';
+  const labelHTML = p.label
+    ? `  <span class="${prefix}switch-label">${escapeHtml(p.label)}</span>`
+    : '';
+  const descHTML = p.description
+    ? `\n  <span class="${prefix}switch-description">${escapeHtml(p.description)}</span>`
+    : '';
+  const control = `  <button type="button" class="${trackCls}" role="switch" aria-checked="${checked}"${disabledAttr}>\n    <span class="${prefix}switch-thumb"></span>\n  </button>`;
+  const layout = (labelHTML || descHTML)
+    ? `<div class="${prefix}switch-row">\n${control}${labelHTML}${descHTML}\n</div>`
+    : control;
+  return layout;
+}
+
+function renderSlider(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const p = node.props || {};
+  const value = Number(node.value ?? 50);
+  const min = Number(p.min ?? 0);
+  const max = Number(p.max ?? 100);
+  const step = Number(p.step ?? 1);
+  const range = max - min || 1;
+  const pct = Math.max(0, Math.min(100, ((value - min) / range) * 100));
+  const labelHTML = p.label
+    ? `  <label class="${prefix}slider-label">${escapeHtml(p.label)} <span class="${prefix}slider-value">${value}</span></label>\n`
+    : '';
+  return `<div class="${prefix}slider">
+${labelHTML}  <div class="${prefix}slider-track" role="slider" aria-valuenow="${value}" aria-valuemin="${min}" aria-valuemax="${max}" aria-step="${step}">
+    <div class="${prefix}slider-fill" style="width:${pct}%"></div>
+    <div class="${prefix}slider-thumb" style="left:${pct}%"></div>
+  </div>
+</div>`;
+}
+
+function renderToggle(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const pressed: boolean = !!node.pressed;
+  const label = node.props?.label;
+  const btnCls = `${prefix}toggle${pressed ? ` ${prefix}toggle-pressed` : ''}`;
+  const pressedAttr = pressed ? ' aria-pressed="true"' : ' aria-pressed="false"';
+  const text = label ?? '';
+  return `<button type="button" class="${btnCls}"${pressedAttr}>${escapeHtml(text)}</button>`;
+}
+
+// --- display family ------------------------------------------------------------
+
+function renderAvatar(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const size = node.props?.size ?? 'md';
+  const sizeCls = `${prefix}avatar ${prefix}avatar-${size}`;
+  const name = node.props?.name;
+  const initials = name
+    ? name
+        .split(/\s+/)
+        .map((p: string) => p[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : '?';
+  return `<div class="${sizeCls}" role="img" aria-label="${escapeHtml(name ?? 'avatar')}">
+  <span class="${prefix}avatar-fallback">${escapeHtml(initials)}</span>
+</div>`;
+}
+
+function renderFrame(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${prefix}frame">
+  ${childrenHTML}
+</div>`;
+}
+
+function renderGroup(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const orientation = (node.orientation || 'horizontal') === 'vertical' ? 'vertical' : 'horizontal';
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${prefix}group ${prefix}group-${orientation}" role="group" data-orientation="${orientation}">
+  ${childrenHTML}
+</div>`;
+}
+
+function renderEmpty(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  return `<div class="${prefix}empty" data-slot="empty">
+  ${childrenHTML}
+</div>`;
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WEEKDAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function renderCalendar(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const year = Number(node.props?.year ?? new Date().getFullYear());
+  const monthName = node.props?.month ?? MONTH_NAMES[new Date().getMonth()];
+  const monthIdx = MONTH_NAMES.findIndex((m) => m.toLowerCase() === String(monthName).toLowerCase());
+  const safeIdx = monthIdx >= 0 ? monthIdx : new Date().getMonth();
+  const first = new Date(year, safeIdx, 1);
+  const last = new Date(year, safeIdx + 1, 0);
+  const startWeekday = first.getDay();
+  const daysInMonth = last.getDate();
+  const cells: string[] = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(`<div class="${prefix}calendar-day ${prefix}calendar-day-outside"></div>`);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(`<button type="button" class="${prefix}calendar-day">${d}</button>`);
+  while (cells.length % 7 !== 0) cells.push(`<div class="${prefix}calendar-day ${prefix}calendar-day-outside"></div>`);
+  const weekdays = WEEKDAY_NAMES.map((w) => `<div class="${prefix}calendar-weekday">${w}</div>`).join('');
+  return `<div class="${prefix}calendar" data-slot="calendar">
+  <div class="${prefix}calendar-header">
+    <button type="button" class="${prefix}calendar-nav" aria-label="Previous month">&larr;</button>
+    <div class="${prefix}calendar-caption">${escapeHtml(MONTH_NAMES[safeIdx])} ${year}</div>
+    <button type="button" class="${prefix}calendar-nav" aria-label="Next month">&rarr;</button>
+  </div>
+  <div class="${prefix}calendar-grid">
+    ${weekdays}
+    ${cells.join('\n    ')}
+  </div>
+</div>`;
+}
+
+function renderDatePicker(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const placeholder = node.props?.placeholder ?? 'Pick a date';
+  const value = node.props?.value;
+  return `<div class="${prefix}date-picker" data-slot="date-picker">
+  <button type="button" class="${prefix}date-picker-trigger" aria-haspopup="dialog">
+    <span class="${prefix}date-picker-value${value ? '' : ` ${prefix}date-picker-placeholder`}">${escapeHtml(value ?? placeholder)}</span>
+    <span class="${prefix}date-picker-caret" aria-hidden="true">&#9662;</span>
+  </button>
 </div>`;
 }

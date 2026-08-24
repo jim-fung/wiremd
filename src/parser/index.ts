@@ -141,7 +141,19 @@ export function validate(
       'tabs', 'tab', 'accordion', 'accordion-item', 'breadcrumbs', 'breadcrumb-item',
       'alert', 'badge', 'separator',
       'row', 'demo',
-      'loading-state', 'empty-state', 'error-state'
+      'loading-state', 'empty-state', 'error-state',
+      // Phase 3: feedback family
+      'toast', 'skeleton', 'spinner', 'kbd', 'progress', 'meter',
+      // Phase 3: overlay family
+      'dialog', 'alert-dialog', 'sheet', 'drawer', 'popover', 'tooltip', 'preview-card',
+      // Phase 3: navigation family
+      'pagination', 'segmented-control', 'scroll-area', 'sidebar', 'menubar',
+      // Phase 3: data entry family ('form' is already listed above)
+      'field', 'fieldset', 'label', 'input-group', 'otp-field', 'number-field',
+      'autocomplete', 'combobox', 'command', 'checkbox-group', 'toggle-group',
+      'switch', 'slider', 'toggle',
+      // Phase 3: display family
+      'avatar', 'frame', 'group', 'empty', 'calendar', 'date-picker'
     ];
 
     if (!validTypes.includes(nodeType)) {
