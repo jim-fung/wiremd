@@ -58,7 +58,22 @@ Custom
 :::
 ```
 
-Works with any wiremd component: buttons, inputs, grids, tabs, badges, navigation, cards. The source pane always shows exactly what you typed.
+Works with any wiremd component: buttons, inputs, grids, tabs, badges, navigation, cards.
+
+## Code Pane
+
+What the right-hand pane shows depends on the style:
+
+- **coss (default):** generated coss-flavored code — Tailwind HTML by default, JSX with `--codegen jsx`. The pane is no longer your raw input.
+- **coss + `{.show-source}`:** add `{.show-source}` to the demo fence to show the wiremd source pane as before:
+
+  ```
+  ::: demo {.show-source}
+  ...any wiremd content...
+  :::
+  ```
+
+- **Legacy styles:** always the wiremd source you typed.
 
 > **Note:** `::: demo` is rendered by the wiremd CLI and VS Code extension. It is not rendered by VitePress — this page itself is served via `wiremd --serve`.
 

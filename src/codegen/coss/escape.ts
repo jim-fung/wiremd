@@ -81,12 +81,19 @@ export function escapeJsxText(text: string): string {
 }
 
 /**
- * Escape a value for a double-quoted JSX string attribute. Emitters wrap the
- * result in double quotes, yielding a JSON string literal with inner quotes
- * escaped (`"` -> `\"`, plus backslashes and control characters per JSON).
+ * Escape a value for a double-quoted JSX string attribute. JSX string
+ * attributes undergo NO backslash escape processing (a raw `\"` is a parse
+ * error in both TypeScript and esbuild), so values are entity-escaped
+ * instead: `&` -> `&amp;` first (so later replacements cannot corrupt
+ * entities), then `"` -> `&quot;`, `<` -> `&lt;`, `>` -> `&gt;`. Control
+ * characters are left literal; backslashes are never inserted.
  */
 export function escapeJsxAttr(value: string): string {
-  return JSON.stringify(value).slice(1, -1);
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /**

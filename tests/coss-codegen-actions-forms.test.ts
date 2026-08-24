@@ -326,7 +326,7 @@ describe('input emitter', () => {
       `<input type="text" placeholder="Say &quot;hi&quot;" class="${INPUT_CLASSES}" />`,
     );
     expect(generateCode(node, { format: 'jsx' })).toBe(
-      `<input type="text" placeholder="Say \\"hi\\"" className="${INPUT_CLASSES}" />`,
+      `<input type="text" placeholder="Say &quot;hi&quot;" className="${INPUT_CLASSES}" />`,
     );
   });
 });

@@ -124,9 +124,9 @@ describe('content emitters: image', () => {
     );
   });
 
-  test('jsx uses JSON-escaped attributes and className', () => {
+  test('jsx uses entity-escaped attributes and className', () => {
     expect(jsx(node)).toBe(
-      '<img src="https://example.com/shot.png" alt="An \\"overview\\" screenshot" width="640" height="480" loading="lazy" className="rounded-lg" />',
+      '<img src="https://example.com/shot.png" alt="An &quot;overview&quot; screenshot" width="640" height="480" loading="lazy" className="rounded-lg" />',
     );
   });
 
@@ -158,9 +158,9 @@ describe('content emitters: link', () => {
     );
   });
 
-  test('jsx JSON-escaped attributes', () => {
+  test('jsx entity-escaped attributes', () => {
     expect(jsx(node)).toBe(
-      '<a href="https://example.com/docs?a=1&b=2" title="Docs & \\"more\\"" className="text-zinc-950 underline underline-offset-2">Read the docs</a>',
+      '<a href="https://example.com/docs?a=1&amp;b=2" title="Docs &amp; &quot;more&quot;" className="text-zinc-950 underline underline-offset-2">Read the docs</a>',
     );
   });
 

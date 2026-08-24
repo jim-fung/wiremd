@@ -21,6 +21,7 @@
 
 import type { CodegenFormat, CodegenRecurse, NodeEmitter } from '../types.js';
 import type { WiremdNode } from '../../../types.js';
+import { escapeHtmlAttr, escapeJsxAttr } from '../escape.js';
 
 type ContainerNode = Extract<WiremdNode, { type: 'container' }>;
 type GridNode = Extract<WiremdNode, { type: 'grid' }>;
@@ -38,14 +39,18 @@ function classAttr(format: CodegenFormat, classes: string): Attr {
   return { name: format === 'jsx' ? 'className' : 'class', value: classes };
 }
 
-function openTag(tag: string, attrs: readonly Attr[]): string {
-  const rendered = attrs.map((attr) => (attr.value === undefined ? attr.name : `${attr.name}="${attr.value}"`));
+function openTag(tag: string, attrs: readonly Attr[], format: CodegenFormat): string {
+  const rendered = attrs.map((attr) =>
+    attr.value === undefined
+      ? attr.name
+      : `${attr.name}="${format === 'jsx' ? escapeJsxAttr(attr.value) : escapeHtmlAttr(attr.value)}"`,
+  );
   return `<${[tag, ...rendered].join(' ')}>`;
 }
 
 /** Wrap child fragments in an element; childless elements render on one line. */
-function element(tag: string, attrs: readonly Attr[], children: readonly string[]): string {
-  const open = openTag(tag, attrs);
+function element(tag: string, attrs: readonly Attr[], children: readonly string[], format: CodegenFormat): string {
+  const open = openTag(tag, attrs, format);
   const body = children.filter((fragment) => fragment.length > 0);
   if (body.length === 0) return `${open}</${tag}>`;
   return [open, ...body, `</${tag}>`].join('\n');
@@ -106,10 +111,11 @@ export const emitContainer: NodeEmitter<ContainerNode> = (node, format, recurse)
       'div',
       [{ name: 'role', value: 'dialog' }, { name: 'aria-modal', value: 'true' }, classAttr(format, MODAL_PANEL_CLASSES)],
       children,
+      format,
     );
-    return element('div', [classAttr(format, MODAL_OVERLAY_CLASSES)], [panel]);
+    return element('div', [classAttr(format, MODAL_OVERLAY_CLASSES)], [panel], format);
   }
-  return element('div', [classAttr(format, containerClasses(kind))], children);
+  return element('div', [classAttr(format, containerClasses(kind))], children, format);
 };
 
 // ---------------------------------------------------------------------------
@@ -126,10 +132,11 @@ export const emitGrid: NodeEmitter<GridNode> = (node, format, recurse) =>
     'div',
     [classAttr(format, `grid grid-cols-${gridColumns(node.columns)} gap-3`)],
     childFragments(node.children, format, recurse),
+    format,
   );
 
 export const emitGridItem: NodeEmitter<GridItemNode> = (node, format, recurse) =>
-  element('div', [classAttr(format, 'min-w-0')], childFragments(node.children, format, recurse));
+  element('div', [classAttr(format, 'min-w-0')], childFragments(node.children, format, recurse), format);
 
 // ---------------------------------------------------------------------------
 // row
@@ -145,7 +152,7 @@ function rowClasses(node: RowNode): string {
 }
 
 export const emitRow: NodeEmitter<RowNode> = (node, format, recurse) =>
-  element('div', [classAttr(format, rowClasses(node))], childFragments(node.children, format, recurse));
+  element('div', [classAttr(format, rowClasses(node))], childFragments(node.children, format, recurse), format);
 
 // ---------------------------------------------------------------------------
 // demo

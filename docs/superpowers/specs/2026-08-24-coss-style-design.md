@@ -94,9 +94,11 @@ export function generateCode(node: WiremdNode, opts: CodegenOptions): string;
 - **`html` format:** semantic HTML carrying Tailwind class strings modeled on coss's
   MIT-licensed `apps/ui` component sources. Renders correctly in any project with
   Tailwind configured; zero JS required.
-- **`jsx` format:** React TSX mirroring coss's copy-paste model, with imports from
-  `coss`/Base UI packages. Output begins with a comment listing required imports.
-  Consumers must install those packages; wiremd only generates text.
+- **`jsx` format:** native elements (`<button>`, `<div>`, ...) with coss-aligned
+  Tailwind class strings — no imports, no import-listing comment, no wrapper.
+  **Supersedes the original design** (JSX with imports from `coss`/Base UI
+  packages); ratified during Phase 2 implementation. Module/import generation
+  remains `renderToReact`'s job; wiremd only generates fragment text.
 - **CLI:** `--codegen <html|jsx>` (default `html`; invalid values error with options
   listed). Applies wherever generated code is displayed.
 - **Demo fence integration:** when rendering HTML with `--style coss`, the demo

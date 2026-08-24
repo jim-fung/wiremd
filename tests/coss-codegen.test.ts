@@ -59,6 +59,30 @@ describe('generateCode contracts', () => {
   });
 });
 
+describe('generateCode JSX attribute entity-escaping', () => {
+  const INPUT_CLASSES =
+    'h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-1 disabled:opacity-50';
+
+  // Contains a double quote, ampersand, less-than, backslash, and a newline:
+  // exactly the characters the broken JSON.stringify escaping mangled.
+  const TRICKY = 'Say "hi" & <b>\nnext\\line';
+  // Both formats escape `& < "` to entities; the backslash and newline stay
+  // literal (JSX string attributes have no backslash escape processing).
+  const ESCAPED = 'Say &quot;hi&quot; &amp; &lt;b&gt;\nnext\\line';
+
+  test('jsx attributes entity-escape quotes and ampersands, never backslash-escape; html unchanged', () => {
+    const node: WiremdNode = { type: 'input', props: { placeholder: TRICKY } };
+    const jsxOut = generateCode(node, { format: 'jsx' });
+    expect(jsxOut).toBe(`<input type="text" placeholder="${ESCAPED}" className="${INPUT_CLASSES}" />`);
+    expect(jsxOut).toContain('&quot;');
+    expect(jsxOut).toContain('&amp;');
+    expect(jsxOut).not.toContain('\\"');
+    expect(jsxOut).not.toContain('\\\\');
+    expect(jsxOut).not.toContain('\\n');
+    expect(generateCode(node)).toBe(`<input type="text" placeholder="${ESCAPED}" class="${INPUT_CLASSES}" />`);
+  });
+});
+
 // Task 1 Step 4 verification: the package root re-exports the codegen surface and
 // CodegenOptions is referenced by a test (brief requirement). Also pins the JSX
 // separator contract (className variant of the pinned HTML fixture above).

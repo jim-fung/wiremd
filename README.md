@@ -312,7 +312,7 @@ const ast = parse(`
 `);
 
 // Render to HTML with visual style
-const html = renderToHTML(ast, { style: 'sketch' });
+const html = renderToHTML(ast, { style: 'coss' });
 
 // Render to JSON
 const json = renderToJSON(ast, { pretty: true });
@@ -326,6 +326,23 @@ const reactComponent = renderToReact(ast, {
 // Render to HTML with Tailwind CSS classes
 const tailwindHTML = renderToTailwind(ast, { pretty: true });
 ```
+
+### Generating Code
+
+`generateCode` emits coss-flavored code as a standalone fragment — semantic HTML with Tailwind classes (default), or JSX:
+
+```typescript
+import { generateCode } from 'wiremd';
+
+// One node or an array of nodes; format defaults to 'html'
+const html = generateCode(ast, { format: 'html' });
+// <button class="inline-flex h-9 ...">Submit</button>
+
+const jsx = generateCode(ast, { format: 'jsx' });
+// <button className="inline-flex h-9 ...">Submit</button>
+```
+
+The result is always a fragment (never imports or a module wrapper) — drop it into any project with Tailwind configured. Module generation remains `renderToReact`'s job.
 
 ## Documentation
 
