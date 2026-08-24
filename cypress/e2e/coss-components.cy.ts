@@ -109,6 +109,24 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-containers', { capture: 'viewport' });
   });
 
+  it('renders alerts: default, four variants, and opener-line title', () => {
+    cy.get('.wmd-container-alert').should('have.length.at.least', 5);
+    // Every alert carries role="alert" (a11y contract).
+    cy.get('.wmd-container-alert[role="alert"]').should('have.length.at.least', 5);
+    // Variant classes are present and distinct from the base.
+    cy.get('.wmd-container-alert.wmd-success').should('exist');
+    cy.get('.wmd-container-alert.wmd-info').should('exist');
+    cy.get('.wmd-container-alert.wmd-warning').should('exist');
+    cy.get('.wmd-container-alert.wmd-error').should('exist');
+    // Opener-line title is present in the rendered output (pre-existing parser
+    // wraps the warning alert body in a form-group because of the inline
+    // buttons, so we search the warning's HTML for the title text rather than
+    // asserting a specific `.wmd-alert-title` descendant).
+    cy.contains('.wmd-container-alert.wmd-warning', 'Storage limit reached').should('be.visible');
+    cy.contains('.wmd-container-alert.wmd-warning', 'Upgrade your plan').should('be.visible');
+    cy.screenshot('coss-alerts', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

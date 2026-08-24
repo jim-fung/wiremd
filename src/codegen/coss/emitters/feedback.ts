@@ -1,0 +1,126 @@
+/**
+ * coss codegen - feedback family (alert, toast, skeleton, spinner, kbd, progress, meter)
+ *
+ * Task 1 covers the alert emitter only; subsequent tasks extend this file with
+ * the rest of the feedback primitives (toast, skeleton, spinner, kbd, progress,
+ * meter) and their unit tests live alongside.
+ *
+ * Copyright (c) 2025 wiremd
+ * Licensed under the MIT License
+ * https://github.com/akonan/wiremd/blob/main/LICENSE
+ */
+
+import type { CodegenFormat, NodeEmitter } from '../types.js';
+import type { WiremdNode } from '../../../types.js';
+import { escapeHtmlAttr, escapeHtmlText, escapeJsxAttr, escapeJsxText } from '../escape.js';
+
+// ---------------------------------------------------------------------------
+// Shared fragment helpers (per-family copies; no shared helper module yet)
+// ---------------------------------------------------------------------------
+
+function attrEscaped(format: CodegenFormat, value: string): string {
+  return format === 'jsx' ? escapeJsxAttr(value) : escapeHtmlAttr(value);
+}
+
+function textEscaped(format: CodegenFormat, value: string): string {
+  return format === 'jsx' ? escapeJsxText(value) : escapeHtmlText(value);
+}
+
+function classAttr(format: CodegenFormat, classes: string): string {
+  return ` ${format === 'jsx' ? 'className' : 'class'}="${attrEscaped(format, classes)}"`;
+}
+
+function childFragments(
+  children: readonly WiremdNode[] | undefined,
+  format: CodegenFormat,
+  recurse: (node: WiremdNode, format: CodegenFormat) => string,
+): string[] {
+  return (children ?? [])
+    .map((child) => recurse(child, format))
+    .filter((fragment) => fragment.length > 0);
+}
+
+// ---------------------------------------------------------------------------
+// alert
+// ---------------------------------------------------------------------------
+
+/**
+ * coss alert base + variant classes, modeled on coss `apps/ui/registry/default/ui/alert.tsx`.
+ * Base is `relative grid w-full items-start gap-y-0.5 rounded-xl border px-3.5 py-3 text-sm`
+ * with variant backgrounds; wiremd picks a neutral-palette subset (no theme tokens).
+ */
+const ALERT_BASE_CLASSES = 'relative grid w-full items-start gap-y-0.5 rounded-lg border px-3.5 py-3 text-sm text-zinc-950';
+const ALERT_VARIANT_BG: Record<'success' | 'info' | 'warning' | 'error', string> = {
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+  info: 'border-blue-200 bg-blue-50 text-blue-900',
+  warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  error: 'border-red-200 bg-red-50 text-red-900',
+};
+const ALERT_TITLE_CLASSES = 'font-medium';
+
+/**
+ * Detect a `::: alert` opener-line title. The first child of the container is
+ * a paragraph that came from the remark-containers plugin's inline opener; the
+ * plugin emits that paragraph with only a `children` array (no `content`
+ * field), so we look there for the joined text-node values. The
+ * `parseParagraph` transformer path produces paragraphs with `content`; the
+ * emitter accepts both shapes.
+ */
+function splitAlertTitle(
+  node: Extract<WiremdNode, { type: 'container' }>,
+): { title: string | undefined; body: readonly WiremdNode[] } {
+  const children = node.children ?? [];
+  if (children.length < 2) return { title: undefined, body: children };
+  const first = children[0];
+  if (first.type !== 'paragraph') return { title: undefined, body: children };
+  const fromContent = typeof first.content === 'string' ? first.content : null;
+  const fromChildren = Array.isArray(first.children)
+    ? first.children.map((c) => {
+        // WiremdNode text children have `content`; remark-containers plugin
+        // emits raw mdast text nodes with `value`. The container emitter only
+        // ever sees WiremdNode, so prefer `content` and fall back to `value`
+        // for resilience against the plugin path.
+        if (c.type === 'text') {
+          const t = c as { content?: string; value?: string };
+          return t.content ?? t.value ?? '';
+        }
+        return '';
+      }).join('')
+    : '';
+  const title = fromContent ?? (fromChildren.length > 0 ? fromChildren : undefined);
+  return { title, body: children.slice(1) };
+}
+
+export const emitAlert: NodeEmitter<Extract<WiremdNode, { type: 'container' }>> = (
+  node,
+  format,
+  recurse,
+) => {
+  // The container emitter only handles `containerType: 'alert'`; other shapes
+  // should never reach here because the dispatcher routes via the container
+  // emitter's own switch. Type the cast explicitly so a future container split
+  // is caught at the call site rather than at runtime.
+  if ((node.containerType as string) !== 'alert') {
+    return '';
+  }
+
+  const variantClass = (node.props?.classes ?? []).find((c): c is 'success' | 'info' | 'warning' | 'error' =>
+    c === 'success' || c === 'info' || c === 'warning' || c === 'error',
+  );
+  const classes = variantClass
+    ? `${ALERT_BASE_CLASSES} ${ALERT_VARIANT_BG[variantClass]}`
+    : ALERT_BASE_CLASSES;
+
+  const { title, body } = splitAlertTitle(node);
+  const bodyFragments = childFragments(body, format, recurse);
+
+  const titleFragment = title !== undefined
+    ? `<p${classAttr(format, ALERT_TITLE_CLASSES)}>${textEscaped(format, title)}</p>`
+    : '';
+
+  const allFragments = [titleFragment, ...bodyFragments].filter((f) => f.length > 0);
+  if (allFragments.length === 0) {
+    return `<div role="alert"${classAttr(format, classes)}></div>`;
+  }
+  return `<div role="alert"${classAttr(format, classes)}>\n${allFragments.join('\n')}\n</div>`;
+};

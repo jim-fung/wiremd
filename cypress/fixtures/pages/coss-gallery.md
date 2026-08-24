@@ -31,7 +31,9 @@ Email
 
 Message
 [Write your message here...]{rows:4}
+:::
 
+::: demo
 Country
 [Select country            v]
 - United States
@@ -130,6 +132,30 @@ Centered hero for landing pages.
 ### Modal Dialog
 Static wireframe state: rendered open.
 [Confirm]* [Cancel]
+:::
+
+## Alerts
+
+::: alert
+Your session will expire in 10 minutes.
+:::
+
+::: alert {.success}
+Profile updated successfully.
+:::
+
+::: alert {.info}
+Heads up: a new release is available.
+:::
+
+::: alert {.warning}
+Storage limit reached
+Upgrade your plan to continue uploading files.
+[Upgrade Now]* [Dismiss]
+:::
+
+::: alert {.error}
+Payment failed. Please check your card details.
 :::
 
 ## Demo Panes (codegen)

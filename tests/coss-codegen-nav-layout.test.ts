@@ -421,11 +421,18 @@ describe('coss codegen layout', () => {
   });
 
   test('container falls back to a neutral bordered box for other containerTypes (html + jsx)', () => {
-    for (const kind of ['section', 'footer', 'alert', 'layout', 'unknown-kind']) {
+    for (const kind of ['section', 'footer', 'layout', 'unknown-kind']) {
       const node = stateContainer(kind);
       expect(generateCode(node)).toBe('<div class="rounded-lg border border-zinc-200"></div>');
       expect(generateCode(node, { format: 'jsx' })).toBe('<div className="rounded-lg border border-zinc-200"></div>');
     }
+  });
+
+  test('container alert is no longer a fallback - it dispatches to emitAlert (role=alert, coss alert classes)', () => {
+    const node = stateContainer('alert');
+    expect(generateCode(node)).toBe(
+      '<div role="alert" class="relative grid w-full items-start gap-y-0.5 rounded-lg border px-3.5 py-3 text-sm text-zinc-950"></div>',
+    );
   });
 
   // -------------------------------------------------------------------------

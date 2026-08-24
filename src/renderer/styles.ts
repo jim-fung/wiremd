@@ -4038,5 +4038,25 @@ body.${prefix}root {
 
 /* Icon */
 .${prefix}icon { display: inline-block; vertical-align: middle; width: 1em; height: 1em; fill: currentColor; }
+
+/* Alert */
+.${prefix}container-alert {
+  display: grid;
+  align-items: start;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  color: #18181b;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.${prefix}container-alert.${prefix}success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.${prefix}container-alert.${prefix}info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.${prefix}container-alert.${prefix}warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.${prefix}container-alert.${prefix}error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.${prefix}alert-title { font-weight: 600; margin: 0; }
 `;
 }

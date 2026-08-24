@@ -1,6 +1,7 @@
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
+  projectId: 'yeiufd',
   e2e: {
     // The pages server (wiremd CLI --serve over cypress/fixtures/pages) is the
     // default surface; the editor spec visits its own Vite server by absolute URL.

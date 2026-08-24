@@ -401,6 +401,9 @@ function renderContainer(node: any, context: RenderContext): string {
   const classes = buildClasses(prefix, `container-${node.containerType}`, node.props);
 
   const nodeClasses: string[] = node.props?.classes || [];
+  if (node.containerType === 'alert') {
+    return renderAlertContainer(node, context, classes, nodeClasses);
+  }
   if (node.containerType === 'layout' && nodeClasses.includes('sidebar-main')) {
     return renderSidebarMainLayout(node, context, classes);
   }
@@ -410,6 +413,45 @@ function renderContainer(node: any, context: RenderContext): string {
   return `<div class="${classes}">
   ${childrenHTML}
 </div>`;
+}
+
+function renderAlertContainer(node: any, context: RenderContext, classes: string, nodeClasses: string[]): string {
+  const { classPrefix: prefix } = context;
+  const variantClass = nodeClasses.find((c: string) =>
+    c === 'success' || c === 'info' || c === 'warning' || c === 'error',
+  );
+  const role = 'alert';
+  const variantAttr = variantClass ? ` data-variant="${escapeHtml(variantClass)}"` : '';
+  const children: any[] = node.children || [];
+
+  // Opener-line title: first child is a paragraph AND there are siblings; treat
+  // the paragraph's text as a bolded title and the rest as body. With only one
+  // paragraph child the whole thing is body (preserves the existing single-line
+  // ::: alert Text body pattern). Title text comes from either the parser-set
+  // `content` field or, when the paragraph only carries `children` (the path
+  // taken by the remark-containers plugin's inline opener), from the joined
+  // text-node values inside the children.
+  let title: string | null = null;
+  let bodyChildren: any[] = children;
+  if (children.length > 1) {
+    const first = children[0];
+    if (first.type === 'paragraph') {
+      const fromContent = typeof first.content === 'string' ? first.content : null;
+      const fromChildren = Array.isArray(first.children)
+        ? first.children.map((c: any) => (c.type === 'text' ? c.value ?? '' : '')).join('')
+        : '';
+      const titleText = fromContent ?? (fromChildren.length > 0 ? fromChildren : null);
+      if (titleText !== null) {
+        title = titleText;
+        bodyChildren = children.slice(1);
+      }
+    }
+  }
+  const bodyHTML = bodyChildren.map((child: any) => renderNode(child, context)).join('\n  ');
+  const titleHTML = title !== null
+    ? `  <p class="${prefix}alert-title">${escapeHtml(title)}</p>\n`
+    : '';
+  return `<div class="${classes}" role="${role}"${variantAttr}>\n${titleHTML}  ${bodyHTML}\n</div>`;
 }
 
 function renderSidebarMainLayout(node: any, context: RenderContext, classes: string): string {

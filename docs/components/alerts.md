@@ -6,9 +6,7 @@
 
 # Alerts
 
-> **Not yet implemented.** The `::: alert` container parses correctly but has no dedicated renderer — it falls back to a generic `<div>`. Variants (`.success`, `.warning`, `.error`) are not visually distinguished. This page documents the intended syntax for when it is implemented.
-
-`::: alert` renders a highlighted message block. Add a variant class to control the tone.
+`::: alert` renders a highlighted message block with a coss-style tone. Add a variant class to control the color.
 
 ## Default
 
@@ -32,6 +30,14 @@ Profile updated successfully.
 
 ::: demo
 
+::: alert {.info}
+Heads up: a new release is available.
+:::
+
+:::
+
+::: demo
+
 ::: alert {.warning}
 You are approaching your storage limit.
 :::
@@ -48,7 +54,7 @@ Payment failed. Please check your card details.
 
 ## With Inline Content on Opener
 
-Place content directly on the opener line to use it as a title/heading.
+Place content directly on the opener line to use it as a title/heading. The first paragraph becomes a bolded lead; remaining body content follows.
 
 ::: demo
 
@@ -62,6 +68,10 @@ Upgrade your plan to continue uploading files.
 
 :::
 
+## Codegen
+
+`::: alert` blocks are emitted through the coss codegen layer (`--codegen html|jsx`) as coss-toned `<div role="alert">…</div>` fragments. See `docs/components/demo.md` for the codegen demo-pane behavior.
+
 ## Syntax
 
 ```
@@ -70,6 +80,7 @@ Message text.
 :::
 
 ::: alert {.success}
+::: alert {.info}
 ::: alert {.warning}
 ::: alert {.error}
 

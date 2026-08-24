@@ -22,6 +22,7 @@
 import type { CodegenFormat, CodegenRecurse, NodeEmitter } from '../types.js';
 import type { WiremdNode } from '../../../types.js';
 import { escapeHtmlAttr, escapeJsxAttr } from '../escape.js';
+import { emitAlert } from './feedback.js';
 
 type ContainerNode = Extract<WiremdNode, { type: 'container' }>;
 type GridNode = Extract<WiremdNode, { type: 'grid' }>;
@@ -105,6 +106,9 @@ function containerClasses(containerType: string): string {
 
 export const emitContainer: NodeEmitter<ContainerNode> = (node, format, recurse) => {
   const kind = node.containerType as string;
+  if (kind === 'alert') {
+    return emitAlert(node, format, recurse);
+  }
   const children = childFragments(node.children, format, recurse);
   if (kind === 'modal') {
     const panel = element(
