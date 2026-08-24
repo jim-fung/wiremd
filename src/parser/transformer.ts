@@ -1821,7 +1821,10 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
   // Check for multiple buttons on the same line BEFORE icon check: [Submit] [Cancel]
   if (/\[([^\]]+)\]/.test(content)) {
     const buttonPattern = /\[([^\]]+)\](\*)?(?:\s*(\{[^}]*\}))?/g;
-    const elements: WiremdNode[] = [];
+    // One slot per bracket-token match, in match order (null = token skipped, e.g. textarea).
+    // Keeping slots aligned with matches lets the mixed-content branch below map each
+    // match back to its element (input/select/button) instead of only button elements.
+    const slots: (WiremdNode | null)[] = [];
     let match;
     const isInputText = (t: string) => /^[_*]+$/.test(t) || /_{3,}$/.test(t);
     const isSelectText = (t: string) => /_{1,}v$/.test(t);
@@ -1834,7 +1837,7 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
         // Dropdown pattern — [Option___v] or [Select_______v]
         const placeholder = text.replace(/_{1,}v$/, '').trim() || undefined;
         if (placeholder) props.placeholder = placeholder;
-        elements.push({ type: 'select', props, options: [] } as any);
+        slots.push({ type: 'select', props, options: [] } as any);
         continue;
       }
 
@@ -1842,12 +1845,15 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
         // Input pattern — [Search___] or [_____]
         const placeholderMatch = text.match(/^([^_*]+)_{3,}$/);
         if (placeholderMatch) props.placeholder = placeholderMatch[1].trim();
-        elements.push({ type: 'input', props });
+        slots.push({ type: 'input', props });
         continue;
       }
 
       // Skip if it has rows attribute (it's a textarea)
-      if ('rows' in props) continue;
+      if ('rows' in props) {
+        slots.push(null);
+        continue;
+      }
 
       if (isPrimary) props.variant = 'primary';
 
@@ -1867,12 +1873,13 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
           }
         }
 
-        elements.push({ type: 'button', content: '', children: children as any, props });
+        slots.push({ type: 'button', content: '', children: children as any, props });
       } else {
-        elements.push({ type: 'button', content: text, props });
+        slots.push({ type: 'button', content: text, props });
       }
     }
 
+    const elements = slots.filter((s): s is WiremdNode => s !== null);
     const buttons = elements.filter(e => e.type === 'button');
     const hasMixed = elements.some(e => e.type !== 'button');
 
@@ -1892,25 +1899,35 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
       } else if (!remainingText && elements.length === 1) {
         return elements[0];
       } else if (remainingText) {
-        // Button(s) with text - create paragraph with mixed content
+        // Element(s) with text - create paragraph with mixed content.
+        // Use the per-match slots (input/select/button alike); indexing only the
+        // button elements here previously dropped input/select tokens into null slots.
         const children: WiremdNode[] = [];
         let lastIndex = 0;
         const buttonMatches = Array.from(content.matchAll(/\[([^\]]+)\](\*)?(?:\s*(\{[^}]*\}))?/g));
 
         buttonMatches.forEach((match, idx) => {
-          // Add text before button
+          // Add text before element
           const textBefore = content.substring(lastIndex, match.index);
-          if (textBefore.trim()) {
-            children.push({ type: 'text', content: textBefore, props: {} });
-          }
+          const element = slots[idx];
 
-          // Add button
-          children.push(buttons[idx]);
+          if (element) {
+            if (textBefore.trim()) {
+              children.push({ type: 'text', content: textBefore, props: {} });
+            }
+            children.push(element);
+          } else {
+            // Token produced no element (e.g. textarea with rows attr) — keep it as literal text
+            const literal = textBefore + match[0];
+            if (literal.trim()) {
+              children.push({ type: 'text', content: literal, props: {} });
+            }
+          }
 
           lastIndex = match.index! + match[0].length;
         });
 
-        // Add remaining text after last button
+        // Add remaining text after last element
         const textAfter = content.substring(lastIndex);
         if (textAfter.trim()) {
           children.push({ type: 'text', content: textAfter, props: {} });
