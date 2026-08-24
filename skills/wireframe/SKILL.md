@@ -13,7 +13,7 @@ description: >-
 # Wireframe Skill
 
 Write a wiremd `.md` file, render it, and iterate. wiremd converts plain Markdown with extended
-syntax into visual wireframes — 7 styles, no design tools needed.
+syntax into visual wireframes — 8 styles (coss default), no design tools needed.
 
 ## Workflows
 

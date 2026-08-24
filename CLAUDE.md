@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**wiremd** converts Markdown with extended wireframing syntax into visual wireframes. It ships as an npm library, a CLI tool, and a VS Code extension. Input is `.md` files with wiremd syntax; output is HTML (7 styles), React/JSX, Tailwind, or JSON.
+**wiremd** converts Markdown with extended wireframing syntax into visual wireframes. It ships as an npm library, a CLI tool, and a VS Code extension. Input is `.md` files with wiremd syntax; output is HTML (8 styles, coss default), React/JSX, Tailwind, or JSON.
 
 ## Commands
 
