@@ -18,7 +18,7 @@ export function createPreview(elements: {
   errorMessage: HTMLElement;
 }) {
   const state: PreviewState = {
-    style: 'sketch',
+    style: 'coss',
     activeTab: 'preview',
     lastHTML: '',
     lastError: null,
