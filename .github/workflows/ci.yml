@@ -116,7 +116,9 @@ jobs:
       run: bun run test:e2e
 
     - name: Upload Cypress artifacts
-      if: failure()
+      # Every run's recordings are kept, green or red — the harness archives
+      # them locally too; this preserves the CI-side evidence for triage.
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: cypress-artifacts
@@ -124,3 +126,4 @@ jobs:
           cypress/videos/
           cypress/screenshots/
         if-no-files-found: ignore
+        retention-days: 7
