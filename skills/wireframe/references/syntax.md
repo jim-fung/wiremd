@@ -551,7 +551,8 @@ All standard markdown works: `# headings`, `**bold**`, `*italic*`, `` `code` ``,
 
 | Style | Description | Best for |
 |-------|-------------|----------|
-| `sketch` | Balsamiq-inspired hand-drawn (default) | Early-stage ideation |
+| `coss` | Cal.com-inspired neutral design system (default) | Modern product UI, dashboards |
+| `sketch` | Balsamiq-inspired hand-drawn | Early-stage ideation |
 | `clean` | Modern minimal | Stakeholder handoff, PM review |
 | `wireframe` | Traditional grayscale with hatching | Low-fidelity explorations |
 | `material` | Google Material Design with elevation | Material Design apps |

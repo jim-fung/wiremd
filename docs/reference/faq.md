@@ -151,11 +151,12 @@ Yes. The `:::` container syntax supports arbitrary nesting. The remark-container
 
 ### What visual styles does the CLI support?
 
-Seven styles, passed with `--style`:
+Eight styles, passed with `--style`:
 
 | Style | Description |
 |---|---|
-| `sketch` | Balsamiq-inspired hand-drawn look (default) |
+| `coss` | Cal.com-inspired neutral design system (default) |
+| `sketch` | Balsamiq-inspired hand-drawn look |
 | `clean` | Modern minimal design |
 | `wireframe` | Traditional grayscale with hatching |
 | `material` | Google Material Design with elevation |

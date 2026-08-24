@@ -4,7 +4,16 @@ Pass as `--style <name>` on the CLI or `{ style: 'name' }` in the API.
 
 ---
 
-## sketch (default)
+## coss (default)
+
+Cal.com-inspired neutral design system: Inter typography, neutral surfaces, black primary
+actions, subtle focus rings. Polished without looking like a production UI.
+
+**Use when:** any audience. **Default choice** — if you're not sure which style to use, use this one.
+
+---
+
+## sketch
 
 Balsamiq-inspired hand-drawn look. Comic Sans font, rough borders, scribbled fills on buttons.
 Immediately reads as "this is a rough draft, not final design" — which manages stakeholder
@@ -22,8 +31,6 @@ polished without looking finished. The most versatile style — works for almost
 
 **Use when:** internal handoff to engineering or design, stakeholder review, PM documentation,
 any time you need the wireframe to be easy to read without looking like a production UI.
-
-**Default choice** — if you're not sure which style to use, use this one.
 
 ---
 

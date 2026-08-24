@@ -49,7 +49,7 @@ Renders in milliseconds. Works in any editor.
 Plain Markdown syntax. No new tools to learn.
 
 ### Flexible
-7 styles. Outputs HTML, React, JSON, or Tailwind.
+8 styles. Outputs HTML, React, JSON, or Tailwind.
 
 :::
 
@@ -81,7 +81,7 @@ $29 / month — most popular, spans two columns
 
 ### What you get
 - Unlimited wireframes
-- 7 visual styles
+- 8 visual styles
 - VS Code extension
 - CLI tool
 

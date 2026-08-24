@@ -27,7 +27,8 @@ Use the style dropdown in the preview toolbar to switch between:
 
 | Style | Look |
 |---|---|
-| `sketch` | Balsamiq-inspired hand-drawn (default) |
+| `coss` | Cal.com-inspired neutral design system (default) |
+| `sketch` | Balsamiq-inspired hand-drawn |
 | `clean` | Modern minimal |
 | `wireframe` | Traditional grayscale |
 | `material` | Google Material Design |

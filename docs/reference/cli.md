@@ -14,7 +14,7 @@ wiremd <input> [options]
 |------|-------|------|---------|-------------|
 | `--output <file>` | `-o` | string | `<input>.html` (or `.json`) | Output file path |
 | `--format <format>` | `-f` | `html` \| `json` | `html` | Output format |
-| `--style <style>` | `-s` | see below | `sketch` | Visual style applied to the HTML output |
+| `--style <style>` | `-s` | see below | `coss` | Visual style applied to the HTML output |
 | `--watch` | `-w` | boolean | — | Watch for file changes and regenerate |
 | `--serve <port>` | — | number | — | Start a dev server with live-reload on the given port |
 | `--watch-pattern <glob>` | — | string | — | Override the glob pattern of files to watch |
@@ -27,7 +27,8 @@ wiremd <input> [options]
 
 | Value | Description |
 |-------|-------------|
-| `sketch` | Balsamiq-inspired hand-drawn look (default) |
+| `coss` | Cal.com-inspired neutral design system (default) |
+| `sketch` | Balsamiq-inspired hand-drawn look |
 | `clean` | Modern minimal design |
 | `wireframe` | Traditional grayscale with hatching |
 | `none` | Unstyled semantic HTML |
@@ -42,7 +43,7 @@ Only `html` and `json` are supported by the CLI. (`react` and `tailwind` are ava
 ## Examples
 
 ```bash
-# One-shot render with default settings (sketch style, HTML output)
+# One-shot render with default settings (coss style, HTML output)
 wiremd wireframe.md
 
 # Write to a specific file

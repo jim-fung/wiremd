@@ -23,7 +23,7 @@ This is the main overview content shown on the first tab.
 
 ::: tab Features
 - Markdown-based wireframing
-- 7 visual styles
+- 8 visual styles
 - VS Code extension
 - Live reload dev server
 

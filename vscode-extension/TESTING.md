@@ -90,7 +90,7 @@ In the Extension Development Host window:
 ### ✅ Basic Preview
 - [ ] Preview opens successfully
 - [ ] Content renders correctly
-- [ ] Styles are applied (default: sketch)
+- [ ] Styles are applied (default: coss)
 
 ### ✅ Live Refresh
 - [ ] Edit markdown → preview updates automatically
@@ -98,7 +98,7 @@ In the Extension Development Host window:
 - [ ] No lag or freezing
 
 ### ✅ Style Switching
-- [ ] Dropdown shows all 7 styles
+- [ ] Dropdown shows all 8 styles
 - [ ] Switching styles updates preview
 - [ ] Each style looks different
 

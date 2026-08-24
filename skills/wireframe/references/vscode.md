@@ -35,7 +35,7 @@ Click the style dropdown in the preview toolbar, or set a workspace default:
 }
 ```
 
-Available styles: `sketch` (default), `clean`, `wireframe`, `material`, `tailwind`, `brutal`, `none`
+Available styles: `coss` (default), `sketch`, `clean`, `wireframe`, `material`, `tailwind`, `brutal`, `none`
 
 ---
 

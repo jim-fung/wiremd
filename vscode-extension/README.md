@@ -5,7 +5,7 @@ Live preview for Wiremd markdown mockups directly in VS Code.
 ## Features
 
 - **Live Preview** - See your wireframe mockups update in real-time as you type
-- **Multiple Styles** - Switch between sketch, clean, wireframe, material, tailwind, and brutal styles
+- **Multiple Styles** - Switch between coss (default), sketch, clean, wireframe, material, tailwind, and brutal styles
 - **Responsive Preview** - Test your designs at different viewport sizes (desktop, laptop, tablet, mobile)
 - **Side-by-Side Editing** - Preview panel syncs with your active markdown file
 - **Error Overlay** - Clear error messages when syntax issues occur
@@ -42,7 +42,8 @@ There are multiple ways to open the Wiremd preview:
 - Use command palette: "Wiremd: Change Preview Style"
 
 Available styles:
-- **Sketch** - Balsamiq-inspired hand-drawn look (default)
+- **Coss** - Cal.com-inspired neutral design system (default)
+- **Sketch** - Balsamiq-inspired hand-drawn look
 - **Clean** - Modern minimal design
 - **Wireframe** - Traditional grayscale with hatching
 - **None** - Unstyled semantic HTML
@@ -67,7 +68,7 @@ Configure the extension through VS Code settings:
 
 ```json
 {
-  "wiremd.defaultStyle": "sketch",
+  "wiremd.defaultStyle": "coss",
   "wiremd.autoRefresh": true,
   "wiremd.refreshDelay": 300,
   "wiremd.showErrorOverlay": true
@@ -76,7 +77,7 @@ Configure the extension through VS Code settings:
 
 ### Settings
 
-- `wiremd.defaultStyle` - Default visual style for previews (default: "sketch")
+- `wiremd.defaultStyle` - Default visual style for previews (default: "coss")
 - `wiremd.autoRefresh` - Automatically refresh preview on file changes (default: true)
 - `wiremd.refreshDelay` - Delay in milliseconds before refreshing (default: 300)
 - `wiremd.showErrorOverlay` - Show error overlay when rendering fails (default: true)

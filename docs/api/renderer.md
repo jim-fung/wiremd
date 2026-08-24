@@ -18,17 +18,18 @@ Choose the right renderer for your use case:
 
 | Renderer | Output | Use Case | Styles | Size |
 |----------|--------|----------|--------|------|
-| **HTML** | Complete HTML document | Static sites, previews, exports | ✅ 7 styles | Medium |
+| **HTML** | Complete HTML document | Static sites, previews, exports | ✅ 8 styles | Medium |
 | **JSON** | JSON string | APIs, data storage, analysis | ❌ | Small |
 | **React** | JSX/TSX component | React apps, Next.js, Gatsby | ❌ Custom CSS | Large |
 | **Tailwind** | HTML + Tailwind classes | Tailwind projects, prototypes | ✅ Utility-based | Medium |
 
 ### Style Comparison
 
-For HTML and Tailwind renderers, you can choose from 7 visual styles:
+For HTML and Tailwind renderers, you can choose from 8 visual styles:
 
 | Style | Description | Best For | Fidelity |
 |-------|-------------|----------|----------|
+| **coss** | Cal.com-inspired neutral design system (default) | Product mockups, dashboards | High |
 | **sketch** | Hand-drawn Balsamiq-style | Brainstorming, low-fi wireframes | Low |
 | **clean** | Modern minimal design | Presentations, high-fi mockups | High |
 | **wireframe** | Black & white traditional | Developer handoff, specs | Medium |
@@ -65,8 +66,8 @@ The wiremd AST from `parse()`.
 
 ```typescript
 interface RenderOptions {
-  // Visual style (default: 'sketch')
-  style?: 'sketch' | 'clean' | 'wireframe' | 'material' | 'tailwind' | 'brutal' | 'none';
+  // Visual style (default: 'coss')
+  style?: 'coss' | 'sketch' | 'clean' | 'wireframe' | 'material' | 'tailwind' | 'brutal' | 'none';
 
   // Inline styles in HTML (default: true)
   inlineStyles?: boolean;
@@ -103,7 +104,7 @@ Email
 `);
 
 const html = renderToHTML(ast);
-// Returns complete HTML document with sketch style
+// Returns complete HTML document with the default coss style
 ```
 
 #### Different Styles
@@ -682,7 +683,7 @@ function processWireframe(options: CLIOptions): void {
 
   const output = render(ast, {
     format: options.format,
-    style: options.style || 'sketch',
+    style: options.style || 'coss',
     pretty: true
   });
 
