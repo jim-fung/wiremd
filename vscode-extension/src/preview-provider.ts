@@ -51,7 +51,7 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
 
     // Get default style from config
     const config = vscode.workspace.getConfiguration('wiremd');
-    this.currentStyle = config.get('defaultStyle', 'sketch');
+    this.currentStyle = config.get('defaultStyle', 'coss');
   }
 
   /**
