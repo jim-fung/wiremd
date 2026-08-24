@@ -88,6 +88,10 @@ This creates a responsive 3-column grid layout with icons and descriptions.
 - ✅ **Framework renderers** - React, Tailwind CSS classes (Vue, Svelte coming soon)
 - ✅ **VS Code extension** - Live preview with real-time updates and style switching
 
+## Supported primitives
+
+The **coss** style (Cal.com's design system) is wiremd's default theme — every primitive renders with coss visuals out of the box and round-trips through `generateCode()` as Tailwind HTML or JSX. All 73 primitives across the base, feedback, overlay, navigation, data-entry, and display families are cataloged in the [coverage matrix](./docs/components/index.md). Composition recipes that assemble primitives into common patterns (login form, pricing card, navbar…) live in [Particles](./docs/components/particles.md).
+
 ## Project Structure
 
 This is an open-source MIT-licensed project containing:

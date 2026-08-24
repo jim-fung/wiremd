@@ -103,4 +103,4 @@ Five additional primitives with first-class codegen discriminants:
 - `::: sidebar` — now a dedicated discriminant: first heading is the header, list children render as a nav menu with `{.active}` support.
 - `::: menubar` — horizontal `role="menubar"` bar for app-style menu triggers.
 
-All five appear in the gallery page under "Navigation" and in the 52-entry `SupportedType` codegen contract.
+All five appear in the gallery page under "Navigation" and in the 73-entry `SupportedType` codegen contract.

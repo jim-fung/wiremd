@@ -180,3 +180,13 @@ pricing card, navbar, settings panel…). No dedicated particle code paths.
   in both formats.
 - Legacy styles still function but warn; removal is a mechanical next-major change.
 - No runtime dependency growth; size budget respected.
+
+### Verification map (post-Phase 3, 2026-08-24)
+
+| Criterion | Verified by |
+| --- | --- |
+| coss-styled HTML with no flags | `coss` default branch in `src/renderer/styles.ts`; coss Cypress suites in `cypress/e2e/coss-components.cy.ts` |
+| Every primitive: syntax + preview + codegen (both formats) | Coverage matrix in `docs/components/index.md`; 73-discriminant `SupportedType` contract in `src/codegen/coss/types.ts`; family pages under `docs/components/` |
+| Particles documented as compositions | `docs/components/particles.md` (no dedicated particle code paths) |
+| Legacy styles warn; removal mechanical | `WiremdStyle` union + deprecation warnings (`src/renderer/styles.ts`); deprecation table in `docs/components/styles.md` |
+| No runtime deps; size budget | Unit suite green (`bun run test`); clean `bun run build` including the chunk-size guard |

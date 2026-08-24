@@ -90,7 +90,7 @@ Renders as a card with rounded-lg border, bg-white, shadow-sm. Pass `href` to wr
 
 ## Codegen
 
-All seven primitives are wired into `generateCode` with both HTML and JSX output. The dispatcher treats `dialog`, `alert-dialog`, `sheet`, `drawer`, `popover`, `tooltip`, and `preview-card` as first-class discriminants — they appear in `FAMILY_EMITTERS` and `SupportedType` (the 47-discriminant frozen table).
+All seven primitives are wired into `generateCode` with both HTML and JSX output. The dispatcher treats `dialog`, `alert-dialog`, `sheet`, `drawer`, `popover`, `tooltip`, and `preview-card` as first-class discriminants — they appear in `FAMILY_EMITTERS` and `SupportedType` (now part of the 73-discriminant frozen table).
 
 The emitted markup mirrors the coss registry components in shape but does NOT import base-ui or any other library; the user is expected to wire the actual interactivity (popover state, sheet slide-in animation, dialog focus trap) in their own build step.
 

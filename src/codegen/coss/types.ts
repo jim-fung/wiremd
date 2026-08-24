@@ -24,13 +24,19 @@ export interface CodegenOptions {
 export type CodegenInput = WiremdNode | readonly WiremdNode[];
 
 /**
- * The 40 AST discriminants supported by the coss codegen layer. Phase 3 Task 2
- * extends the Phase 2 allowlist with the feedback family: toast, skeleton,
- * spinner, kbd, progress, meter. `option` and `breadcrumb-item` are emitted
- * internally by the select/breadcrumbs emitters only; direct `form`,
- * `accordion`, `accordion-item`, `alert`, `loading-state`, `empty-state`,
- * `error-state`, `option`, and `breadcrumb-item` nodes throw
- * `Unsupported codegen node type: <type>` (still on the Phase 3 roadmap).
+ * The 73 AST discriminants supported by the coss codegen layer (Phase 3
+ * complete): base content + feedback (toast, skeleton, spinner, kbd,
+ * progress, meter) + overlays (dialog, alert-dialog, sheet, drawer, popover,
+ * tooltip, preview-card) + navigation (pagination, segmented-control,
+ * scroll-area, sidebar, menubar) + data entry (form, field, fieldset, label,
+ * input-group, otp-field, number-field, autocomplete, combobox, command,
+ * checkbox-group, toggle-group, switch, slider, toggle) + display (avatar,
+ * frame, group, empty, calendar, date-picker). `alert` has no standalone
+ * discriminant: `::: alert` parses to a `container` node whose emitter branch
+ * handles it. `option` and `breadcrumb-item` are emitted internally by the
+ * select/breadcrumbs emitters only. Direct `accordion`, `accordion-item`,
+ * `alert`, `loading-state`, `empty-state`, `error-state`, `option`, and
+ * `breadcrumb-item` nodes throw `Unsupported codegen node type: <type>`.
  */
 export type SupportedType =
   | 'button' | 'input' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'radio-group' | 'icon'
