@@ -8,13 +8,15 @@
  *   2. the wiremd CLI preview server over cypress/fixtures/pages
  *
  * Then runs Cypress (`run` headless by default, `--open` for interactive).
- * Videos land in cypress/videos/, screenshots in cypress/screenshots/.
+ * Videos land in cypress/videos/, screenshots in cypress/screenshots/ —
+ * after each run both are archived to cypress/runs/<timestamp>-<pass|fail>/
+ * so history survives trashAssetsBeforeRuns wiping the live folders.
  *
  * Requires `bun run build` to have produced dist/cli/index.js (the preview
  * server runs through bin/wiremd.js).
  */
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, renameSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -121,6 +123,33 @@ function runCypress() {
   });
 }
 
+/**
+ * Move this run's cypress/videos/ + cypress/screenshots/ into a per-run
+ * archive dir. trashAssetsBeforeRuns:true empties the live folders on the
+ * NEXT run, so without this only the most recent run's evidence survives.
+ */
+function archiveArtifacts(exitCode) {
+  const stamp = new Date().toISOString().replaceAll(':', '').replaceAll('.', '');
+  const dest = path.join(repoRoot, 'cypress', 'runs', `${stamp}-${exitCode === 0 ? 'pass' : 'fail'}`);
+  let moved = 0;
+  for (const name of ['videos', 'screenshots']) {
+    const src = path.join(repoRoot, 'cypress', name);
+    if (!existsSync(src)) continue;
+    const files = readdirSync(src);
+    if (files.length === 0) continue;
+    const destDir = path.join(dest, name);
+    mkdirSync(destDir, { recursive: true });
+    for (const file of files) {
+      renameSync(path.join(src, file), path.join(destDir, file));
+      moved += 1;
+    }
+  }
+  if (moved > 0) {
+    console.log(`[e2e] archived ${moved} artifact file(s) → ${path.relative(repoRoot, dest)}`);
+  }
+  return moved;
+}
+
 const servers = [];
 let exitCode = 1;
 try {
@@ -138,6 +167,7 @@ try {
     throw failure;
   }
   exitCode = await runCypress();
+  archiveArtifacts(exitCode);
 } finally {
   for (const server of servers.reverse()) {
     try {
