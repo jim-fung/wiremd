@@ -11,7 +11,7 @@
  */
 
 /** Package version — keep in sync with package.json (asserted by test). */
-export const VERSION = '0.1.7';
+export const VERSION = '0.1.8';
 
 /** Syntax version — the host-side cache/invalidation gauge. */
 export const SYNTAX_VERSION = '0.1';
