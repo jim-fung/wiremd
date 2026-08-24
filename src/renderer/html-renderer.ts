@@ -227,6 +227,19 @@ export function renderNode(node: WiremdNode, context: RenderContext): string {
     case 'toggle':
       return renderToggleNode(node, context);
 
+    case 'avatar':
+      return renderAvatar(node, context);
+    case 'frame':
+      return renderFrame(node, context);
+    case 'group':
+      return renderGroup(node, context);
+    case 'empty':
+      return renderEmpty(node, context);
+    case 'calendar':
+      return renderCalendar(node, context);
+    case 'date-picker':
+      return renderDatePicker(node, context);
+
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -1478,4 +1491,95 @@ function renderToggleNode(node: any, context: RenderContext): string {
   const pressedAttr = pressed ? ' aria-pressed="true"' : ' aria-pressed="false"';
   const text = label ?? '';
   return `<button type="button" class="${btnCls}"${pressedAttr}>${escapeHtml(text)}</button>`;
+}
+
+// ============================================================================
+// Phase 3 Task 6: display family
+// ============================================================================
+
+function renderAvatar(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const size = node.props?.size ?? 'md';
+  const sizeCls = `${prefix}avatar ${prefix}avatar-${size}`;
+  const name = node.props?.name;
+  const initials = name
+    ? name
+        .split(/\s+/)
+        .map((p: string) => p[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : '?';
+  return `<div class="${sizeCls}" role="img" aria-label="${escapeHtml(name ?? 'avatar')}">
+  <span class="${prefix}avatar-fallback">${escapeHtml(initials)}</span>
+</div>`;
+}
+
+function renderFrame(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${prefix}frame">
+  ${childrenHTML}
+</div>`;
+}
+
+function renderGroup(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const orientation = (node.orientation || 'horizontal') === 'vertical' ? 'vertical' : 'horizontal';
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${prefix}group ${prefix}group-${orientation}" role="group" data-orientation="${orientation}">
+  ${childrenHTML}
+</div>`;
+}
+
+function renderEmpty(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return `<div class="${prefix}empty" data-slot="empty">
+  ${childrenHTML}
+</div>`;
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WEEKDAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function renderCalendar(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const year = Number(node.props?.year ?? new Date().getFullYear());
+  const monthName = node.props?.month ?? MONTH_NAMES[new Date().getMonth()];
+  const monthIdx = MONTH_NAMES.findIndex((m) => m.toLowerCase() === String(monthName).toLowerCase());
+  const safeIdx = monthIdx >= 0 ? monthIdx : new Date().getMonth();
+  const first = new Date(year, safeIdx, 1);
+  const last = new Date(year, safeIdx + 1, 0);
+  const startWeekday = first.getDay();
+  const daysInMonth = last.getDate();
+  const cells: string[] = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(`<div class="${prefix}calendar-day ${prefix}calendar-day-outside"></div>`);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(`<button type="button" class="${prefix}calendar-day">${d}</button>`);
+  while (cells.length % 7 !== 0) cells.push(`<div class="${prefix}calendar-day ${prefix}calendar-day-outside"></div>`);
+  const weekdays = WEEKDAY_NAMES.map((w) => `<div class="${prefix}calendar-weekday">${w}</div>`).join('');
+  return `<div class="${prefix}calendar" data-slot="calendar">
+  <div class="${prefix}calendar-header">
+    <button type="button" class="${prefix}calendar-nav" aria-label="Previous month">&larr;</button>
+    <div class="${prefix}calendar-caption">${escapeHtml(MONTH_NAMES[safeIdx])} ${year}</div>
+    <button type="button" class="${prefix}calendar-nav" aria-label="Next month">&rarr;</button>
+  </div>
+  <div class="${prefix}calendar-grid">
+    ${weekdays}
+    ${cells.join('\n    ')}
+  </div>
+</div>`;
+}
+
+function renderDatePicker(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const placeholder = node.props?.placeholder ?? 'Pick a date';
+  const value = node.props?.value;
+  return `<div class="${prefix}date-picker" data-slot="date-picker">
+  <button type="button" class="${prefix}date-picker-trigger" aria-haspopup="dialog">
+    <span class="${prefix}date-picker-value${value ? '' : ` ${prefix}date-picker-placeholder`}">${escapeHtml(value ?? placeholder)}</span>
+    <span class="${prefix}date-picker-caret" aria-hidden="true">&#9662;</span>
+  </button>
+</div>`;
 }

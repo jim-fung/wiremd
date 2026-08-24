@@ -4399,5 +4399,86 @@ body.${prefix}root {
   border-radius: 9999px; background: #ffffff;
   border: 2px solid #18181b;
 }
+
+/* Phase 3 Task 6: display family */
+.${prefix}avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; overflow: hidden; background: #f4f4f5;
+  color: #18181b; font-weight: 500; flex-shrink: 0;
+  font-size: 12px;
+}
+.${prefix}avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+.${prefix}avatar-md { width: 36px; height: 36px; font-size: 12px; }
+.${prefix}avatar-lg { width: 48px; height: 48px; font-size: 16px; }
+.${prefix}avatar-xl { width: 64px; height: 64px; font-size: 20px; }
+.${prefix}avatar-fallback {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+
+.${prefix}frame {
+  position: relative; display: flex; flex-direction: column;
+  background: #f4f4f5; border-radius: 16px; padding: 4px; margin: 12px 0;
+}
+.${prefix}frame > * + * { margin-top: 4px; }
+
+.${prefix}group {
+  display: inline-flex; align-items: center; gap: 2px;
+  border-radius: 10px; padding: 4px;
+  background: #fafafa; border: 1px solid #e4e4e7; margin: 12px 0;
+}
+.${prefix}group-vertical { flex-direction: column; align-items: stretch; }
+
+.${prefix}empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 32px 16px; text-align: center;
+  background: #ffffff; border: 1px dashed #d4d4d8; border-radius: 12px;
+  color: #71717a; margin: 16px 0;
+}
+
+.${prefix}calendar {
+  display: inline-flex; flex-direction: column;
+  background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
+  padding: 12px; min-width: 260px; margin: 12px 0;
+  font-size: 14px;
+}
+.${prefix}calendar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px 8px;
+}
+.${prefix}calendar-caption { font-weight: 600; color: #18181b; }
+.${prefix}calendar-nav {
+  width: 28px; height: 28px; border: 0; background: transparent;
+  border-radius: 6px; cursor: pointer; color: #71717a;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.${prefix}calendar-nav:hover { background: #f4f4f5; color: #18181b; }
+.${prefix}calendar-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.${prefix}calendar-weekday {
+  text-align: center; font-size: 11px; font-weight: 500;
+  color: #71717a; padding: 6px 0;
+}
+.${prefix}calendar-day {
+  height: 32px; min-width: 32px; border: 0; background: transparent;
+  border-radius: 6px; cursor: pointer; font-size: 13px; color: #18181b;
+  font-variant-numeric: tabular-nums;
+}
+.${prefix}calendar-day:hover { background: #f4f4f5; }
+.${prefix}calendar-day-outside { color: #d4d4d8; pointer-events: none; }
+
+.${prefix}date-picker { display: inline-block; margin: 12px 0; }
+.${prefix}date-picker-trigger {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 12px; min-width: 220px;
+  background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px;
+  font-size: 14px; color: #18181b; cursor: pointer;
+  justify-content: space-between;
+}
+.${prefix}date-picker-trigger:hover { border-color: #a1a1aa; }
+.${prefix}date-picker-value { font-weight: 500; }
+.${prefix}date-picker-placeholder { color: #a1a1aa; font-weight: 400; }
+.${prefix}date-picker-caret { color: #71717a; font-size: 12px; }
 `;
 }

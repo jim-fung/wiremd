@@ -43,7 +43,9 @@ export type SupportedType =
   | 'pagination' | 'segmented-control' | 'scroll-area' | 'sidebar' | 'menubar'
   | 'form' | 'field' | 'fieldset' | 'label' | 'input-group' | 'otp-field' | 'number-field'
   | 'autocomplete' | 'combobox' | 'command' | 'checkbox-group' | 'toggle-group'
-  | 'switch' | 'slider' | 'toggle';
+  | 'switch' | 'slider' | 'toggle'
+  // Phase 3 Task 6: display family
+  | 'avatar' | 'frame' | 'group' | 'empty' | 'calendar' | 'date-picker';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through

@@ -235,6 +235,35 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-data-entry', { capture: 'viewport' });
   });
 
+  it('renders display family: avatar, frame, group, empty, calendar, date-picker', () => {
+    // avatars
+    cy.get('.wmd-avatar[role="img"]').should('have.length.at.least', 3);
+    cy.get('.wmd-avatar.wmd-avatar-md').should('contain', 'AL');
+    cy.get('.wmd-avatar.wmd-avatar-lg').should('contain', 'GH');
+    cy.get('.wmd-avatar.wmd-avatar-sm').should('contain', 'L');
+    // frame
+    cy.get('.wmd-frame').should('contain', 'Frame title');
+    // group horizontal
+    cy.get('.wmd-group.wmd-group-horizontal[role="group"]').should('exist');
+    cy.contains('.wmd-group-horizontal', 'Cut').should('be.visible');
+    // group vertical
+    cy.get('.wmd-group.wmd-group-vertical[role="group"][data-orientation="vertical"]').should('exist');
+    // empty
+    cy.get('.wmd-empty[data-slot="empty"]').should('contain', 'No projects yet');
+    // calendar
+    cy.get('.wmd-calendar[data-slot="calendar"]').should('exist');
+    cy.get('.wmd-calendar .wmd-calendar-caption').should('contain', 'August 2026');
+    cy.get('.wmd-calendar .wmd-calendar-day').its('length').should('be.gte', 28);
+    cy.get('.wmd-calendar-nav[aria-label="Previous month"]').should('exist');
+    cy.get('.wmd-calendar-nav[aria-label="Next month"]').should('exist');
+    // date-picker
+    cy.get('.wmd-date-picker[data-slot="date-picker"]').should('have.length', 2);
+    cy.get('.wmd-date-picker-trigger[aria-haspopup="dialog"]').should('have.length', 2);
+    cy.contains('.wmd-date-picker', 'Pick departure date').should('exist');
+    cy.contains('.wmd-date-picker', '2026-08-24').should('exist');
+    cy.screenshot('coss-display', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

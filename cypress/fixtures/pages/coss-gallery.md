@@ -335,6 +335,44 @@ Email address
 ::: toggle {.active} {label:"Bold"}
 :::
 
+## Display
+
+::: avatar {name:"Ada Lovelace" size:md}
+:::
+
+::: avatar {name:"Grace Hopper" size:lg}
+:::
+
+::: avatar {name:"Linus" size:sm}
+:::
+
+::: frame
+### Frame title
+A rounded muted panel that hosts panels.
+:::
+
+::: group
+[Cut]* [Copy] [Paste]
+:::
+
+::: group {orientation:vertical}
+[Item one] [Item two] [Item three]
+:::
+
+::: empty
+### No projects yet
+Get started by creating your first project.
+:::
+
+::: calendar {month:August year:2026}
+:::
+
+::: date-picker {placeholder:"Pick departure date"}
+:::
+
+::: date-picker {value:"2026-08-24" placeholder:"Pick a date"}
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo

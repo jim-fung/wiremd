@@ -146,6 +146,14 @@ export type WiremdNode =
   | { type: 'slider'; value: number; props: ComponentProps & { min?: number; max?: number; step?: number; label?: string }; position?: Location }
   | { type: 'toggle'; pressed: boolean; props: ComponentProps & { label?: string }; position?: Location }
 
+  // Phase 3 Task 6: display family
+  | { type: 'avatar'; props: ComponentProps & { size?: 'sm' | 'md' | 'lg' | 'xl'; name?: string }; position?: Location }
+  | { type: 'frame'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+  | { type: 'group'; orientation: 'horizontal' | 'vertical'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+  | { type: 'empty'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+  | { type: 'calendar'; props: ComponentProps & { month?: string; year?: number }; children: WiremdNode[]; position?: Location }
+  | { type: 'date-picker'; props: ComponentProps & { placeholder?: string; value?: string }; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 

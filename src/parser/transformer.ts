@@ -606,7 +606,10 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
     containerType === 'number-field' || containerType === 'autocomplete' ||
     containerType === 'combobox' || containerType === 'command' ||
     containerType === 'checkbox-group' || containerType === 'toggle-group' ||
-    containerType === 'switch' || containerType === 'slider' || containerType === 'toggle'
+    containerType === 'switch' || containerType === 'slider' || containerType === 'toggle' ||
+    // Phase 3 Task 6: display family
+    containerType === 'avatar' || containerType === 'frame' || containerType === 'group' ||
+    containerType === 'empty' || containerType === 'calendar' || containerType === 'date-picker'
   ) {
     const processedChildren = processNodeList(node.children || [], options) as any;
     // Promote the first processed heading child to a label/legend string and drop it from children.
@@ -788,6 +791,47 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
           props: {
             ...rest,
             label: typeof props.label === 'string' ? props.label : undefined,
+          },
+        };
+      }
+
+      // Phase 3 Task 6: display family
+      case 'avatar': {
+        const rest = { ...props } as any;
+        const size = ['sm', 'md', 'lg', 'xl'].includes(rest.size) ? rest.size : 'md';
+        delete rest.size; delete rest.name;
+        return {
+          type: 'avatar',
+          props: {
+            ...rest,
+            size,
+            name: typeof props.name === 'string' ? props.name : undefined,
+          },
+        };
+      }
+      case 'frame':
+        return { type: 'frame', props, children: processedChildren };
+      case 'group': {
+        const orientation = (props.orientation as any) === 'vertical' ? 'vertical' : 'horizontal';
+        return { type: 'group', orientation, props, children: processedChildren };
+      }
+      case 'empty':
+        return { type: 'empty', props, children: processedChildren };
+      case 'calendar': {
+        const rest = { ...props } as any;
+        const year = rest.year !== undefined && !Number.isNaN(Number(rest.year)) ? Number(rest.year) : new Date().getFullYear();
+        const month = typeof rest.month === 'string' ? rest.month : undefined;
+        delete rest.year; delete rest.month;
+        return { type: 'calendar', props: { ...rest, month, year }, children: processedChildren };
+      }
+      case 'date-picker': {
+        const rest = { ...props } as any;
+        return {
+          type: 'date-picker',
+          props: {
+            ...rest,
+            placeholder: typeof rest.placeholder === 'string' ? rest.placeholder : undefined,
+            value: typeof rest.value === 'string' ? rest.value : undefined,
           },
         };
       }

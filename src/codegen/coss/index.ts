@@ -51,6 +51,14 @@ import {
   emitToggle,
   emitToggleGroup,
 } from './emitters/data-entry.js';
+import {
+  emitAvatar,
+  emitCalendar,
+  emitDatePicker,
+  emitEmpty,
+  emitFrame,
+  emitGroup,
+} from './emitters/display.js';
 import { emitContainer, emitDemo, emitGrid, emitGridItem, emitRow } from './emitters/layout.js';
 import {
   emitKbd,
@@ -146,6 +154,13 @@ const FAMILY_EMITTERS: FamilyTable = {
   switch: emitSwitch,
   slider: emitSlider,
   toggle: emitToggle,
+  // Phase 3 Task 6: display family
+  avatar: emitAvatar,
+  frame: emitFrame,
+  group: emitGroup,
+  empty: emitEmpty,
+  calendar: emitCalendar,
+  'date-picker': emitDatePicker,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */
