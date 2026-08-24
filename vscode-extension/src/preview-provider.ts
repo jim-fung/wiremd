@@ -15,7 +15,7 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
   private panel: vscode.WebviewPanel | undefined;
   private currentEditor: vscode.TextEditor | undefined;
   private updateTimeout: NodeJS.Timeout | undefined;
-  private currentStyle: string = 'sketch';
+  private currentStyle: string = 'coss';
   private currentViewport: string = 'full';
   private disposables: vscode.Disposable[] = [];
 
@@ -67,7 +67,7 @@ export class WiremdPreviewProvider implements vscode.WebviewPanelSerializer {
 
     // Restore state
     if (state) {
-      this.currentStyle = state.style || 'sketch';
+      this.currentStyle = state.style || 'coss';
       this.currentViewport = state.viewport || 'full';
     }
 
