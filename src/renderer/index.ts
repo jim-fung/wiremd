@@ -38,6 +38,7 @@ export function renderToHTML(
     inlineStyles = true,
     pretty = true,
     classPrefix = 'wmd-',
+    codegen = 'html',
   } = options;
 
   const context = {
@@ -45,6 +46,7 @@ export function renderToHTML(
     classPrefix,
     inlineStyles,
     pretty,
+    codegen,
   };
 
   // Render all children

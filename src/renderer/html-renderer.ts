@@ -8,12 +8,15 @@
  */
 
 import type { WiremdNode } from '../types.js';
+import { generateCode } from '../codegen/coss/index.js';
 
 export interface RenderContext {
   style: string;
   classPrefix: string;
   inlineStyles: boolean;
   pretty: boolean;
+  /** Code format used for coss demo panes when the raw source is not shown. */
+  codegen: 'html' | 'jsx';
 }
 
 /**
@@ -770,7 +773,26 @@ function buildClasses(prefix: string, baseClass: string, props: any): string {
 function renderDemo(node: any, context: RenderContext): string {
   const { classPrefix: prefix } = context;
   const previewHTML = (node.children || []).map((child: any) => renderNode(child, context)).join('\n');
-  const codeHTML = escapeHtml(node.raw || '');
+
+  // coss demos show generated code unless {.show-source} is present;
+  // legacy styles always show the normalized raw source.
+  const showRaw =
+    context.style !== 'coss' ||
+    node.props?.classes?.includes('show-source') === true;
+
+  let codeSource: string;
+  if (showRaw) {
+    codeSource = node.raw || '';
+  } else {
+    try {
+      codeSource = generateCode(node.children || [], { format: context.codegen });
+    } catch {
+      // Unsupported codegen node (or other codegen failure): degrade to raw source.
+      codeSource = node.raw || '';
+    }
+  }
+
+  const codeHTML = escapeHtml(codeSource);
   return `<div class="${prefix}demo">
   <div class="${prefix}demo-preview">${previewHTML}</div>
   <div class="${prefix}demo-code">

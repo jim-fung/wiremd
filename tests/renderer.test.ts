@@ -1038,6 +1038,67 @@ content
     });
   });
 
+  describe('Demo code panes (coss codegen)', () => {
+    const demoMd = '::: demo\n\n[Save]*\n\n:::';
+    const ast = parse(demoMd);
+
+    it('coss demo pane shows generated code by default (pane retained)', () => {
+      const html = renderToHTML(ast, { style: 'coss', codegen: 'html' });
+      expect(html).toContain('wmd-demo-preview');
+      expect(html).toContain('wmd-demo-code');
+      expect(html).toContain('<button');                          // preview renders the real button
+      expect(html).toContain('&lt;button');                       // code pane shows escaped generated HTML
+      expect(html).toContain('bg-zinc-950');                      // coss-generated classes appear
+      expect(html).not.toContain('wmd-demo-code wmd-hidden');     // pane is never removed
+      expect(html).not.toContain('[Save]*');                      // raw source is replaced by generated code
+    });
+
+    it('show-source class restores normalized raw source pane', () => {
+      const raw = renderToHTML(parse('::: demo {.show-source}\n\n[Save]*\n\n:::'), { style: 'coss', codegen: 'jsx' });
+      expect(raw).toContain('wmd-demo-code');
+      expect(raw).toContain('[Save]*');                // normalized raw, escaped
+      expect(raw).not.toContain('className=');         // generated code never appears
+      expect(raw).not.toContain('bg-zinc-950');
+    });
+
+    it('legacy styles always show raw source regardless of codegen', () => {
+      const legacy = renderToHTML(ast, { style: 'clean', codegen: 'jsx' });
+      expect(legacy).toContain('wmd-demo-code');
+      expect(legacy).toContain('[Save]*');
+      expect(legacy).not.toContain('className=');
+      expect(legacy).not.toContain('bg-zinc-950');
+    });
+
+    it('codegen defaults to html without the option', () => {
+      const html = renderToHTML(ast, { style: 'coss' });
+      expect(html).toContain('class=');
+      expect(html).not.toContain('className=');
+      expect(html).toContain('&lt;button');            // pane holds generated HTML, not JSX
+    });
+
+    it('falls back to escaped raw source when a child is unsupported by codegen', () => {
+      const doc = {
+        type: 'document',
+        version: '1.0',
+        meta: {},
+        children: [
+          {
+            type: 'demo',
+            raw: '[Save]*',
+            props: { classes: [] },
+            children: [
+              { type: 'loading-state', message: 'Loading', props: {}, children: [] },
+            ],
+          },
+        ],
+      };
+      const html = renderToHTML(doc as any, { style: 'coss', codegen: 'html' });
+      expect(html).toContain('wmd-demo-code');
+      expect(html).toContain('[Save]*');               // graceful fallback to escaped raw
+      expect(html).not.toContain('bg-zinc-950');       // no partial generated output
+    });
+  });
+
   describe('coss style', () => {
     it('applies wmd-coss class and Inter font stack', () => {
       const html = renderToHTML(parse('# Hello'), { style: 'coss' });

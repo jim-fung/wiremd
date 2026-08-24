@@ -181,6 +181,7 @@ export interface RenderOptions {
   classPrefix?: string;
   typescript?: boolean; // For React renderer
   componentName?: string; // For React renderer
+  codegen?: 'html' | 'jsx'; // Code format for coss demo panes (default: 'html')
 }
 
 // ============================================================================
