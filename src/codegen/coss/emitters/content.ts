@@ -89,7 +89,9 @@ export const emitParagraph: NodeEmitter<Extract<WiremdNode, { type: 'paragraph' 
 };
 
 export const emitText: NodeEmitter<Extract<WiremdNode, { type: 'text' }>> = (node, format) => {
-  return `<span${classAttr(format, 'text-zinc-700 leading-6')}>${text(format, node.content ?? '')}</span>`;
+  // Bare escaped text (matches both legacy renderers): a styling span would
+  // override parent color/leading when nested (e.g. inside link anchors).
+  return text(format, node.content ?? '');
 };
 
 export const emitImage: NodeEmitter<Extract<WiremdNode, { type: 'image' }>> = (node, format) => {

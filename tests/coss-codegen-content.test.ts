@@ -52,7 +52,7 @@ describe('content emitters: heading', () => {
       props: {},
     };
     expect(html(node)).toBe(
-      '<h3 class="text-xl font-semibold text-zinc-950"><span class="text-zinc-700 leading-6">Styled </span><span class="text-zinc-700 leading-6">heading</span></h3>',
+      '<h3 class="text-xl font-semibold text-zinc-950">Styled heading</h3>',
     );
   });
 });
@@ -78,16 +78,35 @@ describe('content emitters: paragraph', () => {
 });
 
 describe('content emitters: text', () => {
-  test('escapes & < > quotes (html)', () => {
+  test('bare escaped text escapes & < > quotes, no wrapper span (html)', () => {
     expect(html({ type: 'text', content: 'Tom & <Jerry> said "hi"' })).toBe(
-      '<span class="text-zinc-700 leading-6">Tom &amp; &lt;Jerry&gt; said &quot;hi&quot;</span>',
+      'Tom &amp; &lt;Jerry&gt; said &quot;hi&quot;',
     );
   });
 
-  test('jsx escapes braces as string-literal expressions', () => {
+  test('bare escaped text, jsx escapes braces as string-literal expressions', () => {
     expect(jsx({ type: 'text', content: 'Tom & <Jerry> said {hi}' })).toBe(
-      '<span className="text-zinc-700 leading-6">Tom &amp; &lt;Jerry&gt; said {\'{\'}hi{\'}\'}</span>',
+      'Tom &amp; &lt;Jerry&gt; said {\'{\'}hi{\'}\'}',
     );
+  });
+
+  test('nested in a link: bare escaped text, no span and no text-zinc-700 (regression)', () => {
+    const anchored: WiremdNode = {
+      type: 'link',
+      href: '/guide',
+      children: [{ type: 'text', content: 'Tom & <Jerry>', props: {} }],
+      props: {},
+    };
+    expect(html(anchored)).toBe(
+      '<a href="/guide" class="text-zinc-950 underline underline-offset-2">Tom &amp; &lt;Jerry&gt;</a>',
+    );
+    expect(jsx(anchored)).toBe(
+      '<a href="/guide" className="text-zinc-950 underline underline-offset-2">Tom &amp; &lt;Jerry&gt;</a>',
+    );
+    for (const out of [html(anchored), jsx(anchored)]) {
+      expect(out).not.toContain('<span');
+      expect(out).not.toContain('text-zinc-700');
+    }
   });
 });
 
@@ -153,7 +172,7 @@ describe('content emitters: link', () => {
       props: {},
     };
     expect(html(nested)).toBe(
-      '<a href="#section" class="text-zinc-950 underline underline-offset-2"><span class="text-zinc-700 leading-6">Jump down</span></a>',
+      '<a href="#section" class="text-zinc-950 underline underline-offset-2">Jump down</a>',
     );
   });
 
@@ -189,13 +208,13 @@ describe('content emitters: list + list-item', () => {
 
   test('ul nests ol; items recurse (html)', () => {
     expect(html(node)).toBe(
-      '<ul class="list-disc pl-5 text-zinc-700 space-y-1"><li>First bullet</li><li><span class="text-zinc-700 leading-6">Nested:</span><ol class="list-decimal pl-5 text-zinc-700 space-y-1"><li>Deep numbered</li></ol></li></ul>',
+      '<ul class="list-disc pl-5 text-zinc-700 space-y-1"><li>First bullet</li><li>Nested:<ol class="list-decimal pl-5 text-zinc-700 space-y-1"><li>Deep numbered</li></ol></li></ul>',
     );
   });
 
   test('ul nests ol; items recurse (jsx)', () => {
     expect(jsx(node)).toBe(
-      '<ul className="list-disc pl-5 text-zinc-700 space-y-1"><li>First bullet</li><li><span className="text-zinc-700 leading-6">Nested:</span><ol className="list-decimal pl-5 text-zinc-700 space-y-1"><li>Deep numbered</li></ol></li></ul>',
+      '<ul className="list-disc pl-5 text-zinc-700 space-y-1"><li>First bullet</li><li>Nested:<ol className="list-decimal pl-5 text-zinc-700 space-y-1"><li>Deep numbered</li></ol></li></ul>',
     );
   });
 
@@ -386,7 +405,7 @@ describe('content emitters: table family', () => {
         children: [{ type: 'text', content: 'cell text', props: {} }],
       }),
     ).toBe(
-      '<th class="border-b border-zinc-200 font-medium text-zinc-500 text-left"><span class="text-zinc-700 leading-6">cell text</span></th>',
+      '<th class="border-b border-zinc-200 font-medium text-zinc-500 text-left">cell text</th>',
     );
   });
 });

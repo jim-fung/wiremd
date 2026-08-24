@@ -85,7 +85,7 @@ export const emitNav: NodeEmitter<NavNode> = (node, format, recurse) =>
 
 export const emitNavItem: NodeEmitter<NavItemNode> = (node, format, recurse) => {
   const href = safeUrl(node.href ?? '#');
-  const active = node.props?.state === 'active';
+  const active = node.props?.state === 'active' || node.props?.classes?.includes('active') === true;
   const attrs: Attr[] = [{ name: 'href', value: href }];
   if (active) attrs.push({ name: 'aria-current', value: 'page' });
   attrs.push(classAttr(format, active ? NAV_ITEM_ACTIVE_CLASSES : NAV_ITEM_CLASSES));
