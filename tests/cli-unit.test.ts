@@ -14,7 +14,18 @@ import {
   warnIfDeprecatedStyle,
   type CLIOptions,
 } from '../src/cli/index.js';
+import { renderToHTML, renderToJSON } from '../src/renderer/index.js';
 import { WIREMD_STYLES } from '../src/types.js';
+
+// Observe how generateOutput calls the renderers (delegating mocks).
+vi.mock('../src/renderer/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/renderer/index.js')>();
+  return {
+    ...actual,
+    renderToHTML: vi.fn(actual.renderToHTML),
+    renderToJSON: vi.fn(actual.renderToJSON),
+  };
+});
 
 describe('deprecated style warning', () => {
   const messages: string[] = [];
@@ -75,6 +86,34 @@ describe('CLI Unit Tests', () => {
     it('should parse style option (long form)', () => {
       const result = parseArgs(['test.md', '--style', 'wireframe']);
       expect(result?.style).toBe('wireframe');
+    });
+
+    it('should parse codegen option (jsx)', () => {
+      const result = parseArgs(['test.md', '--codegen', 'jsx']);
+      expect(result).toEqual({
+        input: 'test.md',
+        format: 'html',
+        style: 'coss',
+        pretty: true,
+        codegen: 'jsx',
+      });
+    });
+
+    it('should parse codegen option (html)', () => {
+      const result = parseArgs(['test.md', '--codegen', 'html']);
+      expect(result?.codegen).toBe('html');
+    });
+
+    it('should omit codegen from default options', () => {
+      const result = parseArgs(['test.md']);
+      expect(result).not.toHaveProperty('codegen');
+    });
+
+    it('should consume the codegen value without swallowing later args', () => {
+      const result = parseArgs(['--codegen', 'jsx', 'test.md', '--watch']);
+      expect(result?.input).toBe('test.md');
+      expect(result?.codegen).toBe('jsx');
+      expect(result?.watch).toBe(true);
     });
 
     it('should parse watch option (short form)', () => {
@@ -171,6 +210,18 @@ describe('CLI Unit Tests', () => {
         );
       });
 
+      it('should error on invalid codegen with exact message', () => {
+        expect(() => parseArgs(['test.md', '--codegen', 'ts'])).toThrow('process.exit(1)');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Error: Invalid codegen "ts". Must be html or jsx.'
+        );
+      });
+
+      it('should error when codegen has no value', () => {
+        expect(() => parseArgs(['test.md', '--codegen'])).toThrow('process.exit(1)');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error: --codegen requires a value');
+      });
+
       it('should error on invalid serve port', () => {
         expect(() => parseArgs(['test.md', '--serve', 'abc'])).toThrow('process.exit(1)');
         expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -260,6 +311,7 @@ describe('CLI Unit Tests', () => {
       expect(output).toContain('--output');
       expect(output).toContain('--format');
       expect(output).toContain('--style');
+      expect(output).toContain('--codegen');
       expect(output).toContain('--watch');
       expect(output).toContain('--serve');
       expect(output).toContain('--watch-pattern');
@@ -375,6 +427,10 @@ describe('CLI Unit Tests', () => {
         '# Test Wireframe\n\n## Button\n[Click Me]\n',
         'utf-8'
       );
+
+      // Reset renderer mock call history (implementations delegate to real code)
+      vi.mocked(renderToHTML).mockClear();
+      vi.mocked(renderToJSON).mockClear();
     });
 
     afterEach(() => {
@@ -472,6 +528,50 @@ describe('CLI Unit Tests', () => {
       };
 
       expect(() => generateOutput(options)).toThrow('File not found: nonexistent.md');
+    });
+
+    it('should thread codegen into renderToHTML options only', () => {
+      generateOutput({
+        input: TEST_FILE,
+        format: 'html',
+        style: 'coss',
+        pretty: true,
+        codegen: 'jsx',
+      } as CLIOptions);
+
+      expect(vi.mocked(renderToHTML)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(renderToHTML)).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ codegen: 'jsx', style: 'coss', inlineStyles: true })
+      );
+      expect(vi.mocked(renderToJSON)).not.toHaveBeenCalled();
+    });
+
+    it('should not add a codegen key to renderToHTML options when the flag is absent', () => {
+      generateOutput({
+        input: TEST_FILE,
+        format: 'html',
+        style: 'coss',
+        pretty: true,
+      });
+
+      expect(vi.mocked(renderToHTML)).toHaveBeenCalledTimes(1);
+      const renderOptions = vi.mocked(renderToHTML).mock.calls[0][1] as Record<string, unknown>;
+      expect('codegen' in renderOptions).toBe(false);
+    });
+
+    it('should produce byte-identical JSON output regardless of codegen', () => {
+      const plain = generateOutput({ input: TEST_FILE, format: 'json', pretty: true });
+      const withCodegen = generateOutput({
+        input: TEST_FILE,
+        format: 'json',
+        pretty: true,
+        codegen: 'jsx',
+      } as CLIOptions);
+
+      expect(withCodegen).toBe(plain);
+      expect(vi.mocked(renderToJSON)).toHaveBeenLastCalledWith(expect.anything(), { pretty: true });
+      expect(vi.mocked(renderToHTML)).not.toHaveBeenCalled();
     });
 
     it('should handle malformed markdown gracefully', () => {

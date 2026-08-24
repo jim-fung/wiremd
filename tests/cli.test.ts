@@ -53,6 +53,7 @@ describe('CLI', () => {
       expect(result).toContain('--output');
       expect(result).toContain('--format');
       expect(result).toContain('--style');
+      expect(result).toContain('--codegen');
       expect(result).toContain('--watch');
       expect(result).toContain('--serve');
     });
@@ -240,6 +241,91 @@ describe('CLI', () => {
           { encoding: 'utf-8' }
         );
       }).toThrow();
+    });
+  });
+
+  describe('Codegen option', () => {
+    const DEMO_INPUT = './test-demo-input.md';
+    const DEMO_OUTPUT = './test-demo-output.html';
+    const JSON_A = './test-demo-codegen.json';
+    const JSON_B = './test-demo-plain.json';
+
+    beforeEach(() => {
+      writeFileSync(DEMO_INPUT, '::: demo\n[Click Me]*\n:::\n', 'utf-8');
+    });
+
+    afterEach(() => {
+      for (const file of [DEMO_INPUT, DEMO_OUTPUT, JSON_A, JSON_B, DEMO_INPUT.replace('.md', '.html')]) {
+        try {
+          if (existsSync(file)) {
+            unlinkSync(file);
+          }
+        } catch (e) {
+          // Ignore if files don't exist
+        }
+      }
+    });
+
+    it('should accept --codegen jsx and generate JSX in coss demo code panes', () => {
+      execSync(
+        `node dist/cli/index.js ${DEMO_INPUT} -o ${DEMO_OUTPUT} --codegen jsx`
+      );
+
+      const html = readFileSync(DEMO_OUTPUT, 'utf-8');
+      expect(html).toContain('wmd-demo-code');
+      expect(html).toContain('className=');
+    });
+
+    it('should accept --codegen html', () => {
+      execSync(
+        `node dist/cli/index.js ${DEMO_INPUT} -o ${DEMO_OUTPUT} --codegen html`
+      );
+
+      expect(existsSync(DEMO_OUTPUT)).toBe(true);
+    });
+
+    it('should keep legacy styles showing raw source despite --codegen jsx', () => {
+      execSync(
+        `node dist/cli/index.js ${DEMO_INPUT} -o ${DEMO_OUTPUT} --style clean --codegen jsx`
+      );
+
+      const html = readFileSync(DEMO_OUTPUT, 'utf-8');
+      expect(html).toContain('wmd-demo-code');
+      expect(html).toContain('[Click Me]*');
+      expect(html).not.toContain('className=');
+    });
+
+    it('should produce byte-identical JSON output with --codegen jsx', () => {
+      execSync(
+        `node dist/cli/index.js ${DEMO_INPUT} -o ${JSON_A} --format json --codegen jsx`
+      );
+      execSync(`node dist/cli/index.js ${DEMO_INPUT} -o ${JSON_B} --format json`);
+
+      expect(readFileSync(JSON_A, 'utf-8')).toBe(readFileSync(JSON_B, 'utf-8'));
+    });
+
+    it('should reject invalid codegen with exact error and exit code 1', () => {
+      let exitCode = 0;
+      let stderr = '';
+      try {
+        execSync(`node dist/cli/index.js ${DEMO_INPUT} --codegen ts`, {
+          encoding: 'utf-8',
+          stdio: 'pipe',
+        });
+      } catch (error: any) {
+        exitCode = error.status;
+        stderr = (error.stderr || '').toString();
+      }
+
+      expect(exitCode).toBe(1);
+      expect(stderr).toContain('Error: Invalid codegen "ts". Must be html or jsx.');
+    });
+
+    it('should keep the .html output extension with --codegen jsx', () => {
+      execSync(`node dist/cli/index.js ${DEMO_INPUT} --codegen jsx`);
+
+      const autoOutput = DEMO_INPUT.replace('.md', '.html');
+      expect(existsSync(autoOutput)).toBe(true);
     });
   });
 

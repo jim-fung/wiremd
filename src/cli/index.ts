@@ -15,7 +15,7 @@ import { pathToFileURL } from 'url';
 import { parse } from '../parser/index.js';
 import { resolveIncludes } from '../parser/includes.js';
 import { renderToHTML, renderToJSON } from '../renderer/index.js';
-import type { WiremdStyle } from '../types.js';
+import type { RenderOptions, WiremdStyle } from '../types.js';
 import { WIREMD_STYLES } from '../types.js';
 import { startServer, notifyReload, notifyError } from './server.js';
 import { VERSION } from '../version.js';
@@ -35,6 +35,7 @@ export interface CLIOptions {
   output?: string;
   format?: 'html' | 'json';
   style?: WiremdStyle;
+  codegen?: 'html' | 'jsx';
   watch?: boolean;
   serve?: number;
   pretty?: boolean;
@@ -56,6 +57,7 @@ OPTIONS:
   -o, --output <file>        Output file path (default: <input>.html)
   -f, --format <format>      Output format: html, json (default: html)
   -s, --style <style>        Visual style: coss (default), or deprecated: sketch, clean, wireframe, none, tailwind, material, brutal
+  --codegen <format>         Code format for coss demo code panes: html, jsx (default: html)
   -w, --watch                Watch for changes and regenerate
   --serve <port>             Start dev server with live-reload (default: 3000)
   --watch-pattern <pattern>  Glob pattern for files to watch (e.g., "**/*.md")
@@ -176,6 +178,17 @@ export function parseArgs(args: string[]): CLIOptions | null {
         break;
       }
 
+      case '--codegen': {
+        const { value: codegen, next } = readFlagValue(args, i, arg);
+        if (codegen !== 'html' && codegen !== 'jsx') {
+          console.error(`Error: Invalid codegen "${codegen}". Must be html or jsx.`);
+          process.exit(1);
+        }
+        options.codegen = codegen;
+        i = next;
+        break;
+      }
+
       case '-w':
       case '--watch':
         options.watch = true;
@@ -263,7 +276,7 @@ export function checkFileSize(filePath: string): void {
 }
 
 export function generateOutput(options: CLIOptions): string {
-  const { input, format, style, pretty } = options;
+  const { input, format, style, pretty, codegen } = options;
 
   // Check if input file exists
   if (!existsSync(input)) {
@@ -284,7 +297,17 @@ export function generateOutput(options: CLIOptions): string {
   if (format === 'json') {
     return renderToJSON(ast, { pretty });
   } else {
-    return renderToHTML(ast, { style, pretty, inlineStyles: true });
+    // `codegen` affects HTML output only (coss demo code panes); JSON is untouched.
+    // Only set the key when the flag was provided so the default path stays clean.
+    const renderOptions: RenderOptions = {
+      style,
+      pretty,
+      inlineStyles: true,
+    };
+    if (codegen !== undefined) {
+      renderOptions.codegen = codegen;
+    }
+    return renderToHTML(ast, renderOptions);
   }
 }
 
