@@ -75,7 +75,7 @@ function startPagesServer() {
       '--serve',
       String(PAGES_PORT),
       '--style',
-      'clean',
+      'coss',
     ],
     { stdio: 'inherit' },
   );
