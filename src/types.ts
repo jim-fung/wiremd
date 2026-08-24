@@ -113,6 +113,15 @@ export type WiremdNode =
   | { type: 'progress'; value: number; indeterminate: boolean; props: ComponentProps & { label?: string }; position?: Location }
   | { type: 'meter'; value: number; min: number; max: number; props: ComponentProps & { label?: string }; position?: Location }
 
+  // Overlay family (Phase 3 Task 3) - dialog / alert-dialog / sheet / drawer / popover / tooltip / preview-card
+  | { type: 'dialog'; props: ComponentProps & { title?: string; description?: string; showClose?: boolean }; children: WiremdNode[]; position?: Location }
+  | { type: 'alert-dialog'; props: ComponentProps & { title?: string; description?: string; cancelText?: string; actionText?: string; actionVariant?: 'primary' | 'secondary' | 'danger' }; children: WiremdNode[]; position?: Location }
+  | { type: 'sheet'; side: 'top' | 'right' | 'bottom' | 'left'; props: ComponentProps & { title?: string; description?: string; showClose?: boolean }; children: WiremdNode[]; position?: Location }
+  | { type: 'drawer'; side: 'top' | 'right' | 'bottom' | 'left'; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'popover'; props: ComponentProps & { title?: string; description?: string; trigger?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'tooltip'; props: ComponentProps & { content: string; side?: 'top' | 'right' | 'bottom' | 'left' }; children: WiremdNode[]; position?: Location }
+  | { type: 'preview-card'; props: ComponentProps & { href?: string }; children: WiremdNode[]; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 

@@ -38,7 +38,8 @@ export type SupportedType =
   | 'heading' | 'paragraph' | 'text' | 'image' | 'link' | 'list' | 'list-item'
   | 'table' | 'table-header' | 'table-row' | 'table-cell' | 'blockquote' | 'code' | 'separator'
   | 'tabs' | 'tab' | 'breadcrumbs' | 'demo'
-  | 'toast' | 'skeleton' | 'spinner' | 'kbd' | 'progress' | 'meter';
+  | 'toast' | 'skeleton' | 'spinner' | 'kbd' | 'progress' | 'meter'
+  | 'dialog' | 'alert-dialog' | 'sheet' | 'drawer' | 'popover' | 'tooltip' | 'preview-card';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through

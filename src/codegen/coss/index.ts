@@ -43,11 +43,20 @@ import {
   emitSpinner,
   emitToast,
 } from './emitters/feedback.js';
+import {
+  emitAlertDialog,
+  emitDialog,
+  emitDrawer,
+  emitPopover,
+  emitPreviewCard,
+  emitSheet,
+  emitTooltip,
+} from './emitters/overlays.js';
 
 /** Per-discriminant table: TypeScript verifies each emitter against its exact node shape. */
 type FamilyTable = { readonly [K in SupportedType]: NodeEmitter<Extract<WiremdNode, { type: K }>> };
 
-/** All 40 allowlisted discriminants, in contract order. */
+/** All 47 allowlisted discriminants, in contract order. */
 const FAMILY_EMITTERS: FamilyTable = {
   button: emitButton,
   input: emitInput,
@@ -90,6 +99,14 @@ const FAMILY_EMITTERS: FamilyTable = {
   kbd: emitKbd,
   progress: emitProgress,
   meter: emitMeter,
+  // Phase 3 Task 3: overlay family
+  dialog: emitDialog,
+  'alert-dialog': emitAlertDialog,
+  sheet: emitSheet,
+  drawer: emitDrawer,
+  popover: emitPopover,
+  tooltip: emitTooltip,
+  'preview-card': emitPreviewCard,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */

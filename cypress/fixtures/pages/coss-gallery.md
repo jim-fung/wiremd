@@ -189,6 +189,42 @@ Loading
 Storage
 :::
 
+## Overlays
+
+::: dialog
+### Edit profile
+Name [____]
+[Save]* [Cancel]
+:::
+
+::: alert-dialog
+### Delete project?
+This cannot be undone.
+[Delete]{.danger}* [Cancel]
+:::
+
+::: sheet {.right}
+### Filters
+- Category
+- Price
+:::
+
+::: drawer {.left}
+### Menu
+[Home] [Settings] [Logout]
+:::
+
+::: popover
+### Quick actions
+- Pin
+- Share
+- Delete
+:::
+
+::: tooltip
+Press S to save
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo

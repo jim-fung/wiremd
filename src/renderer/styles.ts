@@ -4123,5 +4123,65 @@ body.${prefix}root {
   font-size: 14px; color: #18181b; margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* Phase 3 Task 3: overlay family */
+.${prefix}dialog, .${prefix}alert-dialog, .${prefix}sheet, .${prefix}drawer, .${prefix}popover, .${prefix}preview-card {
+  position: relative;
+  background: #ffffff; color: #18181b;
+  border: 1px solid #e4e4e7; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  padding: 20px 24px; max-width: 480px; margin: 16px 0;
+  font-size: 14px; line-height: 1.5;
+}
+.${prefix}dialog-title, .${prefix}alert-dialog-title, .${prefix}sheet-title, .${prefix}drawer-title, .${prefix}popover-title, .${prefix}preview-card-title {
+  font-size: 18px; font-weight: 600; margin: 0 0 8px; color: #18181b;
+}
+.${prefix}dialog-description, .${prefix}alert-dialog-description, .${prefix}sheet-description, .${prefix}drawer-description, .${prefix}popover-description {
+  color: #71717a; margin: 0 0 12px; font-size: 14px;
+}
+.${prefix}dialog-close {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border: 0; background: transparent;
+  border-radius: 6px; cursor: pointer; font-size: 18px; line-height: 1;
+  color: #71717a;
+}
+.${prefix}dialog-close:hover { background: #f4f4f5; color: #18181b; }
+
+.${prefix}alert-dialog-actions {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;
+}
+
+.${prefix}sheet, .${prefix}drawer {
+  border-radius: 0; margin: 0;
+  max-width: 360px; min-height: 100%;
+}
+.${prefix}sheet[data-side="right"], .${prefix}drawer[data-side="right"] {
+  border-left: 1px solid #e4e4e7;
+}
+.${prefix}sheet[data-side="left"], .${prefix}drawer[data-side="left"] {
+  border-right: 1px solid #e4e4e7;
+}
+.${prefix}sheet[data-side="top"], .${prefix}drawer[data-side="top"] {
+  max-width: 100%; border-bottom: 1px solid #e4e4e7;
+}
+.${prefix}sheet[data-side="bottom"], .${prefix}drawer[data-side="bottom"] {
+  max-width: 100%; border-top: 1px solid #e4e4e7;
+}
+
+.${prefix}popover { padding: 16px; max-width: 320px; }
+
+.${prefix}tooltip {
+  display: inline-block; padding: 6px 10px; background: #18181b; color: #fafafa;
+  border-radius: 6px; font-size: 12px; line-height: 1.4;
+  max-width: 240px; text-align: center;
+}
+
+.${prefix}preview-card-link {
+  text-decoration: none; color: inherit; display: block;
+}
+.${prefix}preview-card-link:hover .${prefix}preview-card {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
 `;
 }

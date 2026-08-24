@@ -150,6 +150,28 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-feedback', { capture: 'viewport' });
   });
 
+  it('renders overlay family: dialog, alert-dialog, sheet, drawer, popover, tooltip, preview-card', () => {
+    // dialog
+    cy.get('.wmd-dialog[role="dialog"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-dialog', 'Edit profile').should('be.visible');
+    // alert-dialog
+    cy.get('.wmd-alert-dialog[role="alertdialog"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-alert-dialog', 'Delete project?').should('be.visible');
+    cy.contains('.wmd-alert-dialog', 'Cancel').should('be.visible');
+    // sheet (right side)
+    cy.get('.wmd-sheet[data-side="right"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-sheet', 'Filters').should('be.visible');
+    // drawer (left side)
+    cy.get('.wmd-drawer[data-side="left"]').should('have.length.at.least', 1);
+    // popover
+    cy.get('.wmd-popover[role="dialog"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-popover', 'Quick actions').should('be.visible');
+    // tooltip
+    cy.get('.wmd-tooltip[role="tooltip"]').should('have.length.at.least', 1);
+    cy.contains('.wmd-tooltip', 'Press S').should('be.visible');
+    cy.screenshot('coss-overlays', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

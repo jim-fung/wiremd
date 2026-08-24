@@ -146,6 +146,27 @@ export function renderNode(node: WiremdNode, context: RenderContext): string {
     case 'meter':
       return renderMeter(node, context);
 
+    case 'dialog':
+      return renderDialog(node, context);
+
+    case 'alert-dialog':
+      return renderAlertDialog(node, context);
+
+    case 'sheet':
+      return renderSheet(node, context);
+
+    case 'drawer':
+      return renderDrawer(node, context);
+
+    case 'popover':
+      return renderPopover(node, context);
+
+    case 'tooltip':
+      return renderTooltip(node, context);
+
+    case 'preview-card':
+      return renderPreviewCard(node, context);
+
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -971,4 +992,118 @@ function renderMeter(node: any, context: RenderContext): string {
   return `<div class="${cls}" role="meter" aria-valuenow="${value}" aria-valuemin="${min}" aria-valuemax="${max}">
 ${labelHTML}${trackHTML}${valueHTML}
 </div>`;
+}
+
+// ============================================================================
+// Phase 3 Task 3: overlay family
+// ============================================================================
+
+function overlayShell(
+  context: RenderContext,
+  kind: string,
+  props: any,
+  inner: string,
+  role = 'dialog',
+  ariaLabel?: string,
+  dataAttrs = '',
+): string {
+  const { classPrefix: prefix } = context;
+  const cleanedProps = { ...props };
+  delete cleanedProps.title;
+  delete cleanedProps.description;
+  delete cleanedProps.showClose;
+  delete cleanedProps.cancelText;
+  delete cleanedProps.actionText;
+  delete cleanedProps.actionVariant;
+  delete cleanedProps.content;
+  delete cleanedProps.trigger;
+  const cls = buildClasses(prefix, kind, cleanedProps);
+  const title = typeof props.title === 'string' ? props.title : undefined;
+  const desc = typeof props.description === 'string' ? props.description : undefined;
+  const showClose = props.showClose !== false;
+  const titleHTML = title
+    ? `  <h2 class="${prefix}${kind}-title">${escapeHtml(title)}</h2>\n`
+    : '';
+  const descHTML = desc
+    ? `  <p class="${prefix}${kind}-description">${escapeHtml(desc)}</p>\n`
+    : '';
+  const closeHTML = showClose && kind === 'dialog'
+    ? `  <button type="button" class="${prefix}${kind}-close" aria-label="Close">×</button>\n`
+    : '';
+  const ariaLabelAttr = ariaLabel ? ` aria-label="${escapeHtml(ariaLabel)}"` : '';
+  return `<div class="${cls}" role="${role}"${ariaLabelAttr}${dataAttrs}>
+${titleHTML}${descHTML}${inner}${closeHTML}</div>`;
+}
+
+function renderDialog(node: any, context: RenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return overlayShell(context, 'dialog', node.props || {}, inner, 'dialog');
+}
+
+function renderAlertDialog(node: any, context: RenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const actionVariant: string = node.props?.actionVariant || 'danger';
+  const actionText: string = node.props?.actionText || 'Confirm';
+  const cancelText: string = node.props?.cancelText || 'Cancel';
+  const actionsHTML = `\n  <div class="${context.classPrefix}alert-dialog-actions">
+    <button type="button" class="${context.classPrefix}button ${context.classPrefix}${actionVariant}">${escapeHtml(cancelText)}</button>
+    <button type="button" class="${context.classPrefix}button ${context.classPrefix}${actionVariant === 'danger' ? 'primary' : 'danger'}">${escapeHtml(actionText)}</button>
+  </div>`;
+  return overlayShell(context, 'alert-dialog', node.props || {}, inner + actionsHTML, 'alertdialog');
+}
+
+function renderSheet(node: any, context: RenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const side = node.side || 'right';
+  return overlayShell(
+    context,
+    'sheet',
+    node.props || {},
+    inner,
+    'dialog',
+    undefined,
+    ` data-side="${escapeHtml(side)}"`,
+  );
+}
+
+function renderDrawer(node: any, context: RenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const side = node.side || 'left';
+  return overlayShell(
+    context,
+    'drawer',
+    node.props || {},
+    inner,
+    'dialog',
+    undefined,
+    ` data-side="${escapeHtml(side)}"`,
+  );
+}
+
+function renderPopover(node: any, context: RenderContext): string {
+  const inner = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  return overlayShell(context, 'popover', node.props || {}, inner, 'dialog');
+}
+
+function renderTooltip(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cleanedProps = { ...(node.props || {}) };
+  delete cleanedProps.content;
+  delete cleanedProps.side;
+  const cls = buildClasses(prefix, 'tooltip', cleanedProps);
+  const content: string = node.props?.content || '';
+  const side: string = node.props?.side || 'top';
+  const childHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const inner = childHTML || content;
+  return `<span class="${cls}" role="tooltip" data-side="${escapeHtml(side)}">${escapeHtml(inner)}</span>`;
+}
+
+function renderPreviewCard(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'preview-card', node.props || {});
+  const childrenHTML = (node.children || []).map((c: any) => renderNode(c, context)).join('\n  ');
+  const href: string | undefined = node.props?.href;
+  const wrap = (inner: string) =>
+    href ? `<a class="${prefix}preview-card-link" href="${escapeHtml(href)}">${inner}</a>` : inner;
+  return wrap(`<div class="${cls}">\n  ${childrenHTML}\n</div>`);
 }

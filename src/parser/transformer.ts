@@ -513,6 +513,63 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
         } as WiremdNode);
   }
 
+  // Phase 3 Task 3: overlay family
+  if (
+    containerType === 'dialog' || containerType === 'alert-dialog' ||
+    containerType === 'sheet' || containerType === 'drawer' ||
+    containerType === 'popover' || containerType === 'tooltip' ||
+    containerType === 'preview-card'
+  ) {
+    const isSheet = containerType === 'sheet';
+    const isDrawer = containerType === 'drawer';
+    const isTooltip = containerType === 'tooltip';
+    const isPreview = containerType === 'preview-card';
+    const isDialog = containerType === 'dialog';
+    const isAlert = containerType === 'alert-dialog';
+    const isPopover = containerType === 'popover';
+    const classes = (props.classes || []) as string[];
+    const findSide = (): 'top' | 'right' | 'bottom' | 'left' => {
+      const s = classes.find((c) => c === 'top' || c === 'right' || c === 'bottom' || c === 'left');
+      return (s as 'top' | 'right' | 'bottom' | 'left') || 'right';
+    };
+    const firstChild = (node.children || [])[0];
+    let titleFromOpener: string | undefined;
+    if (firstChild && (firstChild as any).type === 'heading') {
+      titleFromOpener = (firstChild as any).content;
+    }
+    const cleanedClasses = classes.filter((c) => c !== 'top' && c !== 'right' && c !== 'bottom' && c !== 'left');
+    const baseProps: any = { ...props, classes: cleanedClasses };
+    const childrenToUse = titleFromOpener
+      ? (node.children || []).slice(1)
+      : (node.children || []);
+    const processedChildren = processNodeList(childrenToUse, options) as any;
+    if (isSheet) {
+      return { type: 'sheet', side: findSide(), props: { ...baseProps, title: titleFromOpener }, children: processedChildren };
+    }
+    if (isDrawer) {
+      return { type: 'drawer', side: findSide(), props: { ...baseProps, title: titleFromOpener }, children: processedChildren };
+    }
+    if (isTooltip) {
+      return {
+        type: 'tooltip',
+        props: { ...baseProps, content: titleFromOpener ?? '' },
+        children: processedChildren,
+      };
+    }
+    if (isPreview) {
+      return { type: 'preview-card', props: baseProps, children: processedChildren };
+    }
+    if (isDialog) {
+      return { type: 'dialog', props: { ...baseProps, title: titleFromOpener }, children: processedChildren };
+    }
+    if (isAlert) {
+      return { type: 'alert-dialog', props: { ...baseProps, title: titleFromOpener }, children: processedChildren };
+    }
+    if (isPopover) {
+      return { type: 'popover', props: { ...baseProps, title: titleFromOpener }, children: processedChildren };
+    }
+  }
+
   return {
     type: 'container',
     containerType: containerType as any,
