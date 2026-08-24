@@ -22,3 +22,7 @@ export * from './parser/index.js';
 export * from './renderer/index.js';
 
 export { VERSION, SYNTAX_VERSION } from './version.js';
+
+// Export coss codegen surface (outside the types/renderer barrels, so explicit)
+export { generateCode } from './codegen/coss/index.js';
+export type { CodegenFormat, CodegenInput, CodegenOptions } from './codegen/coss/types.js';
