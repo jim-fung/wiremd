@@ -65,7 +65,7 @@ export function renderPreview(
   documentNode: DocumentNode,
   options: PreviewRenderOptions
 ): PreviewResult {
-  const style = options.style ?? 'sketch';
+  const style = options.style ?? 'coss';
   const classPrefix = options.classPrefix;
   if (!CLASS_PREFIX_PATTERN.test(classPrefix)) {
     throw new TypeError(

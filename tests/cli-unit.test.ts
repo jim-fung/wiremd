@@ -21,7 +21,7 @@ describe('CLI Unit Tests', () => {
       expect(result).toEqual({
         input: 'test.md',
         format: 'html',
-        style: 'sketch',
+        style: 'coss',
         pretty: true,
       });
     });
@@ -254,7 +254,7 @@ describe('CLI Unit Tests', () => {
       showHelp();
       const output = consoleLogSpy.mock.calls[0][0];
 
-      expect(output).toContain('sketch');
+      expect(output).toContain('coss');
       expect(output).toContain('clean');
       expect(output).toContain('wireframe');
       expect(output).toContain('none');

@@ -4,6 +4,11 @@ import { renderToHTML, renderToJSON } from '../src/renderer/index.js';
 import { getStyleCSS } from '../src/renderer/styles.js';
 
 describe('HTML Renderer', () => {
+  it('defaults to coss style when no style given', () => {
+    const html = renderToHTML(parse('# Hello'));
+    expect(html).toContain('wmd-coss');
+  });
+
   describe('Basic Components', () => {
     it('should render a button', () => {
       const ast = parse('[Click Me]');

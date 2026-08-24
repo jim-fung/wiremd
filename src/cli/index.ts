@@ -15,6 +15,7 @@ import { pathToFileURL } from 'url';
 import { parse } from '../parser/index.js';
 import { resolveIncludes } from '../parser/includes.js';
 import { renderToHTML, renderToJSON } from '../renderer/index.js';
+import type { WiremdStyle } from '../types.js';
 import { startServer, notifyReload, notifyError } from './server.js';
 import { VERSION } from '../version.js';
 import chokidar from 'chokidar';
@@ -24,7 +25,7 @@ export interface CLIOptions {
   input: string;
   output?: string;
   format?: 'html' | 'json';
-  style?: 'sketch' | 'clean' | 'wireframe' | 'none';
+  style?: WiremdStyle;
   watch?: boolean;
   serve?: number;
   pretty?: boolean;
@@ -45,7 +46,7 @@ USAGE:
 OPTIONS:
   -o, --output <file>        Output file path (default: <input>.html)
   -f, --format <format>      Output format: html, json (default: html)
-  -s, --style <style>        Visual style: sketch, clean, wireframe, none, tailwind, material, brutal (default: sketch)
+  -s, --style <style>        Visual style: coss (default), or deprecated: sketch, clean, wireframe, none, tailwind, material, brutal
   -w, --watch                Watch for changes and regenerate
   --serve <port>             Start dev server with live-reload (default: 3000)
   --watch-pattern <pattern>  Glob pattern for files to watch (e.g., "**/*.md")
@@ -55,14 +56,14 @@ OPTIONS:
   -v, --version              Show version number
 
 EXAMPLES:
-  # Generate HTML with default Balsamiq-style
+  # Generate HTML with the default coss style
   wiremd wireframe.md
 
   # Output to specific file
   wiremd wireframe.md -o output.html
 
-  # Use alternative style
-  wiremd wireframe.md --style clean
+  # Use a deprecated legacy style (warns; removed next major)
+  wiremd wireframe.md --style sketch
 
   # Watch mode with live-reload
   wiremd wireframe.md --watch --serve 3000
@@ -74,7 +75,9 @@ EXAMPLES:
   wiremd wireframe.md --format json
 
 STYLES:
-  sketch     - Balsamiq-inspired hand-drawn look (default)
+  coss       - Cal.com-inspired neutral design system (default)
+  Deprecated (removed next major):
+  sketch     - Balsamiq-inspired hand-drawn look
   clean      - Modern minimal design
   wireframe  - Traditional grayscale with hatching
   none       - Unstyled semantic HTML
@@ -116,7 +119,7 @@ export function parseArgs(args: string[]): CLIOptions | null {
   const options: CLIOptions = {
     input: '',
     format: 'html',
-    style: 'sketch',
+    style: 'coss',
     pretty: true,
   };
 

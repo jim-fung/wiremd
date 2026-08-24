@@ -54,7 +54,7 @@ describe('fragment shape (A3/A4)', () => {
       expect(result.html, fixture.name).not.toMatch(/<body/i);
     }
     const result = preview('# Title');
-    expect(result.html.startsWith('<div class="wmd-root wmd-sketch"')).toBe(true);
+    expect(result.html.startsWith('<div class="wmd-root wmd-coss"')).toBe(true);
     expect(result.html.endsWith('</div>')).toBe(true);
   });
 

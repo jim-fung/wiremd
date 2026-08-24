@@ -26,7 +26,7 @@ import * as TailwindRenderer from './tailwind-renderer.js';
  * import { renderToHTML } from 'wiremd/renderer';
  *
  * const ast = parse('## Title\n[Button]*');
- * const html = renderToHTML(ast, { style: 'sketch' });
+ * const html = renderToHTML(ast, { style: 'coss' });
  * ```
  */
 export function renderToHTML(
@@ -34,7 +34,7 @@ export function renderToHTML(
   options: RenderOptions = {}
 ): string {
   const {
-    style = 'sketch',
+    style = 'coss',
     inlineStyles = true,
     pretty = true,
     classPrefix = 'wmd-',
