@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/parser/index.js';
 import { renderToHTML, renderToJSON } from '../src/renderer/index.js';
+import { getStyleCSS } from '../src/renderer/styles.js';
 
 describe('HTML Renderer', () => {
   describe('Basic Components', () => {
@@ -1029,6 +1030,30 @@ content
 
 :::`), { style: 'clean' });
       expect(html).toContain('::: grid-3 card');
+    });
+  });
+
+  describe('coss style', () => {
+    it('applies wmd-coss class and Inter font stack', () => {
+      const html = renderToHTML(parse('# Hello'), { style: 'coss' });
+      expect(html).toContain('wmd-coss');
+      expect(html).toContain("'Inter'");
+    });
+
+    it('uses no @import (preview-safe)', () => {
+      const css = getStyleCSS('coss', 'wmd-');
+      expect(css).not.toContain('@import');
+    });
+
+    it('styles buttons, inputs, cards, badges, nav, and tables', () => {
+      const css = getStyleCSS('coss', 'wmd-');
+      for (const sel of [
+        '.wmd-button', '.wmd-input', '.wmd-container-card', '.wmd-badge',
+        '.wmd-nav', '.wmd-table', '.wmd-separator', '.wmd-breadcrumbs',
+        '.wmd-checkbox', '.wmd-select', '.wmd-code-block',
+      ]) {
+        expect(css).toContain(sel);
+      }
     });
   });
 });
