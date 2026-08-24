@@ -106,7 +106,7 @@
       "properties": {
         "wiremd.defaultStyle": {
           "type": "string",
-          "default": "sketch",
+          "default": "coss",
           "enum": [
             "coss",
             "sketch",
