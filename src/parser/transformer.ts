@@ -2386,7 +2386,11 @@ function parseAttributes(attrString: string): any {
     }
     // Key-value: key:value (strip surrounding quotes from the value)
     else if (part.includes(':')) {
-      const [key, value] = part.split(':', 2);
+      // Split on the FIRST colon only — values may themselves contain colons
+      // (e.g. addonStart:"https://example.com/"); split(':', 2) truncated those.
+      const colon = part.indexOf(':');
+      const key = part.slice(0, colon);
+      const value = part.slice(colon + 1);
       const unquoted = value.replace(/^["']|["']$/g, '');
       props[key] = unquoted || true;
     }

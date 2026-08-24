@@ -20,6 +20,37 @@ interface ContainerOpener {
   inline: string;
 }
 
+/** Opener line grammar: '::: type {attrs}… inline-content'. */
+const OPENER_RE = /^:::\s*(\S+)((?:\s*\{[^}]+\})*)\s*(.*)$/;
+
+function openerFromMatch(match: RegExpMatchArray): ContainerOpener {
+  return {
+    containerType: (match[1] || 'section').trim(),
+    attrs: (match[2] || '').trim(),
+    inline: (match[3] || '').trim(),
+  };
+}
+
+/**
+ * Rebuild the source text of a paragraph whose opener line was split across
+ * several inline children. remark-gfm (which runs before this plugin)
+ * autolinks URLs inside {…} attributes, so an opener like
+ * '::: input-group {addonStart:"https://example.com/"}' reaches us as
+ * text('::: input-group {addonStart:"') + link('https://example.com/"}').
+ * text children contribute their value verbatim, link children their url,
+ * breaks a newline.
+ */
+function reconstructOpenerLine(node: any): string {
+  return (node.children || [])
+    .map((child: any) => {
+      if (child.type === 'text') return child.value;
+      if (child.type === 'link') return child.url;
+      if (child.type === 'break') return '\n';
+      return '';
+    })
+    .join('');
+}
+
 /** Parse a paragraph node as a container opener. Returns null if not an opener. */
 function parseContainerOpener(node: any): ContainerOpener | null {
   if (
@@ -33,25 +64,50 @@ function parseContainerOpener(node: any): ContainerOpener | null {
   // Collect every consecutive {…} group on the opener line as attributes.
   // Anything after the last {…} group is inline content. Example:
   //   ::: toggle {.active} {label:"Bold"}   →   attrs="{.active} {label:\"Bold\"}"
-  const match = firstLine.match(/^:::\s*(\S+)((?:\s*\{[^}]+\})*)\s*(.*)$/);
+  const match = firstLine.match(OPENER_RE);
+
+  // GFM autolink repair: the first text child is truncated at the autolinked
+  // URL, which either fails the opener regex or strands an unterminated {…
+  // group at the end of the line (e.g. '::: input-group {addonStart:"').
+  // Rebuild the full line from all paragraph children and re-match. The
+  // reconstruction only feeds the OPENER match — container children keep
+  // their mdast shape, so ordinary paragraphs containing links elsewhere
+  // are unaffected.
+  if (node.children.length > 1 && (!match || /\{[^}]*$/.test(firstLine))) {
+    const rebuiltLine = reconstructOpenerLine(node).split('\n')[0].trim();
+    const rebuiltMatch = rebuiltLine.match(OPENER_RE);
+    if (rebuiltMatch) return openerFromMatch(rebuiltMatch);
+  }
+
   if (!match) return null;
-  const attrs = (match[2] || '').trim();
-  const inline = (match[3] || '').trim();
-  return {
-    containerType: (match[1] || 'section').trim(),
-    attrs,
-    inline,
-  };
+  return openerFromMatch(match);
 }
 
-/** Check if a node is a standalone closing ::: paragraph. */
-function isContainerCloser(node: any): boolean {
-  return (
-    node.type === 'paragraph' &&
-    node.children?.length > 0 &&
-    node.children[0].type === 'text' &&
-    node.children[0].value.trim() === ':::'
-  );
+/**
+ * Count the ':::' closers in a paragraph that remark folded into a single
+ * node. A bare closer run — consecutive ':::' lines with no blank line
+ * between them and no content line above (e.g. the ':::\n:::' ending a
+ * '::: card'-in-'::: demo' nesting) — becomes ONE paragraph whose text is
+ * ':::\n:::'. Each ':::' line in the run closes exactly one nesting level,
+ * so the whole paragraph is worth N closers, not one. Returns 0 for
+ * anything that is not a pure ':::' run.
+ */
+function closerRunCount(node: any): number {
+  if (
+    node.type !== 'paragraph' ||
+    !node.children?.length ||
+    node.children[0].type !== 'text'
+  ) {
+    return 0;
+  }
+  const value = (node.children[0].value as string).trim();
+  if (!value) return 0;
+  const lines = value.split('\n');
+  if (!lines.every((line) => line.trim() === ':::')) return 0;
+  // Inline siblings after the ':::' text (e.g. ':::' then a link on the next
+  // line) keep the legacy single-closer shape: only a lone ':::' line counts.
+  if (node.children.length > 1) return lines.length === 1 ? 1 : 0;
+  return lines.length;
 }
 
 function makeContainerNode(
@@ -92,6 +148,86 @@ function stripTrailingClosers(value: string): [string, number] {
   return [value.slice(0, value.length - match[0].length), count];
 }
 
+interface CloserStrip {
+  /** Replacement node, or null when nothing worth keeping remains. */
+  node: any | null;
+  /** Number of ':::' lines stripped off the end. */
+  count: number;
+  /**
+   * Whether this block terminates the container. Mirrors the legacy
+   * implicit-closer signal: the last text contains a '\n:::' marker, even
+   * when no trailing run could be stripped.
+   */
+  closed: boolean;
+}
+
+/**
+ * Strip a ':::' closer run folded into the last text child of a paragraph
+ * (remark merges content and closer into one paragraph when no blank line
+ * separates them, e.g. '[Save]*\n:::').
+ */
+function stripFoldedCloserInParagraph(para: any): CloserStrip {
+  const lastInline = para.children[para.children.length - 1];
+  if (
+    lastInline?.type !== 'text' ||
+    !(lastInline.value as string).includes('\n:::')
+  ) {
+    return { node: para, count: 0, closed: false };
+  }
+  const [stripped, count] = stripTrailingClosers(lastInline.value as string);
+  const trimmed = stripped.trimEnd();
+  const keep = trimmed || para.children.length > 1;
+  return {
+    node: keep
+      ? {
+          ...para,
+          children: [
+            ...para.children.slice(0, -1),
+            ...(trimmed ? [{ ...lastInline, value: trimmed }] : []),
+          ],
+        }
+      : null,
+    count,
+    closed: true,
+  };
+}
+
+/**
+ * Strip a ':::' closer run absorbed into the last block of a container child.
+ * Handles paragraphs directly, and lists whose last item swallowed the closer
+ * via markdown lazy continuation ('- US\n- CA\n:::' parses with the last
+ * item's text as 'CA\n:::'). The stripped ':::' lines are counted as closers
+ * at the source instead of leaking into list-item text.
+ */
+function stripFoldedCloserInBlock(node: any): CloserStrip {
+  if (node.type === 'paragraph' && node.children?.length) {
+    return stripFoldedCloserInParagraph(node);
+  }
+  if (node.type === 'list' && node.children?.length) {
+    const lastItem = node.children[node.children.length - 1];
+    const inner = stripFoldedCloserInListItem(lastItem);
+    if (!inner.closed) return { node, count: 0, closed: false };
+    const itemChildren = node.children.slice(0, -1);
+    if (inner.node) itemChildren.push(inner.node);
+    return itemChildren.length
+      ? { node: { ...node, children: itemChildren }, count: inner.count, closed: true }
+      : { node: null, count: inner.count, closed: true };
+  }
+  return { node, count: 0, closed: false };
+}
+
+function stripFoldedCloserInListItem(item: any): CloserStrip {
+  if (!item.children?.length) return { node: item, count: 0, closed: false };
+  const lastBlock = item.children[item.children.length - 1];
+  const inner = stripFoldedCloserInBlock(lastBlock);
+  if (!inner.closed) return { node: item, count: 0, closed: false };
+  const children = item.children.slice(0, -1);
+  if (inner.node) children.push(inner.node);
+  return children.length
+    ? { node: { ...item, children }, count: inner.count, closed: true }
+    : { node: null, count: inner.count, closed: true };
+}
+
 function finishContainer(
   containerType: string,
   attrs: string,
@@ -110,6 +246,34 @@ function finishContainer(
 
 /** Safety cap for nested ::: containers; beyond this we stop recursing instead of overflowing the stack. */
 const MAX_CONTAINER_DEPTH = 100;
+
+/**
+ * Extract the content children that follow the opener line inside the opener
+ * paragraph (remark folds the first content line into the opener paragraph
+ * when no blank line separates them). For a single-text paragraph this is
+ * simply every line after the first. When inline nodes (gfm autolinks) split
+ * the paragraph, the line break lives in one of the text children: the tail
+ * of that child plus every following child make up the content — preserving
+ * their inline mdast shape.
+ */
+function extractAfterOpenerChildren(node: any): any[] | null {
+  const children = node.children ?? [];
+  if (children.length === 1 && children[0].type === 'text') {
+    const rest = (children[0].value as string).split('\n').slice(1).join('\n').trim();
+    return rest ? [{ type: 'text', value: rest }] : null;
+  }
+  const breakIdx = children.findIndex(
+    (ch: any) => ch.type === 'text' && (ch.value as string).includes('\n'),
+  );
+  if (breakIdx === -1) return null;
+  const head = children[breakIdx];
+  const rest = (head.value as string).split('\n').slice(1).join('\n').trim();
+  const restChildren = [
+    ...(rest ? [{ ...head, value: rest }] : []),
+    ...children.slice(breakIdx + 1),
+  ];
+  return restChildren.length ? restChildren : null;
+}
 
 function collectContainer(
   nodes: any[],
@@ -219,22 +383,16 @@ function collectContainer(
   // If the trailing content is itself a container opener (e.g. ::: card folded into
   // ::: demo with no blank line), collect it recursively instead of pushing as text.
   let pendingAfterOpener: any = null;
-  if (
-    openerNode.children.length === 1 &&
-    openerNode.children[0].type === 'text'
-  ) {
-    const fullText = openerNode.children[0].value as string;
-    const afterOpener = fullText.split('\n').slice(1).join('\n').trim();
-    if (afterOpener) {
-      const syntheticPara = {
-        type: 'paragraph',
-        children: [{ type: 'text', value: afterOpener }],
-      };
-      if (parseContainerOpener(syntheticPara)) {
-        pendingAfterOpener = syntheticPara;
-      } else {
-        containerChildren.push(syntheticPara);
-      }
+  const afterChildren = extractAfterOpenerChildren(openerNode);
+  if (afterChildren) {
+    const syntheticPara = {
+      type: 'paragraph',
+      children: afterChildren,
+    };
+    if (parseContainerOpener(syntheticPara)) {
+      pendingAfterOpener = syntheticPara;
+    } else {
+      containerChildren.push(syntheticPara);
     }
   }
 
@@ -259,9 +417,20 @@ function collectContainer(
   while (i < nodes.length) {
     const child = nodes[i];
 
-    if (isContainerCloser(child)) {
+    // Closer paragraph — possibly a folded run of several ':::' lines
+    // (':::\n:::'). Each line closes one nesting level; extras propagate to
+    // enclosing containers via extraClosers.
+    const closerRun = closerRunCount(child);
+    if (closerRun > 0) {
       i++;
-      break;
+      return finishContainer(
+        opener.containerType,
+        opener.attrs,
+        opener.inline,
+        containerChildren,
+        i,
+        closerRun - 1,
+      );
     }
 
     // Nested container opener — recurse (must precede implicit-closer check so that
@@ -286,26 +455,22 @@ function collectContainer(
       continue;
     }
 
-    // Implicit closer: paragraph whose last text node ends with \n:::
-    // Happens when content and ::: share a paragraph (no blank line between them).
-    // e.g. "[Save]* [Cancel]\n:::" — remark folds both into one paragraph.
-    // Multiple consecutive ::: lines close multiple nesting levels at once.
-    if (child.type === 'paragraph' && child.children?.length) {
-      const lastInline = child.children[child.children.length - 1];
-      if (lastInline?.type === 'text' && lastInline.value.includes('\n:::')) {
-        const [stripped, closerCount] = stripTrailingClosers(lastInline.value as string);
-        const trimmed = stripped.trimEnd();
-        if (trimmed || child.children.length > 1) {
-          containerChildren.push({
-            ...child,
-            children: [
-              ...child.children.slice(0, -1),
-              ...(trimmed ? [{ ...lastInline, value: trimmed }] : []),
-            ],
-          });
-        }
-        return finishContainer(opener.containerType, opener.attrs, opener.inline, containerChildren, i + 1, Math.max(0, closerCount - 1));
-      }
+    // Implicit closer: a block whose last text ends with a ':::' run folded
+    // in by remark (no blank line before the closer). Handles paragraphs
+    // ('[Save]*\n:::') and lists whose last item absorbed the fence
+    // ('- US\n- CA\n:::' → item text 'CA\n:::'). Multiple consecutive ':::'
+    // lines close multiple nesting levels at once.
+    const fence = stripFoldedCloserInBlock(child);
+    if (fence.closed) {
+      if (fence.node) containerChildren.push(fence.node);
+      return finishContainer(
+        opener.containerType,
+        opener.attrs,
+        opener.inline,
+        containerChildren,
+        i + 1,
+        Math.max(0, fence.count - 1),
+      );
     }
 
     containerChildren.push(child);
@@ -448,8 +613,9 @@ function processNodes(nodes: any[]): any[] {
       continue;
     }
 
-    if (isContainerCloser(node)) {
-      // A ':::' with no open container above it is a dangling terminator — drop it.
+    if (closerRunCount(node) > 0) {
+      // A ':::' (or folded ':::' run) with no open container above it is a
+      // dangling terminator — drop it.
       i++;
       continue;
     }
