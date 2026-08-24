@@ -158,6 +158,37 @@ Upgrade your plan to continue uploading files.
 Payment failed. Please check your card details.
 :::
 
+## Feedback
+
+::: toast
+Changes saved successfully.
+:::
+
+::: toast {.success}
+Heads up
+A new release is available.
+:::
+
+[⌘K]{.kbd} [K]{.kbd}
+
+::: skeleton
+:::
+
+::: spinner
+:::
+
+::: progress {value:60}
+Uploading…
+:::
+
+::: progress {.indeterminate}
+Loading
+:::
+
+::: meter {value:30}
+Storage
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo

@@ -105,6 +105,14 @@ export type WiremdNode =
   | { type: 'empty-state'; icon?: string; title?: string; props: ComponentProps; children: WiremdNode[]; position?: Location }
   | { type: 'error-state'; icon?: string; title?: string; props: ComponentProps; children: WiremdNode[]; position?: Location }
 
+  // Feedback family (Phase 3 Task 2) - toast / skeleton / spinner / kbd / progress / meter
+  | { type: 'toast'; props: ComponentProps & { toastType?: 'success' | 'info' | 'warning' | 'error' | 'loading' }; children: WiremdNode[]; position?: Location }
+  | { type: 'skeleton'; props: ComponentProps & { width?: number | string; height?: number | string }; position?: Location }
+  | { type: 'spinner'; props: ComponentProps & { size?: 'small' | 'medium' | 'large' }; position?: Location }
+  | { type: 'kbd'; content: string; props: ComponentProps; position?: Location }
+  | { type: 'progress'; value: number; indeterminate: boolean; props: ComponentProps & { label?: string }; position?: Location }
+  | { type: 'meter'; value: number; min: number; max: number; props: ComponentProps & { label?: string }; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 

@@ -52,7 +52,7 @@ export function transformToWiremdAST(
       type: 'document',
       version: SYNTAX_VERSION,
       meta,
-      children: processNodeList(mdast.children as any[], options),
+      children: resolveKbdShortcut(processNodeList(mdast.children as any[], options)),
     };
     if (options.position && (mdast as any).position && !document.position) {
       document.position = (mdast as any).position;
@@ -457,12 +457,102 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
     };
   }
 
+  // Phase 3 Task 2: feedback family containers
+  if (containerType === 'toast') {
+    const toastType = (props.classes || []).find((c: string) =>
+      c === 'success' || c === 'info' || c === 'warning' || c === 'error' || c === 'loading',
+    );
+    return {
+      type: 'toast',
+      props: {
+        ...props,
+        toastType,
+        classes: (props.classes || []).filter((c: string) => c !== toastType),
+      },
+      children: processNodeList(node.children || [], options) as any,
+    };
+  }
+
+  if (containerType === 'skeleton') {
+    return { type: 'skeleton', props };
+  }
+
+  if (containerType === 'spinner') {
+    return { type: 'spinner', props };
+  }
+
+  if (containerType === 'progress' || containerType === 'meter') {
+    const isProgress = containerType === 'progress';
+    const classes = props.classes || [];
+    const indeterminate = classes.includes('indeterminate');
+    const valueAttr = props.value !== undefined ? Number(props.value) : undefined;
+    const minAttr = props.min !== undefined ? Number(props.min) : 0;
+    const maxAttr = props.max !== undefined ? Number(props.max) : 100;
+    const fallbackValue = isProgress ? (indeterminate ? 0 : 50) : 60;
+    const value = valueAttr !== undefined && !Number.isNaN(valueAttr) ? valueAttr : fallbackValue;
+    const labelAttr = props.label;
+    const remaining: any = { ...props };
+    delete remaining.value;
+    delete remaining.min;
+    delete remaining.max;
+    delete remaining.label;
+    remaining.classes = classes.filter((c: string) => c !== 'indeterminate');
+    return isProgress
+      ? ({
+          type: 'progress',
+          value,
+          indeterminate,
+          props: { ...remaining, label: typeof labelAttr === 'string' ? labelAttr : undefined },
+        } as WiremdNode)
+      : ({
+          type: 'meter',
+          value,
+          min: minAttr,
+          max: maxAttr,
+          props: { ...remaining, label: typeof labelAttr === 'string' ? labelAttr : undefined },
+        } as WiremdNode);
+  }
+
   return {
     type: 'container',
     containerType: containerType as any,
     props,
     children: processNodeList(node.children || [], options) as any,
   };
+}
+
+/**
+ * Post-parse pass that rewrites any `button` node carrying a `kbd` class into a
+ * dedicated `kbd` node. The wiremd syntax lets the user write `[⌘K]{.kbd}` to
+ * get a keyboard hint; several parser paths emit a plain button for this
+ * shape, and threading a kbd shortcut through every one of them is fragile.
+ * This single tree-walk guarantees a uniform AST regardless of which
+ * transform produced the node.
+ */
+function resolveKbdShortcut(nodes: WiremdNode[]): WiremdNode[] {
+  const out: WiremdNode[] = [];
+  for (const node of nodes) {
+    if (node && (node as any).type === 'button') {
+      const buttonNode = node as Extract<WiremdNode, { type: 'button' }>;
+      const classes = buttonNode.props?.classes ?? [];
+      if (classes.includes('kbd')) {
+        out.push({
+          type: 'kbd',
+          content: buttonNode.content ?? '',
+          props: {
+            ...buttonNode.props,
+            classes: classes.filter((c: string) => c !== 'kbd'),
+          },
+        } as WiremdNode);
+        continue;
+      }
+    }
+    if (node && (node as any).children && Array.isArray((node as any).children)) {
+      (node as any).children = resolveKbdShortcut((node as any).children);
+    }
+    out.push(node);
+  }
+  return out;
 }
 
 /**

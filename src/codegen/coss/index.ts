@@ -35,11 +35,19 @@ import {
 } from './emitters/content.js';
 import { emitBrand, emitBreadcrumbs, emitNav, emitNavItem, emitTab, emitTabs } from './emitters/navigation.js';
 import { emitContainer, emitDemo, emitGrid, emitGridItem, emitRow } from './emitters/layout.js';
+import {
+  emitKbd,
+  emitMeter,
+  emitProgress,
+  emitSkeleton,
+  emitSpinner,
+  emitToast,
+} from './emitters/feedback.js';
 
 /** Per-discriminant table: TypeScript verifies each emitter against its exact node shape. */
 type FamilyTable = { readonly [K in SupportedType]: NodeEmitter<Extract<WiremdNode, { type: K }>> };
 
-/** All 34 allowlisted discriminants, in contract order. */
+/** All 40 allowlisted discriminants, in contract order. */
 const FAMILY_EMITTERS: FamilyTable = {
   button: emitButton,
   input: emitInput,
@@ -75,6 +83,13 @@ const FAMILY_EMITTERS: FamilyTable = {
   tab: emitTab,
   breadcrumbs: emitBreadcrumbs,
   demo: emitDemo,
+  // Phase 3 Task 2: feedback family
+  toast: emitToast,
+  skeleton: emitSkeleton,
+  spinner: emitSpinner,
+  kbd: emitKbd,
+  progress: emitProgress,
+  meter: emitMeter,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */

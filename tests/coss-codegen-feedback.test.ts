@@ -150,3 +150,186 @@ describe('emitAlert (feedback family)', () => {
     }
   });
 });
+
+// ===========================================================================
+// Task 2 - feedback family: toast / skeleton / spinner / kbd / progress / meter
+// ===========================================================================
+
+describe('emitToast', () => {
+  test('default toast: card with role=status (html)', () => {
+    const out = generateCode({
+      type: 'toast',
+      props: { toastType: undefined, classes: [] },
+      children: [{ type: 'paragraph', content: 'Changes saved.', props: {} }],
+    } as WiremdNode);
+    expect(out).toContain('role="status"');
+    expect(out).toContain('flex items-center justify-between');
+    expect(out).toContain('Changes saved.');
+  });
+
+  test('variant toast: emits colored border class (html + jsx)', () => {
+    const node = {
+      type: 'toast',
+      props: { toastType: 'success' as const, classes: [] },
+      children: [{ type: 'paragraph', content: 'Saved.', props: {} }],
+    } as WiremdNode;
+    const html = generateCode(node);
+    expect(html).toContain('border-emerald-200');
+    const jsx = generateCode(node, { format: 'jsx' });
+    expect(jsx).toContain('className=');
+    expect(jsx).toContain('border-emerald-200');
+  });
+
+  test('opener-line title split (paragraph + paragraph children)', () => {
+    const out = generateCode({
+      type: 'toast',
+      props: { classes: [] },
+      children: [
+        { type: 'paragraph', content: 'Heads up', props: {} },
+        { type: 'paragraph', content: 'A new version is available.', props: {} },
+      ],
+    } as WiremdNode);
+    expect(out).toContain('font-medium text-zinc-950');
+    expect(out).toContain('Heads up');
+    expect(out).toContain('A new version is available.');
+  });
+});
+
+describe('emitSkeleton', () => {
+  test('default skeleton: shimmer block with bg + linear gradient', () => {
+    const out = generateCode({
+      type: 'skeleton',
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('animate-skeleton');
+    expect(out).toContain('rounded-sm');
+    expect(out).toContain('linear-gradient');
+  });
+
+  test('width + height produce inline style', () => {
+    const out = generateCode({
+      type: 'skeleton',
+      props: { width: 200, height: 24 },
+    } as WiremdNode);
+    expect(out).toContain('width:200px');
+    expect(out).toContain('height:24px');
+  });
+});
+
+describe('emitSpinner', () => {
+  test('default medium spinner: animate-spin + size class', () => {
+    const out = generateCode({
+      type: 'spinner',
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('role="status"');
+    expect(out).toContain('aria-label="Loading"');
+    expect(out).toContain('animate-spin');
+    expect(out).toContain('h-4 w-4');
+  });
+
+  test('large spinner', () => {
+    const out = generateCode({
+      type: 'spinner',
+      props: { size: 'large' },
+    } as WiremdNode);
+    expect(out).toContain('h-6 w-6');
+  });
+});
+
+describe('emitKbd', () => {
+  test('default kbd: rounded bg + zinc-500 text', () => {
+    const out = generateCode({
+      type: 'kbd',
+      content: '⌘K',
+      props: {},
+    } as WiremdNode);
+    expect(out).toMatch(/<kbd[^>]*class="[^"]*bg-zinc-100/);
+    expect(out).toContain('⌘K');
+  });
+
+  test('JSX kbd uses className', () => {
+    const out = generateCode(
+      { type: 'kbd', content: 'K', props: {} } as WiremdNode,
+      { format: 'jsx' },
+    );
+    expect(out).toContain('className=');
+    expect(out).toContain('K');
+  });
+
+  test('escapes < and > in content', () => {
+    const out = generateCode({
+      type: 'kbd',
+      content: 'A<B',
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('A&lt;B');
+  });
+});
+
+describe('emitProgress', () => {
+  test('determinate progress with value=60', () => {
+    const out = generateCode({
+      type: 'progress',
+      value: 60,
+      indeterminate: false,
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('role="progressbar"');
+    expect(out).toContain('aria-valuenow="60"');
+    expect(out).toContain('width:60%');
+    expect(out).toContain('60%');
+  });
+
+  test('indeterminate progress: width 100% and no value text', () => {
+    const out = generateCode({
+      type: 'progress',
+      value: 0,
+      indeterminate: true,
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('data-indeterminate="true"');
+    expect(out).toContain('width:100%');
+    expect(out).not.toMatch(/<p[^>]*>0%<\/p>/);
+  });
+
+  test('progress with label renders label paragraph', () => {
+    const out = generateCode({
+      type: 'progress',
+      value: 25,
+      indeterminate: false,
+      props: { label: 'Uploading…' },
+    } as WiremdNode);
+    expect(out).toContain('Uploading');
+    expect(out).toContain('width:25%');
+  });
+});
+
+describe('emitMeter', () => {
+  test('meter with value 30 of 100 renders 30% width', () => {
+    const out = generateCode({
+      type: 'meter',
+      value: 30,
+      min: 0,
+      max: 100,
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('role="meter"');
+    expect(out).toContain('aria-valuenow="30"');
+    expect(out).toContain('aria-valuemax="100"');
+    expect(out).toContain('width:30%');
+    expect(out).toContain('30 / 100');
+  });
+
+  test('meter with custom min/max (e.g. 200/1000 = 20%)', () => {
+    const out = generateCode({
+      type: 'meter',
+      value: 200,
+      min: 0,
+      max: 1000,
+      props: {},
+    } as WiremdNode);
+    expect(out).toContain('width:20%');
+    expect(out).toContain('200 / 1000');
+  });
+});

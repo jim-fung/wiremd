@@ -127,6 +127,29 @@ describe('coss components (gallery page, default style)', () => {
     cy.screenshot('coss-alerts', { capture: 'viewport' });
   });
 
+  it('renders feedback family: toast, skeleton, spinner, kbd, progress, meter', () => {
+    // toast
+    cy.get('.wmd-toast').should('have.length.at.least', 2);
+    cy.get('.wmd-toast[role="status"]').should('have.length.at.least', 2);
+    cy.contains('.wmd-toast', 'Changes saved').should('be.visible');
+    // kbd (inline shortcut)
+    cy.get('kbd.wmd-kbd').should('have.length.at.least', 2);
+    cy.contains('kbd.wmd-kbd', '⌘K').should('be.visible');
+    // skeleton
+    cy.get('.wmd-skeleton').should('have.length.at.least', 1);
+    // spinner
+    cy.get('.wmd-spinner[role="status"]').should('have.length.at.least', 1);
+    cy.get('.wmd-spinner.wmd-spinner-md').should('exist');
+    // progress
+    cy.get('.wmd-progress[role="progressbar"]').should('have.length.at.least', 2);
+    cy.get('.wmd-progress-indicator[style*="width:60%"]').should('exist');
+    cy.get('.wmd-progress-indicator[style*="width:100%"]').should('exist');
+    // meter
+    cy.get('.wmd-meter[role="meter"]').should('have.length.at.least', 1);
+    cy.get('.wmd-meter-indicator[style*="width:30%"]').should('exist');
+    cy.screenshot('coss-feedback', { capture: 'viewport' });
+  });
+
   it('shows generated coss code in demo panes by default', () => {
     // Plain ::: demo panes show generated code (escaped in pane), not wiremd source.
     cy.get('.wmd-demo-code').then(($panes) => {

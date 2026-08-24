@@ -4058,5 +4058,70 @@ body.${prefix}root {
 .${prefix}container-alert.${prefix}warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 .${prefix}container-alert.${prefix}error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
 .${prefix}alert-title { font-weight: 600; margin: 0; }
+
+/* Phase 3 Task 2: feedback family */
+.${prefix}toast {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  overflow: hidden; padding: 12px 14px;
+  border: 1px solid #e4e4e7; background: #ffffff;
+  border-radius: 12px; font-size: 14px; line-height: 1.5; color: #18181b;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.05);
+  margin: 12px 0;
+}
+.${prefix}toast[data-variant="success"] { border-color: #a7f3d0; }
+.${prefix}toast[data-variant="info"] { border-color: #bfdbfe; }
+.${prefix}toast[data-variant="warning"] { border-color: #fde68a; }
+.${prefix}toast[data-variant="error"] { border-color: #fecaca; }
+
+.${prefix}skeleton {
+  display: block; width: 100%; min-width: 60px; height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.64) 50%, transparent 60%) #f4f4f5 0 0 / 200% 100%;
+  animation: ${prefix}skeleton-shimmer 1.4s linear infinite;
+}
+@keyframes ${prefix}skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.${prefix}spinner {
+  display: inline-block; box-sizing: border-box;
+  border-style: solid; border-color: #e4e4e7; border-top-color: #18181b;
+  border-radius: 9999px; animation: ${prefix}spinner-spin 0.8s linear infinite;
+}
+.${prefix}spinner.${prefix}spinner-sm { width: 12px; height: 12px; border-width: 1.5px; }
+.${prefix}spinner.${prefix}spinner-md { width: 16px; height: 16px; border-width: 2px; }
+.${prefix}spinner.${prefix}spinner-lg { width: 24px; height: 24px; border-width: 3px; }
+@keyframes ${prefix}spinner-spin { to { transform: rotate(360deg); } }
+
+.${prefix}kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 4px; background: #f4f4f5; color: #71717a;
+  font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500;
+  user-select: none;
+}
+
+.${prefix}progress, .${prefix}meter {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%; margin: 12px 0;
+}
+.${prefix}progress-label, .${prefix}meter-label {
+  font-size: 14px; font-weight: 500; color: #18181b; margin: 0;
+}
+.${prefix}progress-track, .${prefix}meter-track {
+  display: block; width: 100%; overflow: hidden; background: #f4f4f5;
+}
+.${prefix}progress-track { height: 6px; border-radius: 9999px; }
+.${prefix}meter-track { height: 8px; }
+.${prefix}progress-indicator, .${prefix}meter-indicator {
+  display: block; height: 100%; background: #18181b;
+  transition: width 0.5s ease;
+}
+.${prefix}progress-indicator { border-radius: 9999px; }
+.${prefix}progress-value, .${prefix}meter-value {
+  font-size: 14px; color: #18181b; margin: 0;
+  font-variant-numeric: tabular-nums;
+}
 `;
 }

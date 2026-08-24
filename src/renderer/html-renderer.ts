@@ -128,6 +128,24 @@ export function renderNode(node: WiremdNode, context: RenderContext): string {
     case 'demo':
       return renderDemo(node, context);
 
+    case 'toast':
+      return renderToast(node, context);
+
+    case 'skeleton':
+      return renderSkeleton(node, context);
+
+    case 'spinner':
+      return renderSpinner(node, context);
+
+    case 'kbd':
+      return renderKbd(node, context);
+
+    case 'progress':
+      return renderProgress(node, context);
+
+    case 'meter':
+      return renderMeter(node, context);
+
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -858,4 +876,99 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// ============================================================================
+// Phase 3 Task 2: feedback family
+// ============================================================================
+
+function renderToast(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const toastType: string | undefined = node.props?.toastType;
+  const variantClass = toastType && toastType !== 'loading' ? toastType : undefined;
+  const extraClasses = (node.props?.classes || []).filter(
+    (c: string) => c !== variantClass,
+  );
+  const cls = buildClasses(prefix, 'toast', { ...node.props, classes: extraClasses });
+  const variantHTML = variantClass
+    ? ` data-variant="${escapeHtml(variantClass)}"`
+    : '';
+  const childrenHTML = (node.children || []).map((child: any) => renderNode(child, context)).join('\n  ');
+  return `<div class="${cls}" role="status"${variantHTML}>\n  ${childrenHTML}\n</div>`;
+}
+
+function renderSkeleton(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'skeleton', node.props);
+  const width = node.props?.width;
+  const height = node.props?.height;
+  const styleAttr =
+    width !== undefined || height !== undefined
+      ? ` style="${[
+          width !== undefined ? `width:${typeof width === 'number' ? `${width}px` : width}` : '',
+          height !== undefined ? `height:${typeof height === 'number' ? `${height}px` : height}` : '',
+        ]
+          .filter(Boolean)
+          .join(';')}"`
+      : '';
+  return `<div class="${cls}"${styleAttr}></div>`;
+}
+
+function renderSpinner(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const size: string = node.props?.size || 'medium';
+  const sizeClass =
+    size === 'small' ? 'spinner-sm' : size === 'large' ? 'spinner-lg' : 'spinner-md';
+  const cls = buildClasses(prefix, 'spinner', { ...node.props, classes: [sizeClass] });
+  return `<div class="${cls}" role="status" aria-label="Loading"></div>`;
+}
+
+function renderKbd(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'kbd', node.props);
+  return `<kbd class="${cls}">${escapeHtml(node.content ?? '')}</kbd>`;
+}
+
+function renderProgress(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'progress', node.props);
+  const value = Math.max(0, Math.min(100, Number(node.value ?? 0)));
+  const indeterminate: boolean = !!node.indeterminate;
+  const labelText: string | undefined = node.props?.label;
+  const labelHTML = labelText
+    ? `  <p class="${prefix}progress-label">${escapeHtml(labelText)}</p>\n`
+    : '';
+  const trackWidth = indeterminate ? 100 : value;
+  const indicatorStyle = ` style="width:${trackWidth}%"`;
+  const trackHTML = `  <div class="${prefix}progress-track">
+    <div class="${prefix}progress-indicator"${indicatorStyle}></div>
+  </div>`;
+  const valueHTML = !indeterminate
+    ? `\n  <p class="${prefix}progress-value">${value}%</p>`
+    : '';
+  return `<div class="${cls}" role="progressbar" aria-valuenow="${value}"${indeterminate ? '' : ` aria-valuemin="0" aria-valuemax="100"`}${indeterminate ? ' data-indeterminate="true"' : ''}>
+${labelHTML}${trackHTML}${valueHTML}
+</div>`;
+}
+
+function renderMeter(node: any, context: RenderContext): string {
+  const { classPrefix: prefix } = context;
+  const cls = buildClasses(prefix, 'meter', node.props);
+  const value = Number(node.value ?? 0);
+  const min = Number(node.min ?? 0);
+  const max = Number(node.max ?? 100);
+  const range = max - min || 1;
+  const pct = Math.max(0, Math.min(100, ((value - min) / range) * 100));
+  const labelText: string | undefined = node.props?.label;
+  const labelHTML = labelText
+    ? `  <p class="${prefix}meter-label">${escapeHtml(labelText)}</p>\n`
+    : '';
+  const indicatorStyle = ` style="width:${pct}%"`;
+  const trackHTML = `  <div class="${prefix}meter-track">
+    <div class="${prefix}meter-indicator"${indicatorStyle}></div>
+  </div>`;
+  const valueHTML = `\n  <p class="${prefix}meter-value">${value} / ${max}</p>`;
+  return `<div class="${cls}" role="meter" aria-valuenow="${value}" aria-valuemin="${min}" aria-valuemax="${max}">
+${labelHTML}${trackHTML}${valueHTML}
+</div>`;
 }

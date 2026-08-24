@@ -24,19 +24,21 @@ export interface CodegenOptions {
 export type CodegenInput = WiremdNode | readonly WiremdNode[];
 
 /**
- * The 34 AST discriminants supported by the coss codegen layer (exactly the
- * Phase 2 allowlist). `option` and `breadcrumb-item` are emitted internally by
- * the select/breadcrumbs emitters only; direct `form`, `accordion`,
- * `accordion-item`, `alert`, `loading-state`, `empty-state`, `error-state`,
- * `option`, and `breadcrumb-item` nodes throw
- * `Unsupported codegen node type: <type>` (Phase 3 scope).
+ * The 40 AST discriminants supported by the coss codegen layer. Phase 3 Task 2
+ * extends the Phase 2 allowlist with the feedback family: toast, skeleton,
+ * spinner, kbd, progress, meter. `option` and `breadcrumb-item` are emitted
+ * internally by the select/breadcrumbs emitters only; direct `form`,
+ * `accordion`, `accordion-item`, `alert`, `loading-state`, `empty-state`,
+ * `error-state`, `option`, and `breadcrumb-item` nodes throw
+ * `Unsupported codegen node type: <type>` (still on the Phase 3 roadmap).
  */
 export type SupportedType =
   | 'button' | 'input' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'radio-group' | 'icon'
   | 'badge' | 'container' | 'nav' | 'nav-item' | 'brand' | 'grid' | 'grid-item' | 'row'
   | 'heading' | 'paragraph' | 'text' | 'image' | 'link' | 'list' | 'list-item'
   | 'table' | 'table-header' | 'table-row' | 'table-cell' | 'blockquote' | 'code' | 'separator'
-  | 'tabs' | 'tab' | 'breadcrumbs' | 'demo';
+  | 'tabs' | 'tab' | 'breadcrumbs' | 'demo'
+  | 'toast' | 'skeleton' | 'spinner' | 'kbd' | 'progress' | 'meter';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through
