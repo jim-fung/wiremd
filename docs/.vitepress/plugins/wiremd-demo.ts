@@ -192,7 +192,7 @@ function extractDemo(
     const basePath = path.dirname(filePath)
     const resolved = resolveIncludes(source, basePath)
     const ast = parse(resolved)
-    renderedHtml = renderToHTML(ast, { style: 'sketch' })
+    renderedHtml = renderToHTML(ast, { style: 'coss' })
   } catch (err) {
     const msg = String(err).replace(/</g, '&lt;')
     renderedHtml = `<html><body style="font-family:sans-serif;padding:1rem;color:red">wiremd render error: ${msg}</body></html>`
@@ -252,7 +252,7 @@ function extractWiremdContainer(
     const basePath = path.dirname(filePath)
     const resolved = resolveIncludes(source, basePath)
     const ast = parse(resolved)
-    renderedHtml = renderToHTML(ast, { style: 'sketch' })
+    renderedHtml = renderToHTML(ast, { style: 'coss' })
   } catch (err) {
     const msg = String(err).replace(/</g, '&lt;')
     renderedHtml = `<html><body style="font-family:sans-serif;padding:1rem;color:red">wiremd error: ${msg}</body></html>`
