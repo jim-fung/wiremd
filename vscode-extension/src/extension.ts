@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('wiremd.changeStyle', async () => {
-      const styles = ['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'];
+      const styles = ['coss', 'sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'];
       const selected = await vscode.window.showQuickPick(styles, {
         placeHolder: 'Select a visual style'
       });

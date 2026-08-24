@@ -212,7 +212,7 @@ if (shared !== null) {
   const sharedStyle = shared.style as StyleName | null;
   if (
     sharedStyle &&
-    ['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'].includes(sharedStyle)
+    ['coss', 'sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'].includes(sharedStyle)
   ) {
     preview.setStyle(sharedStyle);
     styleSelect.value = sharedStyle;

@@ -108,6 +108,7 @@
           "type": "string",
           "default": "sketch",
           "enum": [
+            "coss",
             "sketch",
             "clean",
             "wireframe",

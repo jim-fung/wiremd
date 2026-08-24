@@ -1,6 +1,7 @@
 import { compileWiremd, renderToPreview } from 'wiremd/embed';
 
 export type StyleName =
+  | 'coss'
   | 'sketch'
   | 'clean'
   | 'wireframe'
