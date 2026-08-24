@@ -16,10 +16,19 @@ import { parse } from '../parser/index.js';
 import { resolveIncludes } from '../parser/includes.js';
 import { renderToHTML, renderToJSON } from '../renderer/index.js';
 import type { WiremdStyle } from '../types.js';
+import { WIREMD_STYLES } from '../types.js';
 import { startServer, notifyReload, notifyError } from './server.js';
 import { VERSION } from '../version.js';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+
+const DEPRECATED_STYLES: readonly string[] = ['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'];
+
+export function warnIfDeprecatedStyle(style: string, log: { style(msg: string): void }): void {
+  if ((DEPRECATED_STYLES as readonly string[]).includes(style)) {
+    log.style(`Style '${style}' is deprecated and will be removed in the next major release — use --style coss`);
+  }
+}
 
 export interface CLIOptions {
   input: string;
@@ -159,11 +168,11 @@ export function parseArgs(args: string[]): CLIOptions | null {
       case '-s':
       case '--style': {
         const { value: style } = readFlagValue(args, i, arg);
-        if (!['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'].includes(style)) {
-          console.error(`Error: Invalid style "${style}". Must be sketch, clean, wireframe, none, tailwind, material, or brutal.`);
+        if (!(WIREMD_STYLES as readonly string[]).includes(style)) {
+          console.error(`Error: Invalid style "${style}". Must be one of: ${WIREMD_STYLES.join(', ')}.`);
           process.exit(1);
         }
-        options.style = style as any;
+        options.style = style as WiremdStyle;
         break;
       }
 
@@ -291,6 +300,11 @@ export function main(): void {
   const options = parseArgs(args);
   if (!options) {
     process.exit(0);
+  }
+
+  // Warn once per invocation if a legacy style was explicitly selected
+  if (options.style) {
+    warnIfDeprecatedStyle(options.style, logger);
   }
 
   const inputIsDir = existsSync(options.input) && statSync(options.input).isDirectory();

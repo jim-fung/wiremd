@@ -11,8 +11,29 @@ import {
   showVersion,
   checkFileSize,
   generateOutput,
+  warnIfDeprecatedStyle,
   type CLIOptions,
 } from '../src/cli/index.js';
+import { WIREMD_STYLES } from '../src/types.js';
+
+describe('deprecated style warning', () => {
+  const messages: string[] = [];
+  const logger = { style: (m: string) => messages.push(m) };
+
+  it('warns for legacy styles', () => {
+    warnIfDeprecatedStyle('sketch', logger);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toBe(
+      "Style 'sketch' is deprecated and will be removed in the next major release — use --style coss",
+    );
+  });
+
+  it('stays silent for coss', () => {
+    messages.length = 0;
+    warnIfDeprecatedStyle('coss', logger);
+    expect(messages).toHaveLength(0);
+  });
+});
 
 describe('CLI Unit Tests', () => {
   describe('parseArgs', () => {
@@ -113,9 +134,7 @@ describe('CLI Unit Tests', () => {
     });
 
     it('should accept all valid styles', () => {
-      const styles = ['sketch', 'clean', 'wireframe', 'none', 'tailwind', 'material', 'brutal'];
-
-      for (const style of styles) {
+      for (const style of WIREMD_STYLES) {
         const result = parseArgs(['test.md', '--style', style]);
         expect(result?.style).toBe(style);
       }
