@@ -41,7 +41,7 @@ Message
 Generate a wireframe:
 
 ```bash
-wiremd contact.md --style sketch
+wiremd contact.md
 ```
 
 This renders into a styled HTML wireframe with a form, inputs, and buttons.
@@ -68,7 +68,7 @@ Fully customizable
 Generate a wireframe:
 
 ```bash
-wiremd features.md --style sketch
+wiremd features.md
 ```
 
 This creates a responsive 3-column grid layout with icons and descriptions.
@@ -82,7 +82,7 @@ This creates a responsive 3-column grid layout with icons and descriptions.
 - ✅ **Fast to write** - Intuitive shortcuts for common patterns
 - ✅ **Extensible** - Add classes and attributes as needed
 - ✅ **Multiple outputs** - HTML, JSON, React (JSX/TSX), Tailwind CSS, Figma (via plugin)
-- ✅ **7 visual styles** - sketch (Balsamiq-inspired), clean, wireframe, tailwind, material, brutal, none
+- ✅ **8 visual styles** - coss (Cal.com-inspired, default), plus deprecated legacy: sketch, clean, wireframe, tailwind, material, brutal, none
 - ✅ **Full CLI tool** - Watch mode, live-reload dev server, style switching
 - ✅ **Rich examples** - Showcase files demonstrating all styles
 - ✅ **Framework renderers** - React, Tailwind CSS classes (Vue, Svelte coming soon)
@@ -172,19 +172,16 @@ Install the **Wiremd** extension from the VS Code Marketplace for live preview a
 ## CLI Usage
 
 ```bash
-# Generate HTML with default sketch style
+# Generate HTML with the default coss style
 wiremd wireframe.md
 
 # Output to specific file
 wiremd wireframe.md -o output.html
 
-# Use alternative styles
-wiremd wireframe.md --style clean      # Modern minimal
-wiremd wireframe.md --style wireframe  # Traditional grayscale
-wiremd wireframe.md --style tailwind   # Utility-first with purple accents
-wiremd wireframe.md --style material   # Google Material Design
-wiremd wireframe.md --style brutal     # Neo-brutalism style
-wiremd wireframe.md --style none       # Unstyled semantic HTML
+# Deprecated legacy styles (warn; removed next major)
+wiremd wireframe.md --style sketch      # Balsamiq-inspired
+wiremd wireframe.md --style clean       # Modern minimal
+wiremd wireframe.md --style material    # Material Design
 
 # Watch mode with live-reload dev server
 wiremd wireframe.md --watch --serve 3000
@@ -384,7 +381,7 @@ const tailwindHTML = renderToTailwind(ast, { pretty: true });
 - [x] Complete TypeScript implementation
 - [x] Parser with full syntax support
 - [x] AST transformer with 40+ node types
-- [x] HTML renderer with 7 visual styles
+- [x] HTML renderer with 8 visual styles
 - [x] JSON output
 - [x] 641+ passing tests
 - [x] Full-featured CLI tool with watch mode and live-reload

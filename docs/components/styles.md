@@ -1,58 +1,49 @@
-# Visual Styles
+::: layout {.sidebar-main}
 
-wiremd includes 7 built-in visual styles. Pass one with `--style` on the CLI or `{ style: '...' }` in the API.
+![[_sidebar.md]]
 
-| Style | Description | Best for |
-|-------|-------------|----------|
-| `sketch` | Hand-drawn, Balsamiq-style | Brainstorming, low-fidelity |
-| `clean` | Modern minimal | Presentations, high-fidelity mockups |
-| `wireframe` | Black & white, traditional | Developer handoff, specs |
-| `material` | Material Design inspired | Android apps, Google-style |
-| `brutal` | Neo-brutalism, bold colors | Artistic, statement designs |
-| `tailwind` | Tailwind CSS utility classes | Tailwind projects |
-| `none` | Semantic HTML, no CSS | Custom styling |
+::: main
 
-`sketch` is the default when no style is specified.
+# Styles
 
-## Previews
+wiremd renders wireframes through visual styles. As of this release the default and
+recommended style is **coss**, modeled on the [coss ui](https://coss.com/ui/docs)
+design system: Inter typography, neutral surfaces, black primary actions, subtle
+focus rings.
 
-### sketch
-![sketch style](/screenshots/showcase-sketch-screenshot.webp)
+## coss (default)
 
-### clean
-![clean style](/screenshots/showcase-clean-screenshot.webp)
+::: demo
 
-### wireframe
-![wireframe style](/screenshots/showcase-wireframe-screenshot.webp)
+# Dashboard
 
-### material
-![material style](/screenshots/showcase-material-screenshot.webp)
+## Revenue
 
-### brutal
-![brutal style](/screenshots/showcase-brutal-screenshot.webp)
+$12,480 [+8.2%]*
 
-### tailwind
-![tailwind style](/screenshots/showcase-tailwind-screenshot.webp)
+[New Report] [Export]
 
-### none
-![none style](/screenshots/showcase-none-screenshot.webp)
+:::
 
-## CLI
+All component pages in this catalog render their examples in coss.
 
-```bash
-wiremd file.md --style clean --serve 3001 --watch
-wiremd file.md --style sketch
-wiremd file.md --style wireframe -o output.html
-```
+## Deprecated styles
 
-## API
+The following styles still work but print a deprecation warning and will be
+removed in the next major release:
 
-```typescript
-import { parse, renderToHTML } from 'wiremd';
+| Style | Look |
+| --- | --- |
+| `sketch` | Balsamiq-inspired hand-drawn (former default) |
+| `clean` | Modern minimal |
+| `wireframe` | Grayscale with hatching |
+| `none` | Unstyled semantic HTML |
+| `tailwind` | Utility-first look, purple accents |
+| `material` | Material Design elevation |
+| `brutal` | Neo-brutalism |
 
-const html = renderToHTML(parse(markdown), { style: 'clean' });
-```
+Select one explicitly: `wiremd page.md --style sketch`.
 
-## VS Code
+:::
 
-Use the style picker in the wiremd preview panel to switch styles live — no terminal needed.
+:::
