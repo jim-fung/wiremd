@@ -53,6 +53,7 @@ export default defineConfig({
               { text: "Navigation", link: "/components/navigation" },
               { text: "Cards", link: "/components/cards" },
               { text: "Tabs", link: "/components/tabs" },
+              { text: "Disclosure", link: "/components/disclosure" },
               { text: "Alerts", link: "/components/alerts" },
               { text: "Tables", link: "/components/tables" },
             ],

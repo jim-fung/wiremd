@@ -26,7 +26,7 @@ wiremd converts Markdown with extended syntax into visual wireframes. Use these 
 
 ## Primitive Coverage Matrix
 
-The **coss** style (Cal.com's design system) is wiremd's default theme: every primitive below ships with wiremd syntax, an AST node, an html-renderer case, coss-theme CSS, and codegen emitters for both `html` and `jsx` formats (`generateCode()`). The 73-discriminant codegen contract is frozen in `src/codegen/coss/types.ts`; renderer cases live in `src/renderer/html-renderer.ts`. Static wireframe semantics apply throughout — overlays render as visible panels, no JavaScript. For composition recipes that assemble these primitives into common patterns (login form, pricing card, navbar, settings panel…), see [Particles](particles.md).
+The **coss** style (Cal.com's design system) is wiremd's default theme: every primitive below ships with wiremd syntax, an AST node, an html-renderer case, coss-theme CSS, and codegen emitters for both `html` and `jsx` formats (`generateCode()`). The 79-discriminant codegen contract is frozen in `src/codegen/coss/types.ts`; renderer cases live in `src/renderer/html-renderer.ts`. Static wireframe semantics apply throughout — overlays render as visible panels, no JavaScript. For composition recipes that assemble these primitives into common patterns (login form, pricing card, navbar, settings panel…), see [Particles](particles.md).
 
 ### Base
 
@@ -67,6 +67,14 @@ The **coss** style (Cal.com's design system) is wiremd's default theme: every pr
 | breadcrumbs | `[[ Home > Settings > Profile ]]` | ✅ | ✅ | ✅ | ✅ |
 | demo | `::: demo` | ✅ | ✅ | ✅ | ✅ |
 
+### Disclosure
+
+| Primitive | wiremd syntax | AST node | Renderer | Codegen | Status |
+|-----------|---------------|----------|----------|---------|--------|
+| accordion | `::: accordion` | ✅ | ✅ | ✅ | ✅ |
+| accordion-item | `::: accordion-item Summary` | ✅ | ✅ | ✅ | ✅ first item expanded by default |
+| collapsible | `::: collapsible Trigger title` | ✅ | ✅ | ✅ | ✅ expanded by default, `{.collapsed}` variant |
+
 ### Feedback
 
 | Primitive | wiremd syntax | AST node | Renderer | Codegen | Status |
@@ -90,6 +98,8 @@ The **coss** style (Cal.com's design system) is wiremd's default theme: every pr
 | popover | `::: popover` | ✅ | ✅ | ✅ | ✅ |
 | tooltip | `::: tooltip` | ✅ | ✅ | ✅ | ✅ |
 | preview-card | `::: preview-card` | ✅ | ✅ | ✅ | ✅ |
+| menu | `::: menu Trigger label` + item list | ✅ | ✅ | ✅ | 🚧 static expanded (no JS) |
+| context-menu | `::: context-menu Zone label` + item list | ✅ | ✅ | ✅ | 🚧 static expanded (no JS) |
 
 ### Navigation
 
@@ -100,6 +110,7 @@ The **coss** style (Cal.com's design system) is wiremd's default theme: every pr
 | scroll-area | `::: scroll-area {maxHeight:220}` | ✅ | ✅ | ✅ | ✅ |
 | sidebar | `::: sidebar` | ✅ | ✅ | ✅ | ✅ dedicated discriminant since Phase 3 Task 4 |
 | menubar | `::: menubar` | ✅ | ✅ | ✅ | ✅ |
+| toolbar | `::: toolbar` | ✅ | ✅ | ✅ | ✅ |
 
 ### Data entry
 

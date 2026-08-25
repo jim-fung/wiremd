@@ -76,6 +76,23 @@ Use `[[ ... ]]` with `>` separators for breadcrumb trails.
 [← Prev] [1]* [2] [3] [4] [Next →]
 :::
 
+## Toolbar
+
+`::: toolbar` renders a horizontal `role="toolbar"` bar for inline bracket buttons and inputs. A `---` on its own blank-line-surrounded line becomes a vertical separator:
+
+::: demo
+
+::: toolbar
+[B]* [I] [U] [Link]
+
+---
+
+[Search___________]{type:search} [Filter]
+
+:::
+
+:::
+
 ## Syntax
 
 ```
@@ -87,6 +104,14 @@ Use `[[ ... ]]` with `>` separators for breadcrumb trails.
 [Link]*
 [Link]
 :::
+
+::: toolbar                              toolbar
+[Action]* [Action]
+
+---
+
+[Search___________]{type:search}
+:::
 ```
 
 :::
@@ -95,12 +120,13 @@ Use `[[ ... ]]` with `>` separators for breadcrumb trails.
 
 ## Navigation family (Phase 3 Task 4)
 
-Five additional primitives with first-class codegen discriminants:
+Five additional primitives with first-class codegen discriminants, plus `toolbar` from the 2026-08-25 coss parity pass:
 
 - `::: pagination` — bracket items become page links; the `*` marker sets `aria-current="page"`.
 - `::: segmented-control` — `[Day]* [Week] [Month]` becomes a pill group with `aria-pressed`.
 - `::: scroll-area {maxHeight:220}` — bordered overflow viewport with inline max-height.
 - `::: sidebar` — now a dedicated discriminant: first heading is the header, list children render as a nav menu with `{.active}` support.
 - `::: menubar` — horizontal `role="menubar"` bar for app-style menu triggers.
+- `::: toolbar` — `role="toolbar"` bar of inline bracket buttons/inputs; blank-line `---` becomes a vertical separator.
 
-All five appear in the gallery page under "Navigation" and in the 73-entry `SupportedType` codegen contract.
+All six appear in the gallery page under "Navigation" and in the 79-entry `SupportedType` codegen contract.

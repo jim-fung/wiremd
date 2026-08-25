@@ -90,7 +90,7 @@ This creates a responsive 3-column grid layout with icons and descriptions.
 
 ## Supported primitives
 
-The **coss** style (Cal.com's design system) is wiremd's default theme — every primitive renders with coss visuals out of the box and round-trips through `generateCode()` as Tailwind HTML or JSX. All 73 primitives across the base, feedback, overlay, navigation, data-entry, and display families are cataloged in the [coverage matrix](./docs/components/index.md). Composition recipes that assemble primitives into common patterns (login form, pricing card, navbar…) live in [Particles](./docs/components/particles.md).
+The **coss** style (Cal.com's design system) is wiremd's default theme — every primitive renders with coss visuals out of the box and round-trips through `generateCode()` as Tailwind HTML or JSX. With the disclosure family (**accordion**, **collapsible**) plus **menu**, **context-menu**, and **toolbar**, wiremd now covers **all 54 of coss's documented UI primitives — full 1:1 parity**. All 80 primitives across the base, disclosure, feedback, overlay, navigation, data-entry, and display families are cataloged in the [coverage matrix](./docs/components/index.md), backed by the 79-discriminant codegen contract. Composition recipes that assemble primitives into common patterns (login form, pricing card, navbar…) live in [Particles](./docs/components/particles.md).
 
 ## Project Structure
 

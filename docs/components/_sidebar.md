@@ -12,6 +12,7 @@
 [[Navigation](./navigation.md)]
 [[Cards](./cards.md)]
 [[Tabs](./tabs.md)]
+[[Disclosure](./disclosure.md)]
 [[Alerts](./alerts.md)]
 [[Tables](./tables.md)]
 

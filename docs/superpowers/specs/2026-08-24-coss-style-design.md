@@ -190,3 +190,24 @@ pricing card, navbar, settings panel…). No dedicated particle code paths.
 | Particles documented as compositions | `docs/components/particles.md` (no dedicated particle code paths) |
 | Legacy styles warn; removal mechanical | `WiremdStyle` union + deprecation warnings (`src/renderer/styles.ts`); deprecation table in `docs/components/styles.md` |
 | No runtime deps; size budget | Unit suite green (`bun run test`); clean `bun run build` including the chunk-size guard |
+
+### coss parity addendum (2026-08-25)
+
+The final five coss primitives landed one day after Phase 3 closed, completing the
+coverage target set in section 5. `SupportedType` grew from 73 to 79 discriminants
+(`accordion`, `accordion-item`, `collapsible`, `toolbar`, `menu`, `context-menu`;
+menu popups use the internal `menu-item` AST node). Full 54/54 parity with coss's
+documented UI primitives is achieved.
+
+| Primitive | Syntax | AST | Renderer | Codegen | Status |
+| --- | --- | --- | --- | --- | --- |
+| accordion | `::: accordion` with `::: accordion-item Summary` fences | `accordion`, `accordion-item` | html-renderer + preview-renderer cases; first item expanded, `{.expanded}`/`{.collapsed}` variants | html + jsx emitters | ✅ |
+| collapsible | `::: collapsible Trigger title` | `collapsible` | html-renderer + preview-renderer cases; expanded by default, `{.collapsed}` variant | html + jsx emitters | ✅ |
+| menu | `::: menu Trigger label` + list children (danger/disabled/shortcut/checkbox/radio items, group headings, separators, submenus) | `menu` (+ internal `menu-item`) | html-renderer + preview-renderer cases; trigger button + always-expanded popup | html + jsx emitters | 🚧 static expanded, no JS |
+| context-menu | `::: context-menu Zone label` + same children as menu | `context-menu` (+ internal `menu-item`) | html-renderer + preview-renderer cases; dashed right-click zone + popup | html + jsx emitters | 🚧 static expanded, no JS |
+| toolbar | `::: toolbar` with inline bracket buttons/inputs; blank-line `---` vertical separator | `toolbar` | html-renderer + preview-renderer cases; `role="toolbar"` | html + jsx emitters | ✅ |
+
+All five ship with coss CSS, unit tests, and e2e coverage. `menu` and `context-menu`
+join `autocomplete`/`combobox`/`command` as static-wireframe (🚧) primitives: the
+popup always renders expanded, with no JavaScript, per the ratified static-semantics
+decision in section 5.

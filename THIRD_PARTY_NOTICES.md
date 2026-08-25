@@ -10,5 +10,6 @@ wiremd incorporates or is inspired by the following third-party projects.
   or `apps/origin/`). Copyright (c) 2025 coss.com. Originally Copyright (c) 2025 Origin UI.
 - Usage: wiremd's coss visual theme and the Tailwind class strings produced by
   `generateCode()` (src/codegen/coss/) are modeled on coss ui's component class
-  conventions. No coss source code is bundled or redistributed.
+  conventions, including the menu, context-menu, toolbar, accordion, and collapsible
+  class conventions. No coss source code is bundled or redistributed.
 - License: MIT — https://opensource.org/licenses/MIT

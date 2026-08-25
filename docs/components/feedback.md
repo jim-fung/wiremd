@@ -71,7 +71,7 @@ Defaults: `min=0`, `max=100`. Renders a `<div role="meter">` with the percentage
 
 ## Codegen
 
-All six primitives are wired into `generateCode` with both HTML and JSX output. The dispatcher treats `toast`, `skeleton`, `spinner`, `kbd`, `progress`, and `meter` as first-class discriminants — they appear in `FAMILY_EMITTERS` and `SupportedType` (now part of the 73-discriminant frozen table).
+All six primitives are wired into `generateCode` with both HTML and JSX output. The dispatcher treats `toast`, `skeleton`, `spinner`, `kbd`, `progress`, and `meter` as first-class discriminants — they appear in `FAMILY_EMITTERS` and `SupportedType` (now part of the 79-discriminant frozen table).
 
 Example codegen output for a kbd shortcut:
 
