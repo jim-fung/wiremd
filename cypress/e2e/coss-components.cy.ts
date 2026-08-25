@@ -289,6 +289,47 @@ describe('coss components (gallery page, default style)', () => {
     });
   });
 
+  it('renders coss parity family: accordion, collapsible, menu, context-menu, toolbar', () => {
+    // accordion: first item expands by default, second stays collapsed.
+    cy.get('.wmd-accordion[data-wmd-accordion]').should('exist');
+    cy.get('.wmd-accordion-trigger').should('have.length.at.least', 2);
+    cy.contains('.wmd-accordion-summary', 'What is wiremd?').should('exist');
+    cy.get('.wmd-accordion-trigger').first().should('have.attr', 'aria-expanded', 'true');
+    cy.get('.wmd-accordion-trigger').eq(1).should('have.attr', 'aria-expanded', 'false');
+    // Collapsed item's panel carries the hidden attribute; expanded one renders.
+    cy.get('.wmd-accordion-item').eq(1).find('.wmd-accordion-panel').should('have.attr', 'hidden');
+    cy.get('.wmd-accordion-panel-inner').should('exist');
+    // collapsible: rendered closed ({.collapsed}).
+    cy.get('.wmd-collapsible-trigger').should('have.attr', 'aria-expanded', 'false');
+    cy.get('.wmd-collapsible-panel[hidden]').should('exist');
+    cy.contains('.wmd-collapsible-trigger', 'Advanced settings').should('exist');
+    // menu: static open popup with group label, checkbox item, shortcut, separator, destructive.
+    cy.get('.wmd-menu-trigger[aria-haspopup="menu"]').should('exist');
+    cy.get('.wmd-menu-popup[role="menu"]').should('be.visible');
+    cy.get('.wmd-menu-label').should('contain.text', 'File');
+    cy.get('.wmd-menu-popup [role="menuitemcheckbox"][aria-checked="true"]').should(
+      'contain.text',
+      'Enable sync',
+    );
+    cy.get('.wmd-menu-indicator').should('contain.text', '✓');
+    cy.contains('kbd.wmd-menu-shortcut', '⌘N').should('exist');
+    cy.get('.wmd-menu-separator').should('have.length', 1);
+    cy.contains('.wmd-menu-destructive', 'Delete').should('exist');
+    // context-menu: dashed zone trigger + static popup menu.
+    cy.get('.wmd-context-menu[data-wmd-context-menu]').should('exist');
+    cy.contains('.wmd-context-menu-trigger', 'Canvas').should('exist');
+    cy.get('.wmd-context-menu-popup[role="menu"]').should('exist');
+    cy.get('.wmd-context-menu-item[aria-disabled="true"]').should('contain.text', 'Paste');
+    // toolbar: button group with one vertical separator between groups.
+    cy.get('.wmd-toolbar[role="toolbar"]').should('exist');
+    cy.get('.wmd-toolbar button').should('have.length.at.least', 4);
+    cy.get('.wmd-toolbar-separator[role="separator"][aria-orientation="vertical"]').should(
+      'have.length',
+      1,
+    );
+    cy.screenshot('coss-parity', { capture: 'viewport' });
+  });
+
   it('captures the full gallery page', () => {
     cy.screenshot('coss-gallery-full', { capture: 'fullPage' });
   });

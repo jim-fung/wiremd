@@ -373,6 +373,49 @@ Get started by creating your first project.
 ::: date-picker {value:"2026-08-24" placeholder:"Pick a date"}
 :::
 
+## Coss parity
+
+::: accordion
+
+::: accordion-item What is wiremd?
+A markdown component syntax.
+:::
+
+::: accordion-item Can I nest components?
+Yes — any block content.
+:::
+
+:::
+
+::: collapsible Advanced settings {.collapsed}
+Toggled settings content lives here.
+:::
+
+::: menu Actions
+### File
+- New file {shortcut:"⌘N"}
+- Make a copy
+
+---
+
+- [x] Enable sync
+- Delete {.danger}
+:::
+
+::: context-menu Canvas
+- Cut
+- Copy
+- Paste {disabled}
+:::
+
+::: toolbar
+[Bold]* [Italic] [Underline]
+
+---
+
+[Save]
+:::
+
 ## Demo Panes (codegen)
 
 ::: demo
