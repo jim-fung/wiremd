@@ -1,6 +1,7 @@
 /**
  * Embed/preview coverage for the Phase 3 primitives (feedback, overlay,
- * navigation, data entry, display families).
+ * navigation, data entry, display families) and the coss parity family
+ * (accordion, collapsible, menu, context-menu, toolbar).
  *
  * Two gates per family:
  *   1. `compileWiremd` accepts the discriminant — the validator allowlist
@@ -28,7 +29,7 @@ function expectNoAstRejections(compiled: ReturnType<typeof compileWiremd>): void
   expect(rejections, JSON.stringify(rejections)).toEqual([]);
 }
 
-/** One representative source per Phase 3 discriminant (39 + form). */
+/** One representative source per Phase 3 discriminant (44 + form). */
 const PHASE3_SOURCES: Array<[name: string, source: string]> = [
   // feedback
   ['toast', '::: toast {.success}\nSaved!\n:::'],
@@ -74,13 +75,20 @@ const PHASE3_SOURCES: Array<[name: string, source: string]> = [
   ['empty', '::: empty\nNothing here\n:::'],
   ['calendar', '::: calendar {month:"January" year:2026}\n:::'],
   ['date-picker', '::: date-picker {placeholder:"Pick a date"}\n:::'],
+  // coss parity family
+  ['accordion', '::: accordion\n\n::: accordion-item First question\nFirst answer here.\n:::\n\n::: accordion-item Second question {.collapsed}\nSecond answer.\n:::\n\n:::'],
+  ['collapsible', '::: collapsible Advanced settings {.collapsed}\nHidden settings content.\n:::'],
+  ['menu', '::: menu Actions\n### File group\n- New file {shortcut:"⌘N"}\n- [x] Enable sync\n- ( ) Light\n- (x) Dark\n\n---\n\n- Delete {.danger}\n:::'],
+  ['context-menu', '::: context-menu Canvas zone\n- Cut\n- Copy\n- Paste {disabled}\n:::'],
+  ['toolbar', '::: toolbar\n[Bold]* [Italic] [Underline]\n\n---\n\n[Save]\n:::'],
 ];
 
 describe('phase 3 embed compile gate', () => {
   test('every Phase 3 discriminant compiles without INVALID_COMPONENT_TYPE', () => {
     // The 40-primitive list includes `form`, which predates Phase 3; the
-    // corpus covers all of them (39 sources, form included).
-    expect(PHASE3_SOURCES.length).toBe(39);
+    // corpus covers all of them (44 sources, form included) plus the
+    // 5 coss parity primitives.
+    expect(PHASE3_SOURCES.length).toBe(44);
     for (const [name, source] of PHASE3_SOURCES) {
       const compiled = compileWiremd(source, { style: 'coss' });
       expect(compiled.document, name).not.toBeNull();
@@ -320,5 +328,58 @@ describe('phase 3 display family previews', () => {
       /class="ok-wiremd-date-picker-value ok-wiremd-date-picker-placeholder">Pick a date</,
     );
     expect(result.html).toMatch(/class="ok-wiremd-date-picker-trigger" aria-haspopup="dialog"/);
+  });
+});
+
+describe('coss parity family previews', () => {
+  test('accordion expands the first item by default and hides the rest', () => {
+    const { result } = preview('::: accordion\n\n::: accordion-item A\na\n:::\n\n::: accordion-item B\nb\n:::\n\n:::');
+    expect(result.html).toMatch(/class="ok-wiremd-accordion-trigger" aria-expanded="true"/);
+    expect(result.html).toMatch(/class="ok-wiremd-accordion-trigger" aria-expanded="false"/);
+    expect(result.html).toMatch(/class="ok-wiremd-accordion-panel" hidden>/);
+    expect(result.html).toMatch(/class="ok-wiremd-accordion-panel">/);
+  });
+
+  test('accordion {.collapsed} keeps every panel hidden', () => {
+    const { result } = preview('::: accordion\n\n::: accordion-item First question\nFirst answer here.\n:::\n\n::: accordion-item Second question {.collapsed}\nSecond answer.\n:::\n\n:::');
+    expect(result.html).not.toContain('aria-expanded="true"');
+    expect(result.html.match(/class="ok-wiremd-accordion-panel" hidden>/g)).toHaveLength(2);
+    expect(result.html).toContain('First answer here.');
+  });
+
+  test('collapsible collapsed state lands on class, aria, and the hidden panel', () => {
+    const { result } = preview('::: collapsible Advanced settings {.collapsed}\nHidden settings content.\n:::');
+    expect(result.html).toContain('ok-wiremd-collapsible-collapsed');
+    expect(result.html).toMatch(/class="ok-wiremd-collapsible-trigger" aria-expanded="false">Advanced settings/);
+    expect(result.html).toMatch(/class="ok-wiremd-collapsible-panel" hidden>/);
+    expect(result.html).toContain('Hidden settings content.');
+  });
+
+  test('menu keeps its trigger, popup role, kbd shortcut, and destructive flag', () => {
+    const { result } = preview('::: menu Actions\n### File group\n- New file {shortcut:"⌘N"}\n- [x] Enable sync\n- Delete {.danger}\n:::');
+    expect(result.html).toMatch(/<button type="button" class="ok-wiremd-menu-trigger" aria-haspopup="menu" aria-expanded="true">Actions/);
+    expect(result.html).toMatch(/<div class="ok-wiremd-menu-popup" role="menu">/);
+    expect(result.html).toMatch(/<div class="ok-wiremd-menu-label">File group<\/div>/);
+    expect(result.html).toMatch(/<kbd class="ok-wiremd-menu-shortcut">⌘N<\/kbd>/);
+    expect(result.html).toMatch(/class="ok-wiremd-menu-item ok-wiremd-menu-destructive" role="menuitem"/);
+    expect(result.html).toMatch(/class="ok-wiremd-menu-item" role="menuitemcheckbox" aria-checked="true"/);
+  });
+
+  test('context-menu renders a dashed zone div instead of a button trigger', () => {
+    const { result } = preview('::: context-menu Canvas zone\n- Cut\n- Paste {disabled}\n:::');
+    expect(result.html).toMatch(/<div class="ok-wiremd-context-menu-trigger" data-wmd-context-zone>Canvas zone<\/div>/);
+    expect(result.html).not.toMatch(/<button[^>]*ok-wiremd-context-menu/);
+    expect(result.html).toMatch(/<div class="ok-wiremd-context-menu-popup" role="menu">/);
+    expect(result.html).toMatch(/class="ok-wiremd-context-menu-item ok-wiremd-context-menu-item-disabled" role="menuitem" aria-disabled="true"/);
+  });
+
+  test('toolbar carries role=toolbar and vertical separator spans', () => {
+    const { result } = preview('::: toolbar\n[Bold]* [Italic] [Underline]\n\n---\n\n[Save]\n:::');
+    expect(result.html).toMatch(/<div class="ok-wiremd-toolbar" role="toolbar">/);
+    expect(result.html).toMatch(
+      /<span class="ok-wiremd-toolbar-separator" role="separator" aria-orientation="vertical"><\/span>/,
+    );
+    expect(result.html).toContain('>Bold</button>');
+    expect(result.html).toContain('>Save</button>');
   });
 });

@@ -356,6 +356,13 @@ export function renderPreviewNode(node: WiremdNode, context: PreviewRenderContex
     case 'empty': return renderEmpty(node as any, context);
     case 'calendar': return renderCalendar(node as any, context);
     case 'date-picker': return renderDatePicker(node as any, context);
+    case 'accordion': return renderAccordion(node as any, context);
+    case 'accordion-item': return renderAccordionItem(node as any, context);
+    case 'collapsible': return renderCollapsible(node as any, context);
+    case 'menu': return renderMenu(node as any, context);
+    case 'menu-item': return renderMenuItem(node as any, context, 'menu', false);
+    case 'context-menu': return renderContextMenu(node as any, context);
+    case 'toolbar': return renderToolbar(node as any, context);
     default:
       return `<!-- Unknown node type: ${(node as any).type} -->`;
   }
@@ -1265,6 +1272,126 @@ function renderMenubar(node: any, context: PreviewRenderContext): string {
   const cls = buildClasses(context, 'menubar', node.props || {});
   const childrenHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
   return `<div class="${cls}" role="menubar">\n  ${childrenHTML}\n</div>`;
+}
+
+// --- coss parity family: accordion / collapsible / menu / context-menu / toolbar
+
+function renderAccordion(node: any, context: PreviewRenderContext): string {
+  const cls = buildClasses(context, 'accordion', node.props || {});
+  const itemsHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n');
+  return `<div class="${cls}" data-wmd-accordion>\n${itemsHTML}\n</div>`;
+}
+
+function renderAccordionItem(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const expanded = node.expanded === true;
+  const cls = buildClasses(context, 'accordion-item', node.props || {}) +
+    (expanded ? '' : ` ${prefix}accordion-collapsed`);
+  const contentHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n    ');
+  return `<div class="${cls}">
+  <h3 class="${prefix}accordion-header"><button type="button" class="${prefix}accordion-trigger" aria-expanded="${expanded}"><span class="${prefix}accordion-summary">${escapeHtml(node.summary || '')}</span><span class="${prefix}accordion-indicator" aria-hidden="true">▾</span></button></h3>
+  <div class="${prefix}accordion-panel"${expanded ? '' : ' hidden'}>
+    <div class="${prefix}accordion-panel-inner">
+    ${contentHTML}
+    </div>
+  </div>
+</div>`;
+}
+
+function renderCollapsible(node: any, context: PreviewRenderContext): string {
+  const { classPrefix: prefix } = context;
+  const expanded = node.collapsed !== true;
+  const cls = buildClasses(context, 'collapsible', node.props || {}) +
+    (expanded ? '' : ` ${prefix}collapsible-collapsed`);
+  const contentHTML = (node.children || []).map((c: any) => renderPreviewNode(c, context)).join('\n  ');
+  const title = escapeHtml(node.props?.title || 'Toggle');
+  return `<div class="${cls}" data-wmd-collapsible>
+  <button type="button" class="${prefix}collapsible-trigger" aria-expanded="${expanded}">${title}<span class="${prefix}collapsible-indicator" aria-hidden="true">▾</span></button>
+  <div class="${prefix}collapsible-panel"${expanded ? '' : ' hidden'}>
+  ${contentHTML}
+  </div>
+</div>`;
+}
+
+function renderMenu(node: any, context: PreviewRenderContext): string {
+  return renderMenuShell(node, context, false);
+}
+
+function renderContextMenu(node: any, context: PreviewRenderContext): string {
+  return renderMenuShell(node, context, true);
+}
+
+function renderMenuShell(node: any, context: PreviewRenderContext, isContext: boolean): string {
+  const { classPrefix: prefix } = context;
+  const base = isContext ? 'context-menu' : 'menu';
+  const cls = buildClasses(context, base, node.props || {});
+  const title = escapeHtml(node.props?.title || (isContext ? 'Right-click zone' : 'Menu'));
+  const trigger = isContext
+    ? `<div class="${prefix}${base}-trigger" data-wmd-context-zone>${title}</div>`
+    : `<button type="button" class="${prefix}${base}-trigger" aria-haspopup="menu" aria-expanded="true">${title}<span class="${prefix}${base}-trigger-caret" aria-hidden="true">▾</span></button>`;
+  const inner = (node.children || [])
+    .map((child: any) => renderMenuChild(child, context, base, false))
+    .filter(Boolean)
+    .join('\n  ');
+  return `<div class="${cls}" data-wmd-${base}>\n  ${trigger}\n  <div class="${prefix}${base}-popup" role="menu">\n  ${inner}\n  </div>\n</div>`;
+}
+
+function renderMenuChild(child: any, context: PreviewRenderContext, base: string, nested: boolean): string {
+  const { classPrefix: prefix } = context;
+  if (child.type === 'heading') {
+    return `<div class="${prefix}${base}-label">${escapeHtml(child.content || '')}</div>`;
+  }
+  if (child.type === 'separator') {
+    return `<div class="${prefix}${base}-separator" role="separator"></div>`;
+  }
+  if (child.type === 'menu-item') {
+    return renderMenuItem(child, context, base, nested);
+  }
+  return renderPreviewNode(child, context);
+}
+
+function renderMenuItem(node: any, context: PreviewRenderContext, base: string, nested: boolean): string {
+  const { classPrefix: prefix } = context;
+  const classes = [`${prefix}${base}-item`];
+  if (node.variant === 'destructive') classes.push(`${prefix}${base}-destructive`);
+  if (node.disabled) classes.push(`${prefix}${base}-item-disabled`);
+  if (nested) classes.push(`${prefix}${base}-sub-trigger`);
+  let role = 'menuitem';
+  if (node.indicator === 'check') role = 'menuitemcheckbox';
+  else if (node.indicator === 'radio') role = 'menuitemradio';
+  const attrs = [`role="${role}"`];
+  if (node.indicator) attrs.push(`aria-checked="${node.checked === true ? 'true' : 'false'}"`);
+  if (node.disabled) attrs.push('aria-disabled="true"');
+  const indicator = node.indicator
+    ? `<span class="${prefix}${base}-indicator" aria-hidden="true">${node.checked === true ? (node.indicator === 'radio' ? '●' : '✓') : ''}</span>`
+    : '';
+  const hasSub = (node.children || []).length > 0;
+  const caret = hasSub ? `<span class="${prefix}${base}-sub-indicator" aria-hidden="true">▸</span>` : '';
+  const shortcut = node.shortcut
+    ? `<kbd class="${prefix}${base}-shortcut">${escapeHtml(node.shortcut)}</kbd>`
+    : '';
+  const label = `<span class="${prefix}${base}-item-text">${escapeHtml(node.content || '')}</span>`;
+  const subHTML = hasSub
+    ? `\n  <div class="${prefix}${base}-sub-list">\n  ${(node.children || [])
+        .map((c: any) => renderMenuChild(c, context, base, true))
+        .filter(Boolean)
+        .join('\n  ')}\n  </div>`
+    : '';
+  return `<div class="${classes.join(' ')}" ${attrs.join(' ')}>${indicator}${label}${shortcut}${caret}${subHTML}\n</div>`;
+}
+
+function renderToolbar(node: any, context: PreviewRenderContext): string {
+  const cls = buildClasses(context, 'toolbar', node.props || {});
+  const inner = (node.children || [])
+    .map((child: any) => {
+      if (child.type === 'separator') {
+        return `<span class="${context.classPrefix}toolbar-separator" role="separator" aria-orientation="vertical"></span>`;
+      }
+      return renderPreviewNode(child, context);
+    })
+    .filter(Boolean)
+    .join('\n  ');
+  return `<div class="${cls}" role="toolbar">\n  ${inner}\n</div>`;
 }
 
 // --- data entry family --------------------------------------------------------

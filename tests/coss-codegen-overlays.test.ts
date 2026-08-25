@@ -164,8 +164,8 @@ describe('emitPreviewCard', () => {
 });
 
 describe('overlay family regression: exclusion list still throws', () => {
-  test('form, accordion etc. still throw', () => {
-    for (const t of ['accordion', 'accordion-item', 'loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item'] as const) {
+  test('form etc. still throw', () => {
+    for (const t of ['loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item', 'menu-item'] as const) {
       expect(() => generateCode({ type: t, props: {} } as unknown as WiremdNode))
         .toThrow(`Unsupported codegen node type: ${t}`);
     }

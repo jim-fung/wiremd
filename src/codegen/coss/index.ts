@@ -3,7 +3,7 @@
  *
  * `generateCode` accepts one node or an ordered node list and emits a
  * standalone HTML or JSX fragment (never imports, never a module wrapper).
- * Dispatch goes through a frozen table mapping all 34 supported discriminants
+ * Dispatch goes through a frozen table mapping all 79 supported discriminants
  * to their family emitters; every other discriminant throws
  * `Unsupported codegen node type: <type>`. Later tasks replace emitter stubs
  * inside `emitters/*` without editing this file.
@@ -33,7 +33,7 @@ import {
   emitTableRow,
   emitText,
 } from './emitters/content.js';
-import { emitBrand, emitBreadcrumbs, emitMenubar, emitNav, emitNavItem, emitPagination, emitScrollArea, emitSegmentedControl, emitSidebar, emitTab, emitTabs } from './emitters/navigation.js';
+import { emitAccordion, emitAccordionItem, emitBrand, emitBreadcrumbs, emitCollapsible, emitMenubar, emitNav, emitNavItem, emitPagination, emitScrollArea, emitSegmentedControl, emitSidebar, emitTab, emitTabs, emitToolbar } from './emitters/navigation.js';
 import {
   emitAutocomplete,
   emitCheckboxGroup,
@@ -70,8 +70,10 @@ import {
 } from './emitters/feedback.js';
 import {
   emitAlertDialog,
+  emitContextMenu,
   emitDialog,
   emitDrawer,
+  emitMenu,
   emitPopover,
   emitPreviewCard,
   emitSheet,
@@ -81,7 +83,7 @@ import {
 /** Per-discriminant table: TypeScript verifies each emitter against its exact node shape. */
 type FamilyTable = { readonly [K in SupportedType]: NodeEmitter<Extract<WiremdNode, { type: K }>> };
 
-/** All 67 allowlisted discriminants, in contract order. */
+/** All 79 allowlisted discriminants, in contract order. */
 const FAMILY_EMITTERS: FamilyTable = {
   button: emitButton,
   input: emitInput,
@@ -161,6 +163,13 @@ const FAMILY_EMITTERS: FamilyTable = {
   empty: emitEmpty,
   calendar: emitCalendar,
   'date-picker': emitDatePicker,
+  // Coss parity family
+  accordion: emitAccordion,
+  'accordion-item': emitAccordionItem,
+  collapsible: emitCollapsible,
+  toolbar: emitToolbar,
+  menu: emitMenu,
+  'context-menu': emitContextMenu,
 };
 
 /** Uniform runtime signature every family emitter is invoked through. */
@@ -169,7 +178,7 @@ type UniformEmitter = (node: WiremdNode, format: CodegenFormat, recurse: Codegen
 /**
  * Frozen lookup by discriminant. The double cast is the single controlled
  * erasure point from the precisely-typed table above to the uniform dispatch
- * shape; missing keys (the nine excluded types) read as `undefined`.
+ * shape; missing keys (the excluded types) read as `undefined`.
  */
 const DISPATCH: Readonly<Record<string, UniformEmitter | undefined>> = Object.freeze(
   FAMILY_EMITTERS as unknown as Record<string, UniformEmitter>,

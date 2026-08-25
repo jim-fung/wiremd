@@ -4262,6 +4262,100 @@ body.${prefix}root {
   border: 1px solid #e4e4e7; margin: 12px 0; width: fit-content;
 }
 
+/* Coss parity family: accordion / collapsible / menu / context-menu / toolbar */
+.${prefix}accordion { margin: 12px 0; }
+.${prefix}accordion-item { border-bottom: 1px solid #e4e4e7; }
+.${prefix}accordion-item:last-child { border-bottom: 0; }
+.${prefix}accordion-header { margin: 0; display: flex; }
+.${prefix}accordion-trigger {
+  flex: 1; display: flex; width: 100%; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 16px 4px; border: 0; background: transparent; cursor: pointer;
+  text-align: left; font-size: 14px; font-weight: 500; color: #18181b; font-family: inherit;
+}
+.${prefix}accordion-summary { flex: 1; }
+.${prefix}accordion-indicator {
+  display: inline-block; width: 16px; height: 16px; flex-shrink: 0;
+  margin-top: 2px; opacity: 0.8; font-size: 14px; line-height: 16px; color: #18181b;
+  transition: transform 0.2s ease-in-out;
+}
+.${prefix}accordion-collapsed .${prefix}accordion-indicator { transform: rotate(-90deg); }
+.${prefix}accordion-panel { overflow: hidden; font-size: 14px; color: #71717a; }
+.${prefix}accordion-panel-inner { padding: 0 4px 16px; }
+.${prefix}accordion-panel[hidden] { display: none; }
+
+.${prefix}collapsible { margin: 12px 0; }
+.${prefix}collapsible-trigger {
+  display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 12px 16px; border: 1px solid #e4e4e7; border-radius: 10px; background: #ffffff;
+  cursor: pointer; text-align: left; font-size: 14px; font-weight: 500; color: #18181b; font-family: inherit;
+}
+.${prefix}collapsible-trigger:hover { background: #fafafa; }
+.${prefix}collapsible-indicator {
+  display: inline-block; width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8;
+  font-size: 14px; line-height: 16px; color: #18181b; transition: transform 0.2s ease-in-out;
+}
+.${prefix}collapsible-collapsed .${prefix}collapsible-indicator { transform: rotate(-90deg); }
+.${prefix}collapsible-panel {
+  overflow: hidden; font-size: 14px; color: #18181b;
+  border: 1px solid #e4e4e7; border-radius: 10px; margin-top: 8px; padding: 12px 16px;
+}
+.${prefix}collapsible-panel[hidden] { display: none; }
+
+.${prefix}menu, .${prefix}context-menu { position: relative; display: inline-block; margin: 12px 0; max-width: 100%; }
+.${prefix}menu-trigger {
+  display: inline-flex; height: 36px; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 16px; border: 1px solid #e4e4e7; border-radius: 10px; background: #ffffff;
+  font-size: 14px; font-weight: 500; color: #18181b; cursor: pointer; font-family: inherit;
+}
+.${prefix}menu-trigger:hover { background: #fafafa; }
+.${prefix}menu-trigger-caret { opacity: 0.8; font-size: 12px; }
+.${prefix}context-menu-trigger {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 64px; padding: 8px 16px; border: 1px dashed #d4d4d8; border-radius: 12px;
+  background: #fafafa; color: #71717a; font-size: 13px; cursor: context-menu;
+}
+.${prefix}menu-popup, .${prefix}context-menu-popup {
+  min-width: 208px; margin-top: 6px; padding: 4px;
+  background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+.${prefix}menu-item, .${prefix}context-menu-item {
+  display: flex; min-height: 32px; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 6px; font-size: 14px; color: #18181b;
+  cursor: default; user-select: none;
+}
+.${prefix}menu-item:hover, .${prefix}context-menu-item:hover { background: #f4f4f5; }
+.${prefix}menu-destructive, .${prefix}context-menu-destructive { color: #dc2626; }
+.${prefix}menu-destructive:hover, .${prefix}context-menu-destructive:hover { background: #fef2f2; }
+.${prefix}menu-item-disabled, .${prefix}context-menu-item-disabled { opacity: 0.6; pointer-events: none; }
+.${prefix}menu-indicator, .${prefix}context-menu-indicator {
+  display: inline-flex; width: 16px; justify-content: center; flex-shrink: 0;
+  font-size: 12px; color: #18181b;
+}
+.${prefix}menu-item-text, .${prefix}context-menu-item-text { flex: 1; }
+.${prefix}menu-shortcut, .${prefix}context-menu-shortcut {
+  margin-left: auto; font-family: inherit; font-size: 12px; font-weight: 500;
+  color: #71717a; opacity: 0.7; letter-spacing: 0.08em;
+}
+.${prefix}menu-sub-indicator, .${prefix}context-menu-sub-indicator { opacity: 0.8; font-size: 12px; flex-shrink: 0; }
+.${prefix}menu-sub-trigger { font-weight: 500; }
+.${prefix}menu-sub-list, .${prefix}context-menu-sub-list {
+  margin: 2px 0 2px 24px; padding-left: 8px; border-left: 1px solid #f4f4f5;
+}
+.${prefix}menu-label, .${prefix}context-menu-label {
+  padding: 8px 8px 6px; font-size: 12px; font-weight: 500; color: #71717a;
+}
+.${prefix}menu-separator, .${prefix}context-menu-separator { margin: 4px 8px; height: 1px; background: #e4e4e7; }
+
+.${prefix}toolbar {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  padding: 4px; border: 1px solid #e4e4e7; border-radius: 12px;
+  background: #ffffff; margin: 12px 0; width: fit-content; color: #18181b;
+}
+.${prefix}toolbar-separator {
+  flex-shrink: 0; align-self: stretch; width: 1px; margin: 2px 0; background: #e4e4e7;
+}
+
 /* Phase 3 Task 5: data entry family */
 .${prefix}form { display: flex; flex-direction: column; gap: 16px; margin: 16px 0; }
 

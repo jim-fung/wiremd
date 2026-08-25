@@ -448,6 +448,58 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
     };
   }
 
+  // ::: accordion  (children are ::: accordion-item containers). First item
+  // expands by default unless any item carries {.expanded}/{.collapsed}.
+  if (containerType === 'accordion') {
+    const rawItems = (node.children || []).filter(
+      (c: any) => c.type === 'wiremdBlock' && (c.containerType || '').trim() === 'accordion-item',
+    );
+    const anyExplicit = rawItems.some((c: any) => {
+      if (/\b(expanded|collapsed)\b/.test(String(c.attributes || ''))) return true;
+      const p = (c.children || [])[0];
+      const text = p?.type === 'paragraph' ? String(p.children?.[0]?.value ?? '') : '';
+      return /\{\s*\.?\s*(expanded|collapsed)\b/.test(text);
+    });
+    const items = (processNodeList(node.children || [], options) as any[]).filter(
+      (n: any) => n.type === 'accordion-item',
+    );
+    if (items.length > 0 && !anyExplicit) {
+      items[0].expanded = true;
+    }
+    return { type: 'accordion', props, children: items as any };
+  }
+
+  // ::: accordion-item Summary  /  ::: accordion-item Summary {.expanded}
+  if (containerType === 'accordion-item') {
+    const openerClasses = (props.classes || []) as string[];
+    let explicit: boolean | undefined;
+    if (openerClasses.includes('expanded') || openerClasses.includes('collapsed')) {
+      explicit = openerClasses.includes('expanded');
+    }
+    const firstChild = node.children[0];
+    let summary = '';
+    let contentChildren = node.children || [];
+    if (firstChild?.type === 'paragraph' && firstChild.children?.[0]?.type === 'text') {
+      const raw: string = firstChild.children[0].value;
+      const m = raw.match(/^(.+?)(?:\s*(\{[^}]+\}))?$/);
+      summary = (m?.[1] || raw).trim();
+      const trailing = m?.[2] || '';
+      if (explicit === undefined && /\{\s*\.?\s*(expanded|collapsed)\b/.test(trailing)) {
+        explicit = trailing.includes('expanded');
+      }
+      contentChildren = node.children.slice(1);
+    }
+    const rest = { ...props } as any;
+    rest.classes = openerClasses.filter((c: any) => c !== 'expanded' && c !== 'collapsed');
+    return {
+      type: 'accordion-item',
+      summary,
+      expanded: explicit === true,
+      props: rest,
+      children: processNodeList(contentChildren, options) as any,
+    };
+  }
+
   if (containerType === 'demo') {
     return {
       type: 'demo',
@@ -836,6 +888,62 @@ function transformContainer(node: any, options: ParseOptions): WiremdNode {
         };
       }
     }
+  }
+
+  // Coss parity family: collapsible / menu / context-menu / toolbar
+  if (containerType === 'collapsible') {
+    const classes = (props.classes || []) as string[];
+    let collapsed = classes.includes('collapsed') || props.collapsed === true;
+    const rest = { ...props } as any;
+    delete rest.collapsed;
+    rest.classes = classes.filter((c: any) => c !== 'collapsed' && c !== 'expanded');
+    const firstChild = (node.children || [])[0];
+    let title: string | undefined;
+    let childrenToUse = node.children || [];
+    if (firstChild?.type === 'paragraph' && firstChild.children?.[0]?.type === 'text') {
+      const raw: string = firstChild.children[0].value;
+      const m = raw.match(/^(.+?)(?:\s*(\{[^}]+\}))?$/);
+      if (m?.[2] && /\{\s*\.?\s*(expanded|collapsed)\b/.test(m[2])) {
+        collapsed = m[2].includes('collapsed');
+      }
+      title = (m?.[1] || raw).trim() || undefined;
+      childrenToUse = childrenToUse.slice(1);
+    }
+    return {
+      type: 'collapsible',
+      collapsed,
+      props: { ...rest, title },
+      children: processNodeList(childrenToUse, options) as any,
+    };
+  }
+
+  // ::: menu Trigger Label / ::: context-menu Zone Label — list children become
+  // menu items (task/radio markers become check/radio items, trailing {…}
+  // attribute groups carry {.danger}/{.disabled}/{shortcut:"…"}, nested lists
+  // become submenus); headings become group labels and --- becomes a separator.
+  if (containerType === 'menu' || containerType === 'context-menu') {
+    const isContext = containerType === 'context-menu';
+    const firstChild = (node.children || [])[0];
+    let titleFromOpener: string | undefined;
+    let childrenToUse = node.children || [];
+    if (firstChild?.type === 'paragraph' && firstChild.children?.[0]?.type === 'text') {
+      const raw: string = firstChild.children[0].value;
+      const m = raw.match(/^(.+?)(?:\s*(\{[^}]+\}))?$/);
+      titleFromOpener = (m?.[1] || raw).trim() || undefined;
+      childrenToUse = childrenToUse.slice(1);
+    }
+    const processed = processNodeList(childrenToUse, options) as any[];
+    return {
+      type: isContext ? 'context-menu' : 'menu',
+      props: { ...props, title: titleFromOpener },
+      children: menuItemsFromProcessed(processed) as any,
+    };
+  }
+
+  // ::: toolbar — inline bracket buttons/inputs; standalone --- (blank-line
+  // separated) becomes a vertical toolbar separator.
+  if (containerType === 'toolbar') {
+    return { type: 'toolbar', props, children: processNodeList(node.children || [], options) as any };
   }
 
   return {
@@ -2032,6 +2140,67 @@ function transformParagraph(node: any, _options: ParseOptions, nextNode?: any): 
 /**
  * Transform list node
  */
+/**
+ * Coss parity: flatten processed menu children into menu-item trees.
+ * Lists splice their converted children in place; list-item / gfm checkbox /
+ * radio nodes convert to menu-item nodes; everything else (headings as group
+ * labels, separators, custom blocks) passes through untouched.
+ */
+function menuItemsFromProcessed(processed: any[]): WiremdNode[] {
+  const out: WiremdNode[] = [];
+  for (const node of processed) {
+    if (!node) continue;
+    if (node.type === 'list') {
+      out.push(...menuItemsFromProcessed(node.children || []));
+    } else {
+      const item = menuItemFromNode(node);
+      out.push(item ?? node);
+    }
+  }
+  return out;
+}
+
+/** Convert one processed node into a menu-item, or null to pass it through. */
+function menuItemFromNode(node: any): WiremdNode | null {
+  if (node.type === 'list-item') {
+    const item = menuItemFromContent(String(node.content ?? ''));
+    const nested = (node.children || []).find((c: any) => c.type === 'list');
+    if (nested) (item as any).children = menuItemsFromProcessed([nested]);
+    return item;
+  }
+  if (node.type === 'checkbox' || node.type === 'radio') {
+    const item = menuItemFromAttrs(
+      String(node.label ?? ''),
+      node.props || {},
+    );
+    (item as any).indicator = node.type === 'checkbox' ? 'check' : 'radio';
+    (item as any).checked = node.type === 'checkbox' ? node.checked === true : node.selected === true;
+    const nested = (node.children || []).find((c: any) => c.type === 'list');
+    if (nested) (item as any).children = menuItemsFromProcessed([nested]);
+    return item;
+  }
+  return null;
+}
+
+/** Split trailing {…} attribute groups off a plain list item's content. */
+function menuItemFromContent(content: string): WiremdNode {
+  const m = content.match(/^(.+?)(?:\s*(\{[^}]+\}))?$/);
+  const attrs = m?.[2] ? parseAttributes(m[2]) : {};
+  return menuItemFromAttrs((m?.[1] || content).trim(), attrs as any);
+}
+
+/** Build a menu-item node, lifting {.danger}/{.disabled}/{shortcut:"…"} into fields. */
+function menuItemFromAttrs(content: string, attrs: any): WiremdNode {
+  const classes = (attrs.classes || []) as string[];
+  const rest = { ...attrs } as any;
+  rest.classes = classes.filter((c: any) => c !== 'danger' && c !== 'destructive' && c !== 'disabled');
+  const item: any = { type: 'menu-item', content, props: rest };
+  if (classes.includes('danger') || classes.includes('destructive')) item.variant = 'destructive';
+  if (classes.includes('disabled') || attrs.disabled === true) item.disabled = true;
+  if (typeof attrs.shortcut === 'string') item.shortcut = attrs.shortcut;
+  return item;
+}
+
 function transformList(node: any, options: ParseOptions): WiremdNode {
   const children: WiremdNode[] = [];
 

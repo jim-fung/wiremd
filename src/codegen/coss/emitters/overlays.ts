@@ -227,3 +227,98 @@ ${inner.join('\n')}
   }
   return card;
 };
+
+// ---------------------------------------------------------------------------
+// menu / context-menu (coss parity). Static expanded wireframes: trigger plus
+// a visible popup. menu-item children are emitted internally by these two
+// emitters only — never through the dispatcher.
+// ---------------------------------------------------------------------------
+
+type MenuNode = Extract<WiremdNode, { type: 'menu' }>;
+type ContextMenuNode = Extract<WiremdNode, { type: 'context-menu' }>;
+type MenuItemNode = Extract<WiremdNode, { type: 'menu-item' }>;
+
+const MENU_TRIGGER_CLASSES =
+  'inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-950 shadow-sm transition-colors hover:bg-zinc-50';
+const CONTEXT_ZONE_CLASSES =
+  'flex min-h-16 items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 text-sm text-zinc-500';
+const MENU_POPUP_CLASSES =
+  'relative z-50 min-w-32 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none';
+const MENU_ITEM_CLASSES =
+  'flex min-h-8 cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-base text-zinc-950 outline-none sm:min-h-7 sm:text-sm';
+const MENU_ITEM_DESTRUCTIVE_CLASSES =
+  'flex min-h-8 cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-base text-red-600 outline-none sm:min-h-7 sm:text-sm';
+const MENU_ITEM_DISABLED_SUFFIX = ' pointer-events-none opacity-60';
+const MENU_ITEM_TEXT_CLASSES = 'flex-1';
+const MENU_INDICATOR_CLASSES = 'inline-flex w-4 shrink-0 justify-center text-xs text-zinc-950';
+const MENU_SHORTCUT_CLASSES =
+  'ms-auto hidden font-sans text-xs font-medium tracking-widest text-zinc-500 opacity-70 sm:inline';
+const MENU_LABEL_CLASSES = 'px-2 py-1.5 text-xs font-medium text-zinc-500';
+const MENU_SEPARATOR_CLASSES = 'mx-2 my-1 h-px bg-zinc-200';
+const MENU_SUB_LIST_CLASSES = 'ml-6 border-l border-zinc-100 pl-2';
+
+function menuChildFragment(child: WiremdNode, format: CodegenFormat): string {
+  if (child.type === 'heading') {
+    const text = textEscaped(format, String((child as any).content ?? ''));
+    return `<div${classAttr(format, MENU_LABEL_CLASSES)}>${text}</div>`;
+  }
+  if (child.type === 'separator') {
+    return `<div${classAttr(format, MENU_SEPARATOR_CLASSES)} role="separator"></div>`;
+  }
+  if (child.type === 'menu-item') {
+    return menuItemFragment(child as MenuItemNode, format);
+  }
+  return '';
+}
+
+function menuItemFragment(node: MenuItemNode, format: CodegenFormat): string {
+  const destructive = node.variant === 'destructive';
+  const disabled = node.disabled === true;
+  let classes = destructive ? MENU_ITEM_DESTRUCTIVE_CLASSES : MENU_ITEM_CLASSES;
+  if (disabled) classes += MENU_ITEM_DISABLED_SUFFIX;
+  let role = 'menuitem';
+  if (node.indicator === 'check') role = 'menuitemcheckbox';
+  else if (node.indicator === 'radio') role = 'menuitemradio';
+  const attrs = [`role="${role}"`];
+  if (node.indicator) attrs.push(`aria-checked="${node.checked === true ? 'true' : 'false'}"`);
+  if (disabled) attrs.push('aria-disabled="true"');
+
+  const indicator = node.indicator
+    ? `<span${classAttr(format, MENU_INDICATOR_CLASSES)} aria-hidden="true">${node.checked === true ? (node.indicator === 'radio' ? '●' : '✓') : ''}</span>`
+    : '';
+  const label = `<span${classAttr(format, MENU_ITEM_TEXT_CLASSES)}>${textEscaped(format, node.content ?? '')}</span>`;
+  const shortcut = node.shortcut
+    ? `<kbd${classAttr(format, MENU_SHORTCUT_CLASSES)}>${textEscaped(format, node.shortcut)}</kbd>`
+    : '';
+  const hasSub = (node.children ?? []).length > 0;
+  const caret = hasSub
+    ? `<span${classAttr(format, `${MENU_INDICATOR_CLASSES} opacity-80`)} aria-hidden="true">▸</span>`
+    : '';
+  const sub = hasSub
+    ? `\n<div${classAttr(format, MENU_SUB_LIST_CLASSES)}>\n${(node.children ?? [])
+        .map((child) => menuChildFragment(child, format))
+        .filter((fragment) => fragment.length > 0)
+        .join('\n')}\n</div>`
+    : '';
+  return `<div${classAttr(format, classes)} ${attrs.join(' ')}>${indicator}${label}${shortcut}${caret}${sub}\n</div>`;
+}
+
+export const emitMenu: NodeEmitter<MenuNode> = (node, format) => {
+  const title = typeof node.props?.title === 'string' ? node.props.title : 'Menu';
+  const trigger = `<button type="button"${classAttr(format, MENU_TRIGGER_CLASSES)} aria-haspopup="menu" aria-expanded="true">${textEscaped(format, title)} <span aria-hidden="true">▾</span></button>`;
+  const inner = (node.children ?? [])
+    .map((child) => menuChildFragment(child, format))
+    .filter((fragment) => fragment.length > 0);
+  const popup = `<div${classAttr(format, MENU_POPUP_CLASSES)} role="menu">\n${inner.join('\n')}\n</div>`;
+  return `<div${classAttr(format, 'relative inline-block max-w-full')}>\n${trigger}\n${popup}\n</div>`;
+};
+
+export const emitContextMenu: NodeEmitter<ContextMenuNode> = (node, format) => {
+  const title = typeof node.props?.title === 'string' ? node.props.title : 'Right-click zone';
+  const zone = `<div${classAttr(format, CONTEXT_ZONE_CLASSES)} data-wmd-context-zone>${textEscaped(format, title)}</div>`;
+  const inner = (node.children ?? [])
+    .map((child) => menuChildFragment(child, format))
+    .filter((fragment) => fragment.length > 0);
+  const popup = `<div${classAttr(format, MENU_POPUP_CLASSES)} role="menu">\n${inner.join('\n')}\n</div>`;
+  return `<div${classAttr(format, 'relative inline-block max-w-full')}>\n${zone}\n${popup}\n</div>`;
+};

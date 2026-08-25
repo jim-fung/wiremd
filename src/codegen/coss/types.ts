@@ -24,18 +24,20 @@ export interface CodegenOptions {
 export type CodegenInput = WiremdNode | readonly WiremdNode[];
 
 /**
- * The 73 AST discriminants supported by the coss codegen layer (Phase 3
- * complete): base content + feedback (toast, skeleton, spinner, kbd,
- * progress, meter) + overlays (dialog, alert-dialog, sheet, drawer, popover,
- * tooltip, preview-card) + navigation (pagination, segmented-control,
- * scroll-area, sidebar, menubar) + data entry (form, field, fieldset, label,
- * input-group, otp-field, number-field, autocomplete, combobox, command,
- * checkbox-group, toggle-group, switch, slider, toggle) + display (avatar,
- * frame, group, empty, calendar, date-picker). `alert` has no standalone
- * discriminant: `::: alert` parses to a `container` node whose emitter branch
- * handles it. `option` and `breadcrumb-item` are emitted internally by the
- * select/breadcrumbs emitters only. Direct `accordion`, `accordion-item`,
- * `alert`, `loading-state`, `empty-state`, `error-state`, `option`, and
+ * The 79 AST discriminants supported by the coss codegen layer (Phase 3
+ * complete + coss parity): base content + feedback (toast, skeleton, spinner,
+ * kbd, progress, meter) + overlays (dialog, alert-dialog, sheet, drawer,
+ * popover, tooltip, preview-card, menu, context-menu) + navigation
+ * (pagination, segmented-control, scroll-area, sidebar, menubar, toolbar) +
+ * data entry (form, field, fieldset, label, input-group, otp-field,
+ * number-field, autocomplete, combobox, command, checkbox-group,
+ * toggle-group, switch, slider, toggle) + display (avatar, frame, group,
+ * empty, calendar, date-picker) + disclosure (accordion, accordion-item,
+ * collapsible). `alert` has no standalone discriminant: `::: alert` parses to
+ * a `container` node whose emitter branch handles it. `option`,
+ * `breadcrumb-item`, and `menu-item` are emitted internally by the
+ * select/breadcrumbs/menu emitters only. Direct `menu-item`, `alert`,
+ * `loading-state`, `empty-state`, `error-state`, `option`, and
  * `breadcrumb-item` nodes throw `Unsupported codegen node type: <type>`.
  */
 export type SupportedType =
@@ -51,7 +53,10 @@ export type SupportedType =
   | 'autocomplete' | 'combobox' | 'command' | 'checkbox-group' | 'toggle-group'
   | 'switch' | 'slider' | 'toggle'
   // Phase 3 Task 6: display family
-  | 'avatar' | 'frame' | 'group' | 'empty' | 'calendar' | 'date-picker';
+  | 'avatar' | 'frame' | 'group' | 'empty' | 'calendar' | 'date-picker'
+  // Coss parity family: disclosure (accordion, accordion-item, collapsible),
+  // navigation (toolbar) and overlays (menu, context-menu)
+  | 'accordion' | 'accordion-item' | 'collapsible' | 'toolbar' | 'menu' | 'context-menu';
 
 /**
  * Child-recursion callback handed to every family emitter. Routes back through

@@ -153,7 +153,9 @@ export function validate(
       'autocomplete', 'combobox', 'command', 'checkbox-group', 'toggle-group',
       'switch', 'slider', 'toggle',
       // Phase 3: display family
-      'avatar', 'frame', 'group', 'empty', 'calendar', 'date-picker'
+      'avatar', 'frame', 'group', 'empty', 'calendar', 'date-picker',
+      // Coss parity family
+      'collapsible', 'menu', 'menu-item', 'context-menu', 'toolbar'
     ];
 
     if (!validTypes.includes(nodeType)) {
@@ -642,6 +644,16 @@ export function validate(
           });
         }
         break;
+
+      case 'menu-item':
+        if (!node.content && node.content !== '') {
+          pushError({
+            message: 'Menu item must have a content property',
+            path,
+            code: 'MISSING_CONTENT',
+          });
+        }
+        break;
     }
 
     // Validate nested structure rules
@@ -774,6 +786,21 @@ export function validate(
           message: 'Accordion should only contain accordion-item children',
           path,
           code: 'INVALID_ACCORDION_CHILDREN',
+        });
+      }
+    }
+
+    // Menu/context-menu contain menu-item children plus heading group labels and separators
+    if ((nodeType === 'menu' || nodeType === 'context-menu') && node.children) {
+      const validMenuChildren = ['menu-item', 'heading', 'separator'];
+      const hasInvalidMenuChildren = node.children.some(
+        (child: any) => !validMenuChildren.includes(child.type),
+      );
+      if (hasInvalidMenuChildren) {
+        pushError({
+          message: 'Menu should only contain menu-item, heading, or separator children',
+          path,
+          code: 'INVALID_MENU_CHILDREN',
         });
       }
     }

@@ -338,3 +338,94 @@ export const emitMenubar: NodeEmitter<MenubarNode> = (node, format, recurse) =>
     childFragments(node.children, format, recurse),
     format,
   );
+
+// ---------------------------------------------------------------------------
+// accordion / collapsible / toolbar (coss parity)
+// ---------------------------------------------------------------------------
+
+type AccordionNode = Extract<WiremdNode, { type: 'accordion' }>;
+type AccordionItemNode = Extract<WiremdNode, { type: 'accordion-item' }>;
+type CollapsibleNode = Extract<WiremdNode, { type: 'collapsible' }>;
+type ToolbarNode = Extract<WiremdNode, { type: 'toolbar' }>;
+
+const ACCORDION_ITEM_CLASSES = 'border-b border-zinc-200 last:border-b-0';
+const ACCORDION_TRIGGER_CLASSES =
+  'flex flex-1 cursor-pointer items-start justify-between gap-4 rounded-md py-4 pr-1 text-left font-medium text-sm text-zinc-950';
+const ACCORDION_INDICATOR_CLASSES =
+  'pointer-events-none inline-flex size-4 shrink-0 translate-y-0.5 items-center justify-center text-zinc-950 opacity-80 transition-transform duration-200 ease-in-out';
+const ACCORDION_PANEL_CLASSES = 'overflow-hidden pb-4 pr-1 pt-0 text-sm text-zinc-500';
+
+export const emitAccordion: NodeEmitter<AccordionNode> = (node, format, recurse) =>
+  element('div', [], childFragments(node.children, format, recurse), format);
+
+export const emitAccordionItem: NodeEmitter<AccordionItemNode> = (node, format, recurse) => {
+  const expanded = node.expanded === true;
+  const trigger = element(
+    'button',
+    [
+      { name: 'type', value: 'button' },
+      { name: 'aria-expanded', value: expanded ? 'true' : 'false' },
+      classAttr(format, ACCORDION_TRIGGER_CLASSES),
+    ],
+    [
+      inlineElement('span', [classAttr(format, 'flex-1')], escapeText(node.summary ?? '', format), format),
+      inlineElement('span', [classAttr(format, ACCORDION_INDICATOR_CLASSES)], '▾', format),
+    ],
+    format,
+  );
+  const panelAttrs: Attr[] = [classAttr(format, ACCORDION_PANEL_CLASSES)];
+  if (!expanded) panelAttrs.push({ name: 'hidden' });
+  const panel = element('div', panelAttrs, childFragments(node.children, format, recurse), format);
+  return element('div', [classAttr(format, ACCORDION_ITEM_CLASSES)], [trigger, panel], format);
+};
+
+const COLLAPSIBLE_TRIGGER_CLASSES =
+  'flex w-full cursor-pointer items-center justify-between gap-4 rounded-md border border-zinc-200 bg-white px-4 py-3 text-left font-medium text-sm text-zinc-950';
+const COLLAPSIBLE_PANEL_CLASSES =
+  'mt-2 overflow-hidden rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950';
+
+export const emitCollapsible: NodeEmitter<CollapsibleNode> = (node, format, recurse) => {
+  const expanded = node.collapsed !== true;
+  const title = typeof node.props?.title === 'string' && node.props.title ? node.props.title : 'Toggle';
+  const trigger = element(
+    'button',
+    [
+      { name: 'type', value: 'button' },
+      { name: 'aria-expanded', value: expanded ? 'true' : 'false' },
+      classAttr(format, COLLAPSIBLE_TRIGGER_CLASSES),
+    ],
+    [
+      inlineElement('span', [classAttr(format, 'flex-1')], escapeText(title, format), format),
+      inlineElement('span', [classAttr(format, ACCORDION_INDICATOR_CLASSES)], '▾', format),
+    ],
+    format,
+  );
+  const panelAttrs: Attr[] = [classAttr(format, COLLAPSIBLE_PANEL_CLASSES)];
+  if (!expanded) panelAttrs.push({ name: 'hidden' });
+  const panel = element('div', panelAttrs, childFragments(node.children, format, recurse), format);
+  return element('div', [], [trigger, panel], format);
+};
+
+const TOOLBAR_CLASSES = 'relative flex gap-2 rounded-xl border border-zinc-200 bg-white p-1 text-zinc-950';
+const TOOLBAR_SEPARATOR_CLASSES = 'shrink-0 self-stretch w-px bg-zinc-200';
+
+export const emitToolbar: NodeEmitter<ToolbarNode> = (node, format, recurse) => {
+  const frags = (node.children ?? [])
+    .map((child) => {
+      if (child.type === 'separator') {
+        return element(
+          'span',
+          [
+            { name: 'role', value: 'separator' },
+            { name: 'aria-orientation', value: 'vertical' },
+            classAttr(format, TOOLBAR_SEPARATOR_CLASSES),
+          ],
+          [],
+          format,
+        );
+      }
+      return recurse(child, format);
+    })
+    .filter((fragment) => fragment.length > 0);
+  return element('div', [{ name: 'role', value: 'toolbar' }, classAttr(format, TOOLBAR_CLASSES)], frags, format);
+};

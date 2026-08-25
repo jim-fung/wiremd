@@ -38,7 +38,7 @@ describe('generateCode contracts', () => {
     }
   });
 
-  test.each(['accordion', 'accordion-item', 'alert', 'loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item'] as const)(
+  test.each(['alert', 'loading-state', 'empty-state', 'error-state', 'option', 'breadcrumb-item', 'menu-item'] as const)(
     'direct %s throws Unsupported codegen node type',
     (type) => {
       expect(() => generateCode({ type, props: {} } as unknown as WiremdNode)).toThrow(

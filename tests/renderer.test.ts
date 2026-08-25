@@ -1122,4 +1122,129 @@ content
       }
     });
   });
+
+  describe('coss parity family: accordion / collapsible / menu / context-menu / toolbar', () => {
+    const accordionInput = `
+::: accordion
+
+::: accordion-item First question
+First answer here.
+:::
+
+::: accordion-item Second question {.collapsed}
+Second answer.
+:::
+
+:::
+    `.trim();
+
+    const menuInput = `
+::: menu Actions
+### File group
+- New file {shortcut:"⌘N"}
+- [x] Enable sync
+- ( ) Light
+- (x) Dark
+
+---
+
+- Delete {.danger}
+- Share
+  - Copy link
+:::
+    `.trim();
+
+    it('should render the first accordion item expanded by default', () => {
+      const html = renderToHTML(parse('::: accordion\n\n::: accordion-item A\na\n:::\n\n::: accordion-item B\nb\n:::\n\n:::'), { style: 'coss' });
+      expect(html.match(/aria-expanded="true"/g)).toHaveLength(1);
+      expect(html).toMatch(/<button[^>]*wmd-accordion-trigger[^>]*aria-expanded="true"/);
+      expect(html).toMatch(/<span class="wmd-accordion-summary">A<\/span>/);
+    });
+
+    it('should hide collapsed accordion panels via the hidden attribute', () => {
+      const html = renderToHTML(parse(accordionInput), { style: 'coss' });
+      expect(html).toContain('wmd-accordion-item');
+      expect(html).toContain('wmd-accordion-collapsed');
+      expect(html).toMatch(/<div class="wmd-accordion-panel" hidden>/);
+      expect(html).toContain('First answer here.');
+      expect(html).toContain('Second answer.');
+    });
+
+    it('should keep all accordion items collapsed when one carries {.collapsed}', () => {
+      const html = renderToHTML(parse(accordionInput), { style: 'coss' });
+      expect(html).not.toContain('aria-expanded="true"');
+      expect(html.match(/aria-expanded="false"/g)).toHaveLength(2);
+    });
+
+    it('should render an expanded collapsible without the hidden attribute', () => {
+      const html = renderToHTML(parse('::: collapsible Advanced settings\nVisible settings.\n:::'), { style: 'coss' });
+      expect(html).toMatch(/<button[^>]*wmd-collapsible-trigger[^>]*aria-expanded="true">Advanced settings/);
+      expect(html).toMatch(/<div class="wmd-collapsible-panel">/);
+      expect(html).toContain('Visible settings.');
+    });
+
+    it('should render a collapsed collapsible with hidden panel and aria-expanded=false', () => {
+      const html = renderToHTML(parse('::: collapsible Advanced settings {.collapsed}\nHidden settings content.\n:::'), { style: 'coss' });
+      expect(html).toContain('wmd-collapsible-collapsed');
+      expect(html).toMatch(/<button[^>]*wmd-collapsible-trigger[^>]*aria-expanded="false"/);
+      expect(html).toMatch(/<div class="wmd-collapsible-panel" hidden>/);
+      expect(html).toContain('Hidden settings content.');
+    });
+
+    it('should render a menu trigger button plus a role=menu popup', () => {
+      const html = renderToHTML(parse(menuInput), { style: 'coss' });
+      expect(html).toMatch(/<button[^>]*wmd-menu-trigger[^>]*aria-haspopup="menu" aria-expanded="true">Actions/);
+      expect(html).toMatch(/<div class="wmd-menu-popup" role="menu">/);
+    });
+
+    it('should render menu headings as group labels and --- as separators', () => {
+      const html = renderToHTML(parse(menuInput), { style: 'coss' });
+      expect(html).toMatch(/<div class="wmd-menu-label">File group<\/div>/);
+      expect(html).toMatch(/<div class="wmd-menu-separator" role="separator"><\/div>/);
+    });
+
+    it('should render shortcut hints inside a kbd element', () => {
+      const html = renderToHTML(parse(menuInput), { style: 'coss' });
+      expect(html).toMatch(/<kbd class="wmd-menu-shortcut">⌘N<\/kbd>/);
+    });
+
+    it('should map gfm checkboxes and radio markers to menuitemcheckbox/menuitemradio', () => {
+      const html = renderToHTML(parse(menuInput), { style: 'coss' });
+      expect(html).toMatch(/class="wmd-menu-item" role="menuitemcheckbox" aria-checked="true"/);
+      expect(html).toMatch(/class="wmd-menu-item" role="menuitemradio" aria-checked="false"/);
+      expect(html).toMatch(/class="wmd-menu-item" role="menuitemradio" aria-checked="true"/);
+      expect(html).toContain('✓');
+      expect(html).toContain('●');
+    });
+
+    it('should flag destructive items and disabled items', () => {
+      const html = renderToHTML(parse(menuInput + '\n\n::: context-menu Zone\n- Paste {disabled}\n:::'), { style: 'coss' });
+      expect(html).toMatch(/class="wmd-menu-item wmd-menu-destructive" role="menuitem"/);
+      expect(html).toMatch(/class="wmd-context-menu-item wmd-context-menu-item-disabled" role="menuitem" aria-disabled="true"/);
+    });
+
+    it('should render nested lists as submenus with a caret and sub-list div', () => {
+      const html = renderToHTML(parse(menuInput), { style: 'coss' });
+      expect(html).toContain('▸');
+      expect(html).toMatch(/<div class="wmd-menu-sub-list">/);
+      expect(html).toMatch(/<div class="wmd-menu-item wmd-menu-sub-trigger" role="menuitem">/);
+      expect(html).toContain('Copy link');
+    });
+
+    it('should render a context-menu zone div (not a button) with its popup', () => {
+      const html = renderToHTML(parse('::: context-menu Canvas zone\n- Cut\n- Copy\n:::'), { style: 'coss' });
+      expect(html).toMatch(/<div class="wmd-context-menu-trigger" data-wmd-context-zone>Canvas zone<\/div>/);
+      expect(html).not.toMatch(/<button[^>]*wmd-context-menu/);
+      expect(html).toMatch(/<div class="wmd-context-menu-popup" role="menu">/);
+      expect(html).toMatch(/<div class="wmd-context-menu-item" role="menuitem">/);
+    });
+
+    it('should render a toolbar with role=toolbar and vertical separator spans', () => {
+      const html = renderToHTML(parse('::: toolbar\n[Bold]* [Italic]\n\n---\n\n[Save]\n:::'), { style: 'coss' });
+      expect(html).toMatch(/<div class="wmd-toolbar" role="toolbar">/);
+      expect(html).toMatch(/<span class="wmd-toolbar-separator" role="separator" aria-orientation="vertical"><\/span>/);
+      expect(html).toContain('<button class="wmd-button wmd-button-primary">Bold</button>');
+      expect(html).toContain('<button class="wmd-button">Save</button>');
+    });
+  });
 });

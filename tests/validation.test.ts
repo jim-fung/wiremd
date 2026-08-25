@@ -607,6 +607,29 @@ Content
         expect(errors.some(e => e.code === 'MISSING_EXPANDED')).toBe(true);
       });
     });
+
+    describe('Menu Item', () => {
+      it('should reject menu-item without content', () => {
+        const ast = parse('');
+        ast.children.push({
+          type: 'menu-item',
+          props: {},
+        } as any);
+        const errors = validate(ast);
+        expect(errors.some(e => e.code === 'MISSING_CONTENT')).toBe(true);
+      });
+
+      it('should accept menu-item with content and no other required fields', () => {
+        const ast = parse('');
+        ast.children.push({
+          type: 'menu-item',
+          content: 'Open file',
+          props: {},
+        } as any);
+        const errors = validate(ast);
+        expect(errors).toEqual([]);
+      });
+    });
   });
 
   describe('Nested Structure Validation', () => {
@@ -720,6 +743,47 @@ Content
       } as any);
       const errors = validate(ast);
       expect(errors.some(e => e.code === 'INVALID_ACCORDION_CHILDREN')).toBe(true);
+    });
+
+    it('should reject menu with invalid children', () => {
+      const ast = parse('');
+      ast.children.push({
+        type: 'menu',
+        props: {},
+        children: [
+          { type: 'paragraph', content: 'Invalid', props: {} },
+        ],
+      } as any);
+      const errors = validate(ast);
+      expect(errors.some(e => e.code === 'INVALID_MENU_CHILDREN')).toBe(true);
+    });
+
+    it('should reject context-menu with invalid children', () => {
+      const ast = parse('');
+      ast.children.push({
+        type: 'context-menu',
+        props: {},
+        children: [
+          { type: 'paragraph', content: 'Invalid', props: {} },
+        ],
+      } as any);
+      const errors = validate(ast);
+      expect(errors.some(e => e.code === 'INVALID_MENU_CHILDREN')).toBe(true);
+    });
+
+    it('should accept menu children that are menu-items, headings, or separators', () => {
+      const ast = parse('');
+      ast.children.push({
+        type: 'menu',
+        props: {},
+        children: [
+          { type: 'heading', level: 3, content: 'File group', props: {} },
+          { type: 'menu-item', content: 'New file', props: {} },
+          { type: 'separator', props: {} },
+        ],
+      } as any);
+      const errors = validate(ast);
+      expect(errors.some(e => e.code === 'INVALID_MENU_CHILDREN')).toBe(false);
     });
 
     it('should reject breadcrumbs with non-breadcrumb-item children', () => {

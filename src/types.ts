@@ -154,6 +154,13 @@ export type WiremdNode =
   | { type: 'calendar'; props: ComponentProps & { month?: string; year?: number }; children: WiremdNode[]; position?: Location }
   | { type: 'date-picker'; props: ComponentProps & { placeholder?: string; value?: string }; position?: Location }
 
+  // Coss parity family - collapsible / menu / context-menu / toolbar (accordion above)
+  | { type: 'collapsible'; collapsed: boolean; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'menu'; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'menu-item'; content: string; variant?: 'default' | 'destructive'; indicator?: 'check' | 'radio'; checked?: boolean; disabled?: boolean; shortcut?: string; props: ComponentProps; children?: WiremdNode[]; position?: Location }
+  | { type: 'context-menu'; props: ComponentProps & { title?: string }; children: WiremdNode[]; position?: Location }
+  | { type: 'toolbar'; props: ComponentProps; children: WiremdNode[]; position?: Location }
+
   // Demo / showcase
   | { type: 'demo'; raw: string; props: ComponentProps; children: WiremdNode[]; position?: Location };
 
